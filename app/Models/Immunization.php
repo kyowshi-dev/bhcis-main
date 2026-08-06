@@ -19,7 +19,6 @@ class Immunization extends Model
         'date_given',
         'temp_recorded',
         'administered_by',
-        'next_due_date',
         'notes',
         'no_show',
         'no_show_at',
@@ -31,7 +30,6 @@ class Immunization extends Model
             'dose_number' => 'integer',
             'date_given' => 'date',
             'temp_recorded' => 'decimal:2',
-            'next_due_date' => 'date',
             'no_show' => 'boolean',
             'no_show_at' => 'datetime',
         ];
