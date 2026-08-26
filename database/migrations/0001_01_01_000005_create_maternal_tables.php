@@ -26,12 +26,12 @@ return new class extends Migration
             $table->id();
             $table->foreignId('patient_id')->constrained('patients')->cascadeOnDelete();
             $table->enum('status', ['active', 'delivered', 'closed'])->default('active');
-            $table->unsignedInteger('gravidity');
-            $table->unsignedInteger('parity');
-            $table->unsignedInteger('term')->default(0);
-            $table->unsignedInteger('preterm')->default(0);
-            $table->unsignedInteger('livebirth')->default(0);
-            $table->unsignedInteger('abortion')->default(0);
+            $table->unsignedInteger('gravidity')->nullable();
+            $table->unsignedInteger('parity')->nullable();
+            $table->unsignedInteger('term')->nullable();
+            $table->unsignedInteger('preterm')->nullable();
+            $table->unsignedInteger('livebirth')->nullable();
+            $table->unsignedInteger('abortion')->nullable();
             $table->date('lmp');
             $table->date('edc')->nullable();
             $table->unsignedInteger('aog_weeks')->nullable();
@@ -40,6 +40,7 @@ return new class extends Migration
             $table->date('tt_date')->nullable();
             $table->boolean('iron_taken')->default(false);
             $table->text('others')->nullable();
+            $table->json('risk_flags')->nullable();
             $table->foreignId('recorded_by')->nullable()->constrained('health_workers')->nullOnDelete();
             $table->timestamps();
         });
@@ -47,6 +48,7 @@ return new class extends Migration
         Schema::create('prenatal_visits', function (Blueprint $table) {
             $table->id();
             $table->foreignId('pregnancy_id')->constrained('pregnancies')->cascadeOnDelete();
+            $table->foreignId('consultation_id')->nullable()->constrained('consultations')->nullOnDelete();
             $table->date('visit_date');
             $table->decimal('fundic_height_cm', 4, 1)->nullable();
             $table->unsignedInteger('fetal_heart_tone_bpm')->nullable();
@@ -70,6 +72,7 @@ return new class extends Migration
         Schema::create('family_planning_visits', function (Blueprint $table) {
             $table->id();
             $table->foreignId('client_id')->constrained('family_planning_clients')->cascadeOnDelete();
+            $table->foreignId('consultation_id')->nullable()->constrained('consultations')->nullOnDelete();
             $table->date('visit_date');
             $table->string('method');
             $table->date('schedule_next_visit')->nullable();
@@ -81,6 +84,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('patient_id')->constrained('patients')->cascadeOnDelete();
             $table->foreignId('pregnancy_id')->nullable()->constrained('pregnancies')->nullOnDelete();
+            $table->foreignId('consultation_id')->nullable()->constrained('consultations')->nullOnDelete();
             $table->enum('pregnancy_outcome', ['live_birth', 'stillbirth', 'abortion', 'others']);
             $table->unsignedInteger('prenatal_visits_completed')->nullable();
             $table->enum('place_delivered', ['home', 'health_center', 'hospital', 'other_facility']);
@@ -99,20 +103,32 @@ return new class extends Migration
             $table->date('vitamin_a_date')->nullable();
             $table->date('iron_date')->nullable();
             $table->unsignedInteger('iron_count')->nullable();
-            $table->string('child_last_name');
-            $table->string('child_first_name');
+            $table->string('child_last_name')->nullable();
+            $table->string('child_first_name')->nullable();
             $table->string('child_middle_name')->nullable();
-            $table->enum('child_sex', ['M', 'F']);
+            $table->enum('child_sex', ['M', 'F'])->nullable();
             $table->decimal('child_birth_length_cm', 4, 1)->nullable();
             $table->decimal('child_birth_weight_kg', 5, 2)->nullable();
             $table->foreignId('child_patient_id')->nullable()->constrained('patients')->nullOnDelete();
             $table->foreignId('recorded_by')->nullable()->constrained('health_workers')->nullOnDelete();
             $table->timestamps();
         });
+
+        // Add pregnancy_id FK to consultations now that pregnancies table exists
+        Schema::table('consultations', function (Blueprint $table) {
+            $table->foreign('pregnancy_id')->references('id')->on('pregnancies')->nullOnDelete();
+            $table->index('pregnancy_id');
+        });
     }
 
     public function down(): void
     {
+        Schema::table('consultations', function (Blueprint $table) {
+            $table->dropForeign(['pregnancy_id']);
+            $table->dropIndex(['pregnancy_id']);
+            $table->dropColumn('pregnancy_id');
+        });
+
         Schema::dropIfExists('postnatal_records');
         Schema::dropIfExists('family_planning_visits');
         Schema::dropIfExists('family_planning_clients');
