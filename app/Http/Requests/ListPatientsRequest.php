@@ -15,7 +15,7 @@ class ListPatientsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'sort' => ['sometimes', Rule::in(['name', 'age', 'last_visit', 'created'])],
+            'sort' => ['sometimes', Rule::in(['name', 'age', 'gender', 'last_visit', 'created', 'id'])],
             'dir' => ['sometimes', Rule::in(['asc', 'desc'])],
         ];
     }
