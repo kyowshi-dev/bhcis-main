@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ConsultationController;
 use App\Http\Controllers\DashboardController;
@@ -377,7 +378,15 @@ Route::middleware('auth')->group(function () {
         ->middleware('permission:users')
         ->name('roles.update');
 
-    // 10. ZONE MANAGEMENT
+    // 10. ACTIVITY LOGS
+    Route::get('/activity-logs', [ActivityLogController::class, 'index'])
+        ->middleware('permission:users')
+        ->name('activity-logs.index');
+    Route::get('/activity-logs/{auditLog}', [ActivityLogController::class, 'show'])
+        ->middleware('permission:users')
+        ->name('activity-logs.show');
+
+    // 11. ZONE MANAGEMENT
     Route::get('/zones', [ZoneController::class, 'index'])
         ->middleware('permission:zones')
         ->name('zones.index');

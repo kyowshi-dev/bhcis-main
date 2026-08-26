@@ -135,6 +135,8 @@
                                         :active="request()->routeIs('users*')" />
                     <x-layouts.nav-link url="{{ route('roles.index') }}" label="Roles" icon="fa-solid fa-user-shield"
                                         :active="request()->routeIs('roles*')" />
+                    <x-layouts.nav-link url="{{ route('activity-logs.index') }}" label="Activity Logs" icon="fa-solid fa-clock-rotate-left"
+                                        :active="request()->routeIs('activity-logs*')" />
                 @endif
 
                 <x-layouts.nav-link url="{{ route('settings.index') }}" label="Settings" icon="fa-solid fa-gear"
