@@ -34,12 +34,14 @@ final class PatientQueryService
             'name' => $query
                 ->orderBy('patients.last_name', $dir)
                 ->orderBy('patients.first_name', $dir),
+            'gender' => $query->orderBy('patients.sex', $dir),
             'age' => $dir === 'asc'
                 ? $query->orderByDesc('patients.date_of_birth')
                 : $query->orderBy('patients.date_of_birth', 'asc'),
             'last_visit' => $query
                 ->orderByRaw('last_visit IS NULL ASC')
                 ->orderBy('last_visit', $dir),
+            'id' => $query->orderBy('patients.id', $dir),
             default => $query->orderBy('patients.created_at', $dir),
         };
 

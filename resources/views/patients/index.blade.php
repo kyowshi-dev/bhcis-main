@@ -10,8 +10,8 @@
             $nextDir = $patientDir === 'asc' ? 'desc' : 'asc';
         } else {
             $nextDir = match ($column) {
-                'name' => 'asc',
-                'age', 'last_visit', 'created' => 'desc',
+                'name', 'gender' => 'asc',
+                'age', 'last_visit', 'created', 'id' => 'desc',
                 default => 'desc',
             };
         }
@@ -73,7 +73,14 @@
             <table class="min-w-full text-left text-xs lg:text-sm">
                 <thead>
                     <tr style="background: var(--teal-soft);">
-                        <th class="px-4 py-3 font-semibold uppercase tracking-wider whitespace-nowrap" style="color: var(--ink-muted);">ID</th>
+                        <th class="px-4 py-3 font-semibold uppercase tracking-wider whitespace-nowrap" style="color: var(--ink-muted);">
+                            <a href="{{ $patientSortNextUrl('id') }}" class="inline-flex items-center gap-1.5 hover:underline focus:outline-none focus:ring-2 rounded" style="color: inherit; --tw-ring-color: var(--primary);">
+                                ID
+                                @if ($patientSort === 'id')
+                                    <i class="fa-solid {{ $patientDir === 'asc' ? 'fa-chevron-up' : 'fa-chevron-down' }} text-[10px]" aria-hidden="true"></i>
+                                @endif
+                            </a>
+                        </th>
                         <th class="px-4 py-3 font-semibold uppercase tracking-wider whitespace-nowrap" style="color: var(--ink-muted);">
                             <a href="{{ $patientSortNextUrl('name') }}" class="inline-flex items-center gap-1.5 hover:underline focus:outline-none focus:ring-2 rounded" style="color: inherit; --tw-ring-color: var(--primary);">
                                 Name
@@ -90,7 +97,14 @@
                                 @endif
                             </a>
                         </th>
-                        <th class="px-4 py-3 font-semibold uppercase tracking-wider whitespace-nowrap hidden sm:table-cell" style="color: var(--ink-muted);">Gender</th>
+                        <th class="px-4 py-3 font-semibold uppercase tracking-wider whitespace-nowrap hidden sm:table-cell" style="color: var(--ink-muted);">
+                            <a href="{{ $patientSortNextUrl('gender') }}" class="inline-flex items-center gap-1.5 hover:underline focus:outline-none focus:ring-2 rounded" style="color: inherit; --tw-ring-color: var(--primary);">
+                                Gender
+                                @if ($patientSort === 'gender')
+                                    <i class="fa-solid {{ $patientDir === 'asc' ? 'fa-chevron-up' : 'fa-chevron-down' }} text-[10px]" aria-hidden="true"></i>
+                                @endif
+                            </a>
+                        </th>
                         <th class="px-4 py-3 font-semibold uppercase tracking-wider whitespace-nowrap hidden md:table-cell" style="color: var(--ink-muted);">Phone</th>
                         <th class="px-4 py-3 font-semibold uppercase tracking-wider whitespace-nowrap hidden lg:table-cell" style="color: var(--ink-muted);">
                             <a href="{{ $patientSortNextUrl('last_visit') }}" class="inline-flex items-center gap-1.5 hover:underline focus:outline-none focus:ring-2 rounded" style="color: inherit; --tw-ring-color: var(--primary);">
