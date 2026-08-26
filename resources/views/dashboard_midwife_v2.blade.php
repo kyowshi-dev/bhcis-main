@@ -180,7 +180,6 @@
                 try {
                     const response = await safeFetch(`{{ route('search.patients') }}?query=${encodeURIComponent(this.query)}`);
                     this.results = response.ok ? await response.json() : [];
-                    this.results = await response.json();
                 } catch (e) {
                     console.error('Search failed:', e);
                     this.results = [];

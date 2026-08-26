@@ -520,8 +520,7 @@
                 this.loading = true;
                 try {
                     const response = await safeFetch(`{{ route('search.patients') }}?query=${this.query}`);
-                    this.results = response.ok ? await response.json() : [];
-                    const data = await response.json();
+                    const data = response.ok ? await response.json() : [];
                     this.results = data.map(item => ({
                         ...item,
                         text: item.text.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
