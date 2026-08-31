@@ -20,8 +20,15 @@
       x-on:open-vitals-modal.window="showVitalsModal = true" 
       x-on:close-vitals-modal.window="showVitalsModal = false">
     
+    @php
+        /** @var \App\Models\User|null $authUser */
+        $authUser = auth()->user();
+        $can = fn (string $perm) => $authUser !== null && $authUser->hasPermission($perm);
+    @endphp
+
     <div class="relative z-10 flex min-h-screen">
         
+        {{-- Mobile backdrop --}}
         <div x-show="sidebarOpen" 
              @click="sidebarOpen = false" 
              x-transition:enter="transition ease-out duration-200" 
@@ -34,44 +41,32 @@
              style="display: none;">
         </div>
 
+        {{-- Sidebar --}}
         <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'" 
-               class="app-sidebar transform fixed lg:sticky top-0 h-[calc(100vh/var(--app-zoom,1))] overflow-y-auto w-64 shrink-0 flex flex-col z-50 transition-all duration-300 ease-out border-r border-border shadow-md">
+               class="app-sidebar transform fixed lg:sticky top-0 h-[calc(100vh/var(--app-zoom,1))] overflow-y-auto w-[200px] shrink-0 flex flex-col z-50 transition-all duration-300 ease-out border-r border-border shadow-md">
             
-            <div class="flex items-center justify-between p-4 lg:p-5 border-b border-border">
-                <a href="{{ route('dashboard') }}" class="flex items-center gap-2.5">
+            <div class="flex items-center justify-between p-3 lg:p-4 border-b border-border">
+                <a href="{{ route('dashboard') }}" class="flex items-center gap-2">
                     <div class="logo-mark" style="background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.25);">
                         <img src="{{ asset('img/logo.svg') }}" alt="Santa Ana logo">
                     </div>
-                    <span class="font-display font-semibold text-lg text-white">BHCIS System</span>
+                    <span class="font-display font-semibold text-sm text-white">BHCIS</span>
                 </a>
-                <button @click="sidebarOpen = false" class="lg:hidden p-2 rounded-lg hover:bg-white/10 transition-colors text-white/90">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                <button @click="sidebarOpen = false" class="lg:hidden p-1.5 rounded-lg hover:bg-white/10 transition-colors text-white/90">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
 
-            <div class="px-5 pt-3 pb-1">
-                <span class="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] px-2.5 py-1 rounded-full border border-white/15 text-white/80 bg-white/5">
-                    <span class="h-1.5 w-1.5 rounded-full" style="background: var(--primary);"></span>
-                    Sta. Ana Health Center
-                </span>
-            </div>
+            <nav class="flex-1 p-2 pt-2 space-y-0.5 overflow-y-auto" aria-label="Main navigation">
 
-            <nav class="flex-1 p-3 pt-2 space-y-1 overflow-y-auto" aria-label="Main navigation">
-
-                @php
-                    /** @var \App\Models\User|null $authUser */
-                    $authUser = auth()->user();
-                    $can = fn (string $perm) => $authUser !== null && $authUser->hasPermission($perm);
-                @endphp
-
-                <a href="{{ route('dashboard') }}" aria-current="{{ request()->routeIs('dashboard') ? 'page' : 'false' }}" aria-label="Dashboard" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 text-ink-muted hover:bg-black/5">
-                    <i class="fa-solid fa-house text-base opacity-70" aria-hidden="true"></i>
+                {{-- Dashboard - always visible --}}
+                <a href="{{ route('dashboard') }}" aria-current="{{ request()->routeIs('dashboard') ? 'page' : 'false' }}" aria-label="Dashboard" class="nav-link flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium transition-colors duration-200 text-ink-muted hover:bg-black/5">
+                    <i class="fa-solid fa-house text-sm opacity-70" aria-hidden="true"></i>
                     <span>Dashboard</span>
                 </a>
 
+                {{-- Community category items --}}
                 @if ($can('patients') || $can('household') || $can('zones'))
-                    <p class="mt-3 pt-3 border-t border-white/10 px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/50">Community</p>
-
                     @if ($can('patients'))
                         <x-layouts.nav-link url="{{ route('patients.index') }}" label="Patients" icon="fa-solid fa-user-injured"
                                             :active="request()->routeIs('patients*')" />
@@ -88,9 +83,8 @@
                     @endif
                 @endif
 
+                {{-- Health Care Services category items --}}
                 @if ($can('consultations') || $can('immunizations') || $can('maternal'))
-                    <p class="mt-3 pt-3 border-t border-white/10 px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/50">Health Care Services</p>
-
                     @if ($can('consultations'))
                         <x-layouts.nav-link url="{{ route('consultations.index') }}" label="Consultations" icon="fa-solid fa-stethoscope"
                                             :active="request()->routeIs('consultations*')" />
@@ -112,9 +106,8 @@
                     @endif
                 @endif
 
+                {{-- Reports & Inventory category items --}}
                 @if ($can('medicines') || $can('reports'))
-                    <p class="mt-3 pt-3 border-t border-white/10 px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/50">Reports & Inventory</p>
-
                     @if ($can('medicines'))
                         <x-layouts.nav-link url="{{ route('medicines.index') }}" label="Medicines" icon="fa-solid fa-pills"
                                             :active="request()->routeIs('medicines*')" />
@@ -126,12 +119,9 @@
                     @endif
                 @endif
 
-                <p class="mt-3 pt-3 border-t border-white/10 px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/50">
-                    Administration <span class="normal-case tracking-normal font-medium text-[9px] text-white/40">(Admin/Midwife only)</span>
-                </p>
-
+                {{-- Administration category items --}}
                 @if ($can('users'))
-                    <x-layouts.nav-link url="{{ route('users.index') }}" label="User Management" icon="fa-solid fa-user-gear"
+                    <x-layouts.nav-link url="{{ route('users.index') }}" label="Users" icon="fa-solid fa-user-gear"
                                         :active="request()->routeIs('users*')" />
                     <x-layouts.nav-link url="{{ route('roles.index') }}" label="Roles" icon="fa-solid fa-user-shield"
                                         :active="request()->routeIs('roles*')" />
@@ -139,13 +129,18 @@
                                         :active="request()->routeIs('activity-logs*')" />
                 @endif
 
-                <x-layouts.nav-link url="{{ route('settings.index') }}" label="Settings" icon="fa-solid fa-gear"
-                                    :active="request()->routeIs('settings*')" />
+                {{-- Settings - always at bottom --}}
+                <div class="pt-2 mt-2 border-t border-white/10">
+                    <x-layouts.nav-link url="{{ route('settings.index') }}" label="Settings" icon="fa-solid fa-gear"
+                                        :active="request()->routeIs('settings*')" />
+                </div>
             </nav>
         </aside>
 
+        {{-- Main content area --}}
         <div class="flex-1 flex flex-col min-w-0">
             
+            {{-- Header --}}
             <header class="app-header sticky top-0 z-40 shrink-0 flex justify-between items-center px-4 lg:px-6 py-1 border-b border-white/10 shadow-sm"
                     style="background: linear-gradient(180deg, #0b4438 0%, #0a3d32 100%);">
                 <button @click="sidebarOpen = true" class="lg:hidden p-2 rounded-lg hover:bg-white/10 transition-colors text-white/90">
@@ -170,7 +165,7 @@
                             );
                         @endphp
                         
-                        <!-- Notifications Dropdown -->
+                        {{-- Notifications Dropdown --}}
                         <div x-data="{ notificationsOpen: false }" class="relative">
                             <button type="button"
                                     @click="notificationsOpen = !notificationsOpen"
@@ -249,6 +244,7 @@
                             </div>
                         </div>
                         
+                        {{-- Profile Dropdown --}}
                         <div x-data="{ profileOpen: false }" class="relative">
                             <button type="button"
                                     @click="profileOpen = !profileOpen"
@@ -314,6 +310,75 @@
                 </div>
             </header>
 
+            {{-- Horizontal category tab bar --}}
+            @php
+                $activeCategory = 'dashboard';
+                if (request()->routeIs('patients*') || request()->routeIs('households*') || request()->routeIs('zones*')) {
+                    $activeCategory = 'community';
+                } elseif (request()->routeIs('consultations*') || request()->routeIs('immunizations*') || request()->routeIs('maternal*') || request()->routeIs('referrals*')) {
+                    $activeCategory = 'health';
+                } elseif (request()->routeIs('medicines*') || request()->routeIs('reports*')) {
+                    $activeCategory = 'reports';
+                } elseif (request()->routeIs('users*') || request()->routeIs('roles*') || request()->routeIs('activity-logs*')) {
+                    $activeCategory = 'admin';
+                } elseif (request()->routeIs('settings*')) {
+                    $activeCategory = 'settings';
+                }
+            @endphp
+
+            <nav class="app-tabs shrink-0 flex items-center gap-0.5 px-4 lg:px-6 overflow-x-auto" aria-label="Category navigation">
+                <a href="{{ route('dashboard') }}"
+                   class="app-tab {{ $activeCategory === 'dashboard' ? 'app-tab--active' : '' }}"
+                   aria-current="{{ $activeCategory === 'dashboard' ? 'page' : 'false' }}">
+                    <i class="fa-solid fa-house text-xs" aria-hidden="true"></i>
+                    <span>Dashboard</span>
+                </a>
+
+                @if ($can('patients') || $can('household') || $can('zones'))
+                    <a href="{{ route('patients.index') }}"
+                       class="app-tab {{ $activeCategory === 'community' ? 'app-tab--active' : '' }}"
+                       aria-current="{{ $activeCategory === 'community' ? 'page' : 'false' }}">
+                        <i class="fa-solid fa-users text-xs" aria-hidden="true"></i>
+                        <span>Community</span>
+                    </a>
+                @endif
+
+                @if ($can('consultations') || $can('immunizations') || $can('maternal'))
+                    <a href="{{ route('consultations.index') }}"
+                       class="app-tab {{ $activeCategory === 'health' ? 'app-tab--active' : '' }}"
+                       aria-current="{{ $activeCategory === 'health' ? 'page' : 'false' }}">
+                        <i class="fa-solid fa-stethoscope text-xs" aria-hidden="true"></i>
+                        <span>Health Services</span>
+                    </a>
+                @endif
+
+                @if ($can('medicines') || $can('reports'))
+                    <a href="{{ route('medicines.index') }}"
+                       class="app-tab {{ $activeCategory === 'reports' ? 'app-tab--active' : '' }}"
+                       aria-current="{{ $activeCategory === 'reports' ? 'page' : 'false' }}">
+                        <i class="fa-solid fa-boxes-stacked text-xs" aria-hidden="true"></i>
+                        <span>Reports & Inventory</span>
+                    </a>
+                @endif
+
+                @if ($can('users'))
+                    <a href="{{ route('users.index') }}"
+                       class="app-tab {{ $activeCategory === 'admin' ? 'app-tab--active' : '' }}"
+                       aria-current="{{ $activeCategory === 'admin' ? 'page' : 'false' }}">
+                        <i class="fa-solid fa-shield-halved text-xs" aria-hidden="true"></i>
+                        <span>Administration</span>
+                    </a>
+                @endif
+
+                <a href="{{ route('settings.index') }}"
+                   class="app-tab lg:hidden {{ $activeCategory === 'settings' ? 'app-tab--active' : '' }}"
+                   aria-current="{{ $activeCategory === 'settings' ? 'page' : 'false' }}">
+                    <i class="fa-solid fa-gear text-xs" aria-hidden="true"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            {{-- Page content --}}
             <main class="flex-1 px-[clamp(0.5rem,2vw,1.5rem)] pt-3 pb-2 lg:pt-4 lg:pb-3 overflow-auto">
                 @php
                     $wideRoutes = ['dashboard', 'consultations.index', 'immunizations.index', 'patients.index', 'households.index', 'referrals.index', 'medicines.index', 'reports.index', 'zones.index', 'users.index', 'notifications.index'];
@@ -364,7 +429,7 @@
                 </span>
                 <div class="min-w-0">
                     <p id="liveToastTitle" class="text-sm font-semibold text-ink">New Consultation Request</p>
-                    <p id="liveToastSubtitle" class="text-xs text-ink-muted mt-1">Santa Ana Health Center • BHW</p>
+                    <p id="liveToastSubtitle" class="text-xs text-ink-muted mt-1">Santa Ana Health Center - BHW</p>
                 </div>
             </div>
 
