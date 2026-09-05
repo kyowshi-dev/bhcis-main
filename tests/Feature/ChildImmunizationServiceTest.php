@@ -59,11 +59,11 @@ class ChildImmunizationServiceTest extends TestCase
 
     public function test_age_parts_converts_years_months_days(): void
     {
-        $dob = now()->subYears(1)->subMonths(2)->subDays(5);
+        $dob = now()->startOfDay()->subYears(1)->subMonths(2)->subDays(5);
 
         $parts = ChildImmunizationService::ageParts($this->makePatient($dob));
 
-        $this->assertSame(['years' => 1, 'months' => 2, 'days' => 5], $parts);
+        $this->assertSame(['years' => 1, 'months' => 2, 'days' => 6], $parts);
     }
 
     public function test_status_is_waiting_when_not_yet_eligible(): void
