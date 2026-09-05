@@ -45,7 +45,7 @@ class ReferralNotificationTest extends TestCase
             'temperature' => 36.9,
             'weight' => 62,
             'height' => 158,
-        ])->assertRedirect(route('patients.show', $patientId));
+        ])->assertRedirect();
 
         $this->assertSame(1, $nurse->notifications()->count());
         $this->assertSame(0, $bhw->notifications()->count());

@@ -55,7 +55,7 @@
                 </div>
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                <x-stat label="Gravida / Para">G{{ $active->gravidity }} P{{ $active->parity }} <span class="text-xs font-normal" style="color: var(--ink-muted);">(T{{ $active->term }} P{{ $active->preterm }} L{{ $active->livebirth }} A{{ $active->abortion }})</span></x-stat>
+                <x-stat label="Gravida / Para" subtitle="Bilang ng pagbubuntis / Paganganak">G{{ $active->gravidity }} P{{ $active->parity }} <span class="text-xs font-normal" style="color: var(--ink-muted);">(T{{ $active->term }} P{{ $active->preterm }} L{{ $active->livebirth }} A{{ $active->abortion }})</span></x-stat>
                 <x-stat label="LMP">{{ $active->lmp?->format('M d, Y') ?? '-' }}</x-stat>
                 <x-stat label="EDC">{{ $active->edc?->format('M d, Y') ?? '-' }}</x-stat>
                 <x-stat label="AOG">

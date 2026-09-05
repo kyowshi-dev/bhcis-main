@@ -96,7 +96,7 @@ class ConsultationController extends Controller
         $worker = $this->currentWorker();
         $result = ConsultationService::start($patient, $request->validated(), $worker);
 
-        $redirect = redirect()->route('patients.show', $patient->id)
+        $redirect = redirect()->route('consultations.show', $result['consultationId'])
             ->with('success', 'Consultation started. Patient is awaiting nurse intake validation.');
 
         if ($result['referralId']) {

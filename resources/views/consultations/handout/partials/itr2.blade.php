@@ -193,33 +193,21 @@
                     </tr>
                     <tr>
                         <td colspan="2" class="label-cell">Menarche</td>
-                        <td colspan="2">
-                            {{-- TODO: map --}}
-                        </td>
+                        <td colspan="2"></td>
                         <td colspan="2" class="label-cell">Onset of sexual intercourse</td>
-                        <td colspan="2">
-                            {{-- TODO: map --}}
-                        </td>
+                        <td colspan="2"></td>
                     </tr>
                     <tr>
                         <td colspan="2" class="label-cell">Period/ Duration</td>
-                        <td colspan="2">
-                            {{-- TODO: map --}}
-                        </td>
+                        <td colspan="2"></td>
                         <td colspan="2" class="label-cell">Birth Control Method</td>
-                        <td colspan="2">
-                            {{-- TODO: map --}}
-                        </td>
+                        <td colspan="2"></td>
                     </tr>
                     <tr>
                         <td colspan="2" class="label-cell">Interval/ Cycle</td>
-                        <td colspan="2">
-                            {{-- TODO: map --}}
-                        </td>
+                        <td colspan="2"></td>
                         <td colspan="2" class="label-cell">Menopause? (Yes/No)</td>
-                        <td colspan="2">
-                            {{-- TODO: map --}}
-                        </td>
+                        <td colspan="2"></td>
                     </tr>
                 </table>
             </td>
@@ -230,9 +218,7 @@
                     </tr>
                     <tr>
                         <td class="label-cell" style="width:55%;">Birth Weight</td>
-                        <td>
-                            {{-- TODO: map --}}
-                        </td>
+                        <td></td>
                     </tr>
                     <tr>
                         <td class="label-cell text-center">Immunization</td>
@@ -292,9 +278,7 @@
         </tr>
         <tr>
             <td colspan="3" class="label-cell">Prenatal Delivered</td>
-            <td colspan="3">
-                {{-- TODO: map --}}
-            </td>
+            <td colspan="3"></td>
             <td colspan="3" class="label-cell">Delivery Date</td>
             <td colspan="3">{{ $fmtDate($postnatalRecord->delivery_date ?? null) }}</td>
         </tr>

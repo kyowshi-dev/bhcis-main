@@ -57,7 +57,7 @@
                 <form action="{{ route('consultations.acknowledge-intake', $consultation->id) }}" method="POST">
                     @csrf
                     <button type="submit" class="rounded-xl px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90" style="background: var(--accent);">
-                        Send to Doctor
+                        Review and send to doctor
                     </button>
                 </form>
             </div>
@@ -141,24 +141,17 @@
                                 <td class="px-2 py-2" style="color: var(--ink-muted);">{{ $vitalVersion->notes ?? '-' }}</td>
                                 <td class="px-2 py-2">
                                     <div class="flex items-center gap-2">
-                                        <details>
-                                            <summary class="cursor-pointer text-[11px] font-semibold text-[var(--primary)] hover:underline">Edit</summary>
-                                            <div class="mt-2 w-[18rem] rounded-lg border bg-surface p-2" style="border-color: var(--border);">
-                                                <form action="{{ route('consultations.vitals.update', ['consultation' => $consultation->id, 'vitalId' => $vitalVersion->id]) }}" method="POST" class="space-y-2">
-                                                    @csrf
-                                                    @method('PUT')
-                                                    <div class="grid grid-cols-2 gap-2">
-                                                        <input type="number" name="bp_systolic" min="0" max="300" step="1" value="{{ $vitalVersion->bp_systolic }}" placeholder="SYS" class="rounded border px-2 py-1 text-[11px] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]">
-                                                        <input type="number" name="bp_diastolic" min="0" max="200" step="1" value="{{ $vitalVersion->bp_diastolic }}" placeholder="DIA" class="rounded border px-2 py-1 text-[11px] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]">
-                                                        <input type="number" name="temperature" min="30" max="45" step="0.1" value="{{ $vitalVersion->temperature_c }}" placeholder="Temp" class="rounded border px-2 py-1 text-[11px] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]">
-                                                        <input type="number" name="weight" min="0" max="500" step="0.1" value="{{ $vitalVersion->weight_kg }}" placeholder="Weight" class="rounded border px-2 py-1 text-[11px] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]">
-                                                        <input type="number" name="height" min="0" max="300" step="0.1" value="{{ $vitalVersion->height_cm }}" placeholder="Height" class="col-span-2 rounded border px-2 py-1 text-[11px] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]">
-                                                    </div>
-                                                    <textarea name="notes" rows="2" placeholder="Notes" class="w-full rounded border px-2 py-1 text-[11px] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]">{{ $vitalVersion->notes ?? '' }}</textarea>
-                                                    <button type="submit" class="w-full rounded bg-[var(--primary)] px-2 py-1 text-[11px] font-semibold text-white">Update</button>
-                                                </form>
-                                            </div>
-                                        </details>
+                                        <button type="button"
+                                            @click="$dispatch('open-edit-vital', {
+                                                id: {{ $vitalVersion->id }},
+                                                bp_systolic: {{ $vitalVersion->bp_systolic ?? 'null' }},
+                                                bp_diastolic: {{ $vitalVersion->bp_diastolic ?? 'null' }},
+                                                temperature: {{ $vitalVersion->temperature_c ?? 'null' }},
+                                                weight: {{ $vitalVersion->weight_kg ?? 'null' }},
+                                                height: {{ $vitalVersion->height_cm ?? 'null' }},
+                                                notes: @js($vitalVersion->notes ?? '')
+                                            })"
+                                            class="text-[11px] font-semibold text-[var(--primary)] hover:underline">Edit</button>
 <form action="{{ route('consultations.vitals.delete', ['consultation' => $consultation->id, 'vitalId' => $vitalVersion->id]) }}" method="POST" onsubmit="return confirmVitalsDelete(this);">
                                             @csrf
                                             @method('DELETE')
@@ -492,7 +485,9 @@
                 <div class="mt-4 space-y-4">
                     @if ($linkedPrenatalVisits->isNotEmpty())
                         <div>
-                            <p class="text-xs font-semibold uppercase tracking-wide mb-2" style="color: var(--ink-muted);">Prenatal visits</p>
+                            <p class="text-xs font-semibold uppercase tracking-wide mb-2" style="color: var(--ink-muted);">Prenatal visits
+                                <span class="block text-[10px] font-normal normal-case tracking-normal" style="color: var(--ink-subtle);">Prenatal na Pagbisita</span>
+                            </p>
                             <div class="space-y-2">
                                 @foreach ($linkedPrenatalVisits as $pv)
                                     <div class="flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm" style="border-color: var(--border);">
@@ -508,7 +503,9 @@
 
                     @if ($linkedPostnatal !== null)
                         <div>
-                            <p class="text-xs font-semibold uppercase tracking-wide mb-2" style="color: var(--ink-muted);">Postpartum record</p>
+                            <p class="text-xs font-semibold uppercase tracking-wide mb-2" style="color: var(--ink-muted);">Postpartum record
+                                <span class="block text-[10px] font-normal normal-case tracking-normal" style="color: var(--ink-subtle);">Postpartum na Rekord</span>
+                            </p>
                             <div class="flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm" style="border-color: var(--border);">
                                 <span class="font-medium" style="color: var(--ink);">
                                     {{ \App\Models\PostnatalRecord::OUTCOMES[$linkedPostnatal->pregnancy_outcome] ?? $linkedPostnatal->pregnancy_outcome }}
@@ -526,7 +523,9 @@
 
                     @if ($linkedFpVisits->isNotEmpty())
                         <div>
-                            <p class="text-xs font-semibold uppercase tracking-wide mb-2" style="color: var(--ink-muted);">Family planning visits</p>
+                            <p class="text-xs font-semibold uppercase tracking-wide mb-2" style="color: var(--ink-muted);">Family planning visits
+                                <span class="block text-[10px] font-normal normal-case tracking-normal" style="color: var(--ink-subtle);">Family Planning na Pagbisita</span>
+                            </p>
                             <div class="space-y-2">
                                 @foreach ($linkedFpVisits as $fp)
                                     <div class="flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm" style="border-color: var(--border);">
@@ -589,7 +588,7 @@
                     @endif
                     @if ($clinicalReviewOpen)
                         <button type="submit" form="finalizeForm" class="rounded-xl bg-[var(--primary)] px-5 py-2 text-sm font-semibold text-white">
-                            Finalize &amp; Save Consultation
+                            Complete consultation
                         </button>
                     @endif
                 </div>
@@ -599,6 +598,73 @@
 </div>
 
 @push('page-modals')
+    <x-modal name="edit-complaint-modal" title="Edit chief complaint"
+             x-on:open-edit-complaint.window="open = true" x-on:close.window="open = false">
+        <form action="{{ route('consultations.complaint.update', $consultation->id) }}" method="POST" class="space-y-3">
+            @csrf
+            @method('PUT')
+            <div>
+                <label for="complaint-text-edit" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Chief complaint</label>
+                <textarea id="complaint-text-edit" name="complaint_text" rows="4"
+                          class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                          style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);"
+                          placeholder="e.g. Fever 3 days, cough">{{ $consultation->complaint_text }}</textarea>
+            </div>
+            <div class="flex justify-end gap-2 pt-1">
+                <button type="button" @click="$dispatch('close')" class="rounded-lg border px-4 py-2 text-sm font-semibold transition hover:bg-black/[0.03]"
+                        style="border-color: var(--border); color: var(--ink-muted);">Cancel</button>
+                <button type="submit" class="rounded-lg px-4 py-2 text-sm font-semibold text-white transition hover:shadow-md" style="background: var(--primary);">Save</button>
+            </div>
+        </form>
+    </x-modal>
+
+    <x-modal name="edit-vital-modal" title="Edit vitals"
+             x-on:open-edit-vital.window="open = true; const d = $event.detail; if (d) { editVitalId = d.id; editBpSystolic = d.bp_systolic; editBpDiastolic = d.bp_diastolic; editTemperature = d.temperature; editWeight = d.weight; editHeight = d.height; editNotes = d.notes || ''; }"
+             x-on:close.window="open = false"
+             x-data="{ editVitalId: null, editBpSystolic: '', editBpDiastolic: '', editTemperature: '', editWeight: '', editHeight: '', editNotes: '' }">
+        <form :action="'{{ route('consultations.vitals.update', ['consultation' => $consultation->id, 'vitalId' => '__ID__']) }}'".replace('__ID__', editVitalId)" method="POST" class="space-y-3">
+            @csrf
+            @method('PUT')
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Systolic (mmHg)</label>
+                    <input type="number" name="bp_systolic" x-model="editBpSystolic" min="0" max="300" step="1" placeholder="SYS"
+                           class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2" style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);">
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Diastolic (mmHg)</label>
+                    <input type="number" name="bp_diastolic" x-model="editBpDiastolic" min="0" max="200" step="1" placeholder="DIA"
+                           class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2" style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);">
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Temperature (°C)</label>
+                    <input type="number" name="temperature" x-model="editTemperature" min="30" max="45" step="0.1" placeholder="Temp"
+                           class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2" style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);">
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Weight (kg)</label>
+                    <input type="number" name="weight" x-model="editWeight" min="0" max="500" step="0.1" placeholder="Weight"
+                           class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2" style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);">
+                </div>
+                <div class="col-span-2">
+                    <label class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Height (cm)</label>
+                    <input type="number" name="height" x-model="editHeight" min="0" max="300" step="0.1" placeholder="Height"
+                           class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2" style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);">
+                </div>
+            </div>
+            <div>
+                <label class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Notes</label>
+                <textarea name="notes" x-model="editNotes" rows="2" placeholder="Notes"
+                          class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2" style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);"></textarea>
+            </div>
+            <div class="flex justify-end gap-2 pt-1">
+                <button type="button" @click="$dispatch('close')" class="rounded-lg border px-4 py-2 text-sm font-semibold transition hover:bg-black/[0.03]"
+                        style="border-color: var(--border); color: var(--ink-muted);">Cancel</button>
+                <button type="submit" class="rounded-lg px-4 py-2 text-sm font-semibold text-white transition hover:shadow-md" style="background: var(--primary);">Update</button>
+            </div>
+        </form>
+    </x-modal>
+
     <div id="outwardReferralShowModal" x-show="$store.modals.outward" x-transition.opacity.duration.200ms role="dialog" aria-modal="true" class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display: none;">
         <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeConsultationOutwardReferralWizard()"></div>
         <div id="outwardReferralShowPanel" x-show="$store.modals.outward" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl bg-surface focus:outline-none" tabindex="-1">

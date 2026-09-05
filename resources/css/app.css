@@ -580,45 +580,6 @@ body.modal-open {
     --tw-ring-color: rgba(220, 38, 38, 0.25) !important;
 }
 
-/* === Horizontal category tab bar === */
-.app-tabs {
-    background: var(--color-surface);
-    border-bottom: 1px solid var(--color-border);
-    min-height: 2.5rem;
-}
-
-.app-tab {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    padding: 0.5rem 0.875rem;
-    font-size: 0.8125rem;
-    font-weight: 500;
-    color: var(--color-ink-muted);
-    border-bottom: 2px solid transparent;
-    white-space: nowrap;
-    transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
-    margin-bottom: -1px;
-}
-
-.app-tab:hover {
-    color: var(--color-ink);
-    background: var(--color-teal-soft);
-}
-
-.app-tab:focus-visible {
-    outline: 2px solid var(--color-ring);
-    outline-offset: -2px;
-    border-radius: 0.25rem 0.25rem 0 0;
-}
-
-.app-tab--active {
-    color: var(--color-primary);
-    font-weight: 600;
-    border-bottom-color: var(--color-primary);
-    background: var(--color-teal-soft);
-}
-
 /* Compact sidebar nav link sizing */
 .app-sidebar .nav-link {
     padding-left: 0.625rem;

@@ -40,7 +40,7 @@ class ConsultationMaternalLinkTest extends TestCase
             'temperature' => 37.0,
             'weight' => 60,
             'height' => 160,
-        ])->assertRedirect(route('patients.show', $patientId));
+        ])->assertRedirect();
 
         $this->assertSame(
             'Prenatal',

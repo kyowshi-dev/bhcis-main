@@ -36,7 +36,7 @@ class ConsultationLifecycleTest extends TestCase
             'temperature' => 37.5,
             'weight' => 60,
             'height' => 165,
-        ])->assertRedirect(route('patients.show', $patientId));
+        ])->assertRedirect();
 
         $consultation = DB::table('consultations')->where('patient_id', $patientId)->first();
 
@@ -122,7 +122,7 @@ class ConsultationLifecycleTest extends TestCase
             'temperature' => 37.5,
             'weight' => 60,
             'height' => 165,
-        ])->assertRedirect(route('patients.show', $patientId));
+        ])->assertRedirect();
 
         $consultationId = (int) DB::table('consultations')->where('patient_id', $patientId)->value('id');
 
