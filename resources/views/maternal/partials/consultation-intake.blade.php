@@ -8,8 +8,7 @@
                 <x-slot:control>
                     <select name="mode_of_transaction" id="{{ $fieldPrefix }}mode_of_transaction"
                             class="w-full rounded-lg border border-border px-3 py-2.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent-blue" required>
-                        <option value="">Select mode...</option>
-                        <option value="Walk-in" @selected(old('mode_of_transaction') === 'Walk-in')>Walk-in</option>
+                        <option value="Walk-in" @selected(old('mode_of_transaction', 'Walk-in') === 'Walk-in')>Walk-in</option>
                         <option value="Visited" @selected(old('mode_of_transaction') === 'Visited')>Visited</option>
                         <option value="Referral" @selected(old('mode_of_transaction') === 'Referral')>Referral</option>
                     </select>

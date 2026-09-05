@@ -89,7 +89,7 @@
             </div>
         </div>
 
-<div class="kpi-card animate-in opacity-0 delay-5 flex items-center gap-3 p-3 rounded-xl border transition-[transform,box-shadow] duration-200 hover:scale-[1.01] hover:shadow-md"
+        <div class="kpi-card animate-in opacity-0 delay-5 flex items-center gap-3 p-3 rounded-xl border transition-[transform,box-shadow] duration-200 hover:scale-[1.01] hover:shadow-md"
              style="background: var(--bg-surface); border-color: var(--border); box-shadow: var(--shadow-sm); border-left: 4px solid var(--amber);">
             <span class="kpi-card__icon" style="background: var(--amber-soft); color: var(--amber);">
                 <i class="fa-solid fa-calendar-check" aria-hidden="true"></i>
@@ -106,17 +106,6 @@
             </div>
         </div>
 
-        <div class="kpi-card animate-in opacity-0 delay-6 flex items-center gap-3 p-3 rounded-xl border transition-[transform,box-shadow] duration-200 hover:scale-[1.01] hover:shadow-md"
-             style="background: var(--bg-surface); border-color: var(--border); box-shadow: var(--shadow-sm); border-left: 4px solid var(--primary);">
-            <span class="kpi-card__icon" style="background: var(--teal-soft); color: var(--primary);">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-            </span>
-            <div class="min-w-0 flex-1">
-                <p class="kpi-card__label truncate">Health workers</p>
-                <p class="kpi-card__value">{{ $doctorsOnDuty }}</p>
-                <p class="text-[10px] truncate mt-0.5" style="color: var(--ink-muted);">Staff on record</p>
-            </div>
-        </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-2 lg:gap-3">
@@ -224,8 +213,7 @@
                                 <span style="color: var(--ink-muted);">
                                     <strong class="font-semibold text-[var(--ink)]">{{ $user }}</strong> 
                                     modified 
-                                    <span class="font-medium">{{ $table }}</span> 
-                                    <code class="text-xs px-1.5 py-0.5 rounded bg-black/[0.04] text-[var(--ink-subtle)]">#{{ $log->record_id }}</code>
+                                    <span class="font-medium">{{ $table }}</span>
                                 </span>
                             </div>
                             

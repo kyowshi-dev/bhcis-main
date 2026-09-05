@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="space-y-5 lg:space-y-6 animate-in opacity-0"
-     x-data="{ blurSensitive: false, advancedOpen: @json(request()->filled('date_from') || request()->filled('date_to') || (request()->filled('sort') && request('sort') !== 'newest')) }">
+     x-data="{ advancedOpen: @json(request()->filled('date_from') || request()->filled('date_to') || (request()->filled('sort') && request('sort') !== 'newest')) }">
     <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
             <h1 class="font-display font-semibold text-2xl lg:text-3xl" style="color: var(--ink);">
@@ -73,20 +73,6 @@
                 </div>
 
                 <div class="flex flex-wrap items-center gap-3 sm:gap-4 shrink-0">
-                    <div class="inline-flex items-center gap-3 px-3 py-2 rounded-xl border" style="background: var(--bg-surface); border-color: var(--border);">
-                        <span class="text-xs font-semibold uppercase tracking-wide whitespace-nowrap" style="color: var(--ink-muted);">Sensitive data</span>
-                        <button type="button"
-                                @click="blurSensitive = !blurSensitive"
-                                :aria-pressed="blurSensitive.toString()"
-                                class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2"
-                                :style="blurSensitive ? 'background: var(--accent); --tw-ring-color: var(--accent);' : 'background: var(--border); --tw-ring-color: var(--primary);'">
-                            <span class="sr-only">Toggle masking for diagnosis and treatment</span>
-                            <span class="inline-block h-5 w-5 transform rounded-full bg-surface shadow transition-transform duration-200"
-                                  :class="blurSensitive ? 'translate-x-5' : 'translate-x-0.5'"></span>
-                        </button>
-                        <span class="text-xs whitespace-nowrap" :style="blurSensitive ? 'color: var(--accent);' : 'color: var(--ink-muted);'" x-text="blurSensitive ? 'Masked' : 'Visible'"></span>
-                    </div>
-
                     <button type="button"
                             @click="advancedOpen = !advancedOpen"
                             class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-semibold transition hover:bg-black/[0.03]"
@@ -253,7 +239,7 @@
                                     @if (!empty($diagnoses))
                                         <div class="flex flex-wrap gap-2">
                                             @foreach ($diagnoses as $d)
-                                                <span class="inline-block px-2 py-1 rounded-full text-[11px] font-medium" :class="{ 'blur-sensitive-phi': blurSensitive }" style="background: var(--teal-soft); color: var(--primary);">{{ $d }}</span>
+                                                <span class="inline-block px-2 py-1 rounded-full text-[11px] font-medium" style="background: var(--teal-soft); color: var(--primary);">{{ $d }}</span>
                                             @endforeach
                                         </div>
                                     @else
@@ -286,17 +272,4 @@
     @endif
 </div>
 
-<style>
-.blur-sensitive {
-    filter: blur(4px);
-    transition: filter 0.2s ease;
-}
-.blur-sensitive:hover {
-    filter: none;
-}
-.blur-sensitive-phi {
-    filter: blur(4px);
-    transition: filter 0.2s ease;
-}
-</style>
 @endsection

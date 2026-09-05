@@ -7,7 +7,9 @@
 <section class="sticky top-0 z-40 rounded-2xl border px-4 py-4" style="background: var(--bg-surface-elevated); border-color: var(--border); box-shadow: var(--shadow-sm);">
     <div class="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:items-stretch">
         <div class="rounded-2xl border bg-surface p-4" style="border-color: var(--border);">
-            <p class="text-xs font-semibold uppercase tracking-wide text-[var(--ink)]">Patient Info</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-[var(--ink)]">Patient Info
+                <span class="block text-[10px] font-normal normal-case tracking-normal text-[var(--ink-subtle)]">Impormasyon ng Pasyente</span>
+            </p>
             <p class="font-display text-lg font-semibold text-[var(--ink)] mt-2">
                 {{ fullName($patient->last_name, $patient->first_name, $patient->middle_name, $patient->suffix) }}
             </p>
@@ -17,11 +19,13 @@
             </p>
         </div>
 
-        <div class="rounded-2xl border bg-surface p-4" style="border-color: var(--border);" x-data="{ editingComplaint: false }">
+        <div class="rounded-2xl border bg-surface p-4" style="border-color: var(--border);">
             <div class="flex items-center justify-between gap-2">
-                <p class="text-xs font-semibold uppercase tracking-wide text-[var(--ink)]">Chief Complaint</p>
+                <p class="text-xs font-semibold uppercase tracking-wide text-[var(--ink)]">Chief Complaint
+                    <span class="block text-[10px] font-normal normal-case tracking-normal text-[var(--ink-subtle)]">Pangunahing Reklamo</span>
+                </p>
                 @if ($canEditComplaint ?? false)
-                    <button type="button" x-show="!editingComplaint" @click="editingComplaint = true"
+                    <button type="button" @click="$dispatch('open-edit-complaint')"
                             class="inline-flex items-center gap-1 rounded-full bg-teal-soft px-2 py-1 text-[11px] font-semibold text-[var(--primary)] hover:bg-black/5"
                             title="Edit chief complaint" aria-label="Edit chief complaint">
                         <i class="fa-solid fa-pencil text-[10px]" aria-hidden="true"></i>
@@ -29,35 +33,16 @@
                     </button>
                 @endif
             </div>
-            <template x-if="!editingComplaint">
-                <p class="text-sm italic text-[var(--ink-muted)] mt-2 leading-6">
-                    {{ ucwords($consultation->complaint_text ?? '') ?: 'No complaint recorded' }}
-                </p>
-            </template>
-            @if ($canEditComplaint ?? false)
-                <form x-show="editingComplaint" x-cloak style="display: none;" class="mt-2 space-y-2"
-                      action="{{ route('consultations.complaint.update', $consultation->id) }}" method="POST">
-                    @csrf
-                    @method('PUT')
-                    <label for="complaint-text-edit" class="sr-only">Chief complaint</label>
-                    <textarea id="complaint-text-edit" name="complaint_text" rows="3"
-                              class="w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2"
-                              style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);"
-                              placeholder="e.g. Fever 3 days, cough">{{ $consultation->complaint_text }}</textarea>
-                    <div class="flex justify-end gap-2">
-                        <button type="button" @click="editingComplaint = false"
-                                class="rounded-lg border px-3 py-1.5 text-xs font-semibold transition hover:bg-black/[0.03]"
-                                style="border-color: var(--border); color: var(--ink-muted);">Cancel</button>
-                        <button type="submit"
-                                class="rounded-lg bg-[var(--primary)] px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90">Save</button>
-                    </div>
-                </form>
-            @endif
+            <p class="text-sm italic text-[var(--ink-muted)] mt-2 leading-6">
+                {{ ucwords($consultation->complaint_text ?? '') ?: 'No complaint recorded' }}
+            </p>
         </div>
 
         <div class="rounded-2xl border bg-surface p-4" style="border-color: var(--border);">
             <div class="flex items-center justify-between gap-2">
-                <p class="text-xs font-semibold uppercase tracking-wide text-[var(--ink)]">Vitals</p>
+                <p class="text-xs font-semibold uppercase tracking-wide text-[var(--ink)]">Vitals
+                    <span class="block text-[10px] font-normal normal-case tracking-normal text-[var(--ink-subtle)]">Mga Talya</span>
+                </p>
                 <button type="button" @click="$dispatch('open-vitals-modal')" class="inline-flex items-center gap-1 rounded-full bg-teal-soft px-2 py-1 text-[11px] font-semibold text-[var(--primary)] hover:bg-black/5" title="Re-Take Vitals" aria-label="Re-Take Vitals">
                     <i class="fa-solid fa-pencil text-[10px]"></i>
                     <span>Re-take</span>

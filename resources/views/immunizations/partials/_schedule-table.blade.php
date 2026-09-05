@@ -117,7 +117,7 @@
                                                     <input type="hidden" name="no_show" value="0">
                                                     <input type="hidden" name="patient_id" value="{{ $patient->id }}">
                                                     <input type="hidden" name="vaccine_id" value="{{ $vaccineId }}">
-                                                    <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition hover:bg-black/[0.03]" style="border-color: var(--border); color: var(--ink-muted);">
+                                                    <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition hover:bg-black/[0.03]" style="border-color: var(--primary); color: var(--primary);">
                                                         Clear no-show
                                                     </button>
                                                 </form>
@@ -129,7 +129,7 @@
                                                     <input type="hidden" name="patient_id" value="{{ $patient->id }}">
                                                     <input type="hidden" name="vaccine_id" value="{{ $vaccineId }}">
                                                     <input type="hidden" name="dose_number" value="{{ $nextDose }}">
-                                                    <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition hover:bg-black/[0.03]" style="border-color: var(--border); color: var(--ink-muted);">
+                                                    <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition hover:bg-black/[0.03]" style="border-color: var(--danger); color: var(--danger);">
                                                         <i class="fa-solid fa-user-clock" aria-hidden="true"></i> No-show
                                                     </button>
                                                 </form>
@@ -149,7 +149,7 @@
                                         @if (($elig['state'] ?? '') !== 'out_of_window')
                                             <form method="POST" action="{{ route('immunizations.mark-done', [$patient->id, $vaccineId]) }}" @submit.prevent="confirmMarkDone($event.target)">
                                                 @csrf
-                                                <button type="submit" class="inline-flex items-center gap-1 text-xs font-medium hover:underline" style="color: var(--ink-muted);">
+                                                <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition hover:bg-black/[0.03]" style="border-color: var(--border); color: var(--ink-muted);">
                                                     <i class="fa-solid fa-arrow-right-to-bracket" aria-hidden="true"></i> Mark done elsewhere
                                                 </button>
                                             </form>

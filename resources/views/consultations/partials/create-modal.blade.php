@@ -46,8 +46,7 @@
                     <div class="mb-3 lg:mb-4">
                         <label for="mode_of_transaction" class="block text-xs lg:text-sm font-medium mb-1" style="color: var(--ink-muted);">Mode of transaction <span style="color: #b91c1c;">*</span></label>
                         <select name="mode_of_transaction" id="mode_of_transaction" class="w-full px-3 lg:px-4 py-2 lg:py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2" style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);" required>
-                            <option value="">Select mode...</option>
-                            <option value="Walk-in" @selected(old('mode_of_transaction') === 'Walk-in')>Walk-in</option>
+                            <option value="Walk-in" @selected(old('mode_of_transaction', 'Walk-in') === 'Walk-in')>Walk-in</option>
                             <option value="Visited" @selected(old('mode_of_transaction') === 'Visited')>Visited</option>
                             <option value="Referral" @selected(old('mode_of_transaction') === 'Referral')>Referral</option>
                         </select>
@@ -77,7 +76,6 @@
                             <option value="Postpartum" @selected(old('purpose_of_visit') === 'Postpartum')>Postpartum</option>
                             <option value="Child Immunization" @selected(old('purpose_of_visit') === 'Child Immunization')>Child Immunization</option>
                             <option value="Sick Children" @selected(old('purpose_of_visit') === 'Sick Children')>Sick Children</option>
-                            <option value="Firecracker Injury" @selected(old('purpose_of_visit') === 'Firecracker Injury')>Firecracker Injury</option>
                         </select>
                     </div>
 
@@ -139,7 +137,7 @@
                 <div class="flex flex-wrap items-center gap-2 lg:gap-3">
                     <button type="button" onclick="closeConsultationCreateModal()" class="px-4 lg:px-5 py-2 lg:py-2.5 rounded-xl border font-medium text-xs lg:text-sm transition-colors hover:bg-black/[0.03]" style="border-color: var(--border); color: var(--ink-muted);">Cancel</button>
                     <button type="submit" class="px-5 lg:px-6 py-2 lg:py-2.5 rounded-xl text-white font-semibold text-xs lg:text-sm transition hover:opacity-95" style="background: var(--primary); box-shadow: var(--shadow-sm);">
-                        Save & submit for validation
+                        Submit for nurse review
                     </button>
                 </div>
             </div>

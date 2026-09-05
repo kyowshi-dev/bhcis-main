@@ -3,6 +3,9 @@
     $reopenVaccine = $adminErrors ? $vaccines->firstWhere('id', (int) old('vaccine_id')) : null;
     $reopenRequiresTemp = $adminErrors && ($errors->has('temp_recorded') || old('temp_recorded') !== null);
     $reopenOutOfWindow = $adminErrors && ($errors->has('override_reason') || old('override_reason') !== null);
+    $lastRecord = $records->sortByDesc('date_given')->first();
+    $lastWeight = $lastRecord?->child_weight_kg;
+    $lastHeight = $lastRecord?->child_height_cm;
 @endphp
 
 <div
@@ -173,7 +176,17 @@
                 this.doseNumber = detail.doseNumber ?? null;
                 this.outOfWindow = Boolean(detail.outOfWindow);
                 this.adminOpen = true;
-                this.$nextTick(() => document.getElementById('administer_date')?.focus());
+                this.$nextTick(() => {
+                    const weightInput = document.getElementById('administer_weight');
+                    const heightInput = document.getElementById('administer_height');
+                    if (weightInput && !weightInput.value) {
+                        weightInput.value = @js($lastWeight !== null ? number_format((float) $lastWeight, 2, '.', '') : '');
+                    }
+                    if (heightInput && !heightInput.value) {
+                        heightInput.value = @js($lastHeight !== null ? number_format((float) $lastHeight, 1, '.', '') : '');
+                    }
+                    document.getElementById('administer_date')?.focus();
+                });
             },
         };
     }

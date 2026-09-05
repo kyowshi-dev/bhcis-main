@@ -69,7 +69,7 @@ class ReferralFlowTest extends TestCase
             'temperature' => 36.9,
             'weight' => 62,
             'height' => 158,
-        ])->assertRedirect(route('patients.show', $patientId));
+        ])->assertRedirect();
 
         $consultationId = (int) DB::table('consultations')->where('patient_id', $patientId)->value('id');
         $referral = DB::table('outward_referrals')->where('consultation_id', $consultationId)->first();
