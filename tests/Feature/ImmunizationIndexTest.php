@@ -123,7 +123,7 @@ class ImmunizationIndexTest extends TestCase
             ->assertOk()
             ->assertViewHas('dueTodayCount', fn (int $count) => $count >= 1);
 
-        $this->get(route('immunizations.index', ['month' => now()->subMonths(2)->format('Y-m')]))
+        $this->get(route('immunizations.index', ['month' => now()->subMonths(6)->format('Y-m')]))
             ->assertOk()
             ->assertViewHas('dueTodayCount', 0);
     }

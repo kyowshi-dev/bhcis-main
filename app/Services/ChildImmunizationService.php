@@ -119,7 +119,7 @@ class ChildImmunizationService
      */
     public static function ageParts(Patient $patient): array
     {
-        $diff = $patient->date_of_birth->diff(Carbon::now());
+        $diff = $patient->date_of_birth->startOfDay()->diff(Carbon::now()->startOfDay());
 
         return [
             'years' => $diff->y,
