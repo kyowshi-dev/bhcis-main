@@ -15,7 +15,7 @@ class CreateInitialUsersSeeder extends Seeder
         $users = [
             [
                 'username' => 'admin',
-                'email' => 'admin@bhcis.local',
+                'email' => 'admin@bhcis.com',
                 'password' => Hash::make('password123'),
                 'first_name' => 'System',
                 'last_name' => 'Administrator',
@@ -25,7 +25,7 @@ class CreateInitialUsersSeeder extends Seeder
             ],
             [
                 'username' => 'bhw1',
-                'email' => 'bhw1@bhcis.local',
+                'email' => 'bhw1@bhcis.com',
                 'password' => Hash::make('password123'),
                 'first_name' => 'Maria',
                 'last_name' => 'Santos',
@@ -35,7 +35,7 @@ class CreateInitialUsersSeeder extends Seeder
             ],
             [
                 'username' => 'bhw2',
-                'email' => 'bhw2@bhcis.local',
+                'email' => 'bhw2@bhcis.com',
                 'password' => Hash::make('password123'),
                 'first_name' => 'Elena',
                 'last_name' => 'Cruz',
@@ -45,7 +45,7 @@ class CreateInitialUsersSeeder extends Seeder
             ],
             [
                 'username' => 'bhw3',
-                'email' => 'bhw3@bhcis.local',
+                'email' => 'bhw3@bhcis.com',
                 'password' => Hash::make('password123'),
                 'first_name' => 'Josefina',
                 'last_name' => 'Garcia',
@@ -55,7 +55,7 @@ class CreateInitialUsersSeeder extends Seeder
             ],
             [
                 'username' => 'bhw4',
-                'email' => 'bhw4@bhcis.local',
+                'email' => 'bhw4@bhcis.com',
                 'password' => Hash::make('password123'),
                 'first_name' => 'Lorna',
                 'last_name' => 'Villanueva',
@@ -65,7 +65,7 @@ class CreateInitialUsersSeeder extends Seeder
             ],
             [
                 'username' => 'bhw5',
-                'email' => 'bhw5@bhcis.local',
+                'email' => 'bhw5@bhcis.com',
                 'password' => Hash::make('password123'),
                 'first_name' => 'Teresa',
                 'last_name' => 'Mendoza',
@@ -75,7 +75,7 @@ class CreateInitialUsersSeeder extends Seeder
             ],
             [
                 'username' => 'bhw6',
-                'email' => 'bhw6@bhcis.local',
+                'email' => 'bhw6@bhcis.com',
                 'password' => Hash::make('password123'),
                 'first_name' => 'Gloria',
                 'last_name' => 'Aquino',
@@ -85,7 +85,7 @@ class CreateInitialUsersSeeder extends Seeder
             ],
             [
                 'username' => 'bhw7',
-                'email' => 'bhw7@bhcis.local',
+                'email' => 'bhw7@bhcis.com',
                 'password' => Hash::make('password123'),
                 'first_name' => 'Imelda',
                 'last_name' => 'Ramos',
@@ -95,7 +95,7 @@ class CreateInitialUsersSeeder extends Seeder
             ],
             [
                 'username' => 'bhw8',
-                'email' => 'bhw8@bhcis.local',
+                'email' => 'bhw8@bhcis.com',
                 'password' => Hash::make('password123'),
                 'first_name' => 'Nenita',
                 'last_name' => 'Torres',
@@ -105,7 +105,7 @@ class CreateInitialUsersSeeder extends Seeder
             ],
             [
                 'username' => 'midwife',
-                'email' => 'midwife2@bhcis.local',
+                'email' => 'midwife2@bhcis.com',
                 'password' => Hash::make('password123'),
                 'first_name' => 'Rosario',
                 'last_name' => 'Bautista',
@@ -115,7 +115,7 @@ class CreateInitialUsersSeeder extends Seeder
             ],
             [
                 'username' => 'nurse',
-                'email' => 'nurse@bhcis.local',
+                'email' => 'nurse@bhcis.com',
                 'password' => Hash::make('password123'),
                 'first_name' => 'John',
                 'last_name' => 'Reyes',
@@ -125,7 +125,7 @@ class CreateInitialUsersSeeder extends Seeder
             ],
             [
                 'username' => 'doctor',
-                'email' => 'doctor@bhcis.local',
+                'email' => 'doctor@bhcis.com',
                 'password' => Hash::make('password123'),
                 'first_name' => 'Dr. Carlos',
                 'last_name' => 'Garcia',
