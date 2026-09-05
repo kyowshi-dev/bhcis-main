@@ -83,8 +83,8 @@ On **Windows**, enable them in `php.ini` by removing the `;` before each `extens
 
 ```sh
 # 1. Clone the repository
-git clone https://github.com/kyowshi-dev/bhccr-capstone-main.git
-cd bhccr-capstone-main
+git clone https://github.com/kyowshi-dev/bhcis-main.git
+cd bhcis-main
 
 # 2. Install everything (dependencies, .env, key, migrate, seed, build assets)
 composer run setup
