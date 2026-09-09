@@ -12,7 +12,7 @@
     <div class="animate-in opacity-0 delay-1 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
             <h1 class="font-display font-semibold text-2xl lg:text-3xl" style="color: var(--ink);">
-            Welcome Back, <span style="font-style: italic; color: var(--primary);">{{ auth()->user()?->name ?? 'Admin!' }}</span>            
+                Welcome back, <span style="color: var(--primary);">{{ auth()->user()?->name ?? 'Admin' }}</span>
             </h1>
             <p class="text-sm mt-1" style="color: var(--ink-muted);">
             Ania ang kinatibuk-ang impormasyon bahin sa imong health center.
@@ -56,7 +56,7 @@
         </div>
 
         <div class="kpi-card animate-in opacity-0 delay-3 flex items-center gap-3 p-3 rounded-xl border transition-[transform,box-shadow] duration-200 hover:scale-[1.01] hover:shadow-md"
-             style="background: var(--bg-surface); border-color: var(--border); box-shadow: var(--shadow-sm); border-left: 4px solid var(--accent);">
+             style="background: var(--bg-surface); border-color: var(--border); box-shadow: var(--shadow-sm); border-left: 4px solid var(--primary);">
             <span class="kpi-card__icon" style="background: var(--teal-soft); color: var(--primary);">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             </span>
@@ -74,7 +74,7 @@
 
         <div class="kpi-card animate-in opacity-0 delay-4 flex items-center gap-3 p-3 rounded-xl border transition-[transform,box-shadow] duration-200 hover:scale-[1.01] hover:shadow-md"
              style="background: {{ $overdueImmunizations > 0 ? 'var(--danger-soft)' : 'var(--bg-surface)' }}; border-color: var(--border); box-shadow: var(--shadow-sm); border-left: 4px solid {{ $overdueImmunizations > 0 ? 'var(--danger)' : 'var(--primary)' }};">
-            <span class="kpi-card__icon" style="background: {{ $overdueImmunizations > 0 ? 'var(--danger)' : 'var(--teal-soft)' }}; color: {{ $overdueImmunizations > 0 ? '#fff' : 'var(--primary)' }};">
+            <span class="kpi-card__icon" style="background: {{ $overdueImmunizations > 0 ? 'var(--danger)' : 'var(--teal-soft)' }}; color: {{ $overdueImmunizations > 0 ? 'var(--on-danger)' : 'var(--primary)' }};">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             </span>
             <div class="min-w-0 flex-1">
@@ -211,8 +211,8 @@
                                 
                                 <!-- Activity Narrative -->
                                 <span style="color: var(--ink-muted);">
-                                    <strong class="font-semibold text-[var(--ink)]">{{ $user }}</strong> 
-                                    modified 
+                                    <strong class="font-semibold text-[var(--ink)]">{{ $user }}</strong>
+                                    {{ $log->action === 'created' ? 'added a new' : ($log->action === 'deleted' ? 'removed a' : 'updated a') }}
                                     <span class="font-medium">{{ $table }}</span>
                                 </span>
                             </div>

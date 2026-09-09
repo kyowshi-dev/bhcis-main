@@ -48,7 +48,7 @@
 
         <div class="kpi-card animate-in opacity-0 delay-3 flex items-center gap-3 p-4 rounded-xl border transition-[transform,box-shadow] duration-200 hover:scale-[1.01] hover:shadow-md"
              style="background: {{ $pendingDoctorCount > 0 ? 'var(--accent-blue-soft)' : 'var(--bg-surface)' }}; border-color: var(--border); box-shadow: var(--shadow-sm); border-left: 4px solid var(--accent-blue);">
-            <span class="kpi-card__icon" style="background: {{ $pendingDoctorCount > 0 ? 'var(--accent-blue)' : 'var(--teal-soft)' }}; color: {{ $pendingDoctorCount > 0 ? '#fff' : 'var(--accent-blue)' }};">
+            <span class="kpi-card__icon" style="background: {{ $pendingDoctorCount > 0 ? 'var(--accent-blue)' : 'var(--teal-soft)' }}; color: {{ $pendingDoctorCount > 0 ? 'var(--on-accent-blue)' : 'var(--accent-blue)' }};">
                 <i class="fa-solid fa-list-check" aria-hidden="true"></i>
             </span>
             <div class="min-w-0 flex-1">
@@ -143,7 +143,7 @@
                     <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 text-white">
                         <i class="fa-solid fa-heart-pulse" aria-hidden="true"></i>
                     </span>
-                    <h3 class="font-display font-semibold text-lg" style="color: #fff;">Clinical reminder</h3>
+                    <h3 class="font-display font-semibold text-lg" style="color: var(--on-primary);">Clinical reminder</h3>
                 </div>
                 <p class="text-sm mt-2" style="color: rgba(255,255,255,0.88);">
                     Prioritize high-risk symptoms and ensure complete diagnosis notes before closing each consultation.
