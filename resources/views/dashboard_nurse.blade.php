@@ -48,7 +48,7 @@
 
         <div class="kpi-card animate-in opacity-0 delay-3 flex items-center gap-3 p-4 rounded-xl border transition-[transform,box-shadow] duration-200 hover:scale-[1.01] hover:shadow-md"
              style="background: {{ $pendingValidationCount > 0 ? 'var(--accent-blue-soft)' : 'var(--bg-surface)' }}; border-color: var(--border); box-shadow: var(--shadow-sm); border-left: 4px solid var(--accent-blue);">
-            <span class="kpi-card__icon" style="background: {{ $pendingValidationCount > 0 ? 'var(--accent-blue)' : 'var(--teal-soft)' }}; color: {{ $pendingValidationCount > 0 ? '#fff' : 'var(--accent-blue)' }};">
+            <span class="kpi-card__icon" style="background: {{ $pendingValidationCount > 0 ? 'var(--accent-blue)' : 'var(--teal-soft)' }}; color: {{ $pendingValidationCount > 0 ? 'var(--on-accent-blue)' : 'var(--accent-blue)' }};">
                 <i class="fa-solid fa-clipboard-list" aria-hidden="true"></i>
             </span>
             <div class="min-w-0 flex-1">
