@@ -1307,6 +1307,82 @@ window.outwardReferralWizardGoBack = outwardReferralWizardGoBack;
 window.showModal = showModal;
 window.hideModal = hideModal;
 window.safeFetch = safeFetch;
+window.globalSearch = globalSearch;
+
+/**
+ * Global header search — queries patients and households endpoints,
+ * merges results, and navigates on click/Enter.
+ */
+function globalSearch() {
+    return {
+        query: "",
+        results: [],
+        activeIndex: -1,
+        searchTimer: null,
+
+        search: function () {
+            var self = this;
+            if (this.query.trim().length < 2) {
+                this.results = [];
+                this.activeIndex = -1;
+                return;
+            }
+
+            clearTimeout(this.searchTimer);
+            this.searchTimer = setTimeout(function () {
+                var q = encodeURIComponent(self.query.trim());
+                Promise.all([
+                    safeFetch("/search/patients?query=" + q, { headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" } })
+                        .then(function (r) { return r.json(); })
+                        .then(function (data) {
+                            return (data || []).map(function (item) {
+                                return { label: item.text || "", url: "/patients/" + item.id, type: "patient", subtext: item.subtext || "" };
+                            });
+                        })
+                        .catch(function () { return []; }),
+                    safeFetch("/search/households?query=" + q, { headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" } })
+                        .then(function (r) { return r.json(); })
+                        .then(function (data) {
+                            return (data || []).map(function (item) {
+                                return { label: item.text || "", url: "/households/" + item.id, type: "household", subtext: item.subtext || "" };
+                            });
+                        })
+                        .catch(function () { return []; }),
+                ]).then(function (merged) {
+                    self.results = merged[0].concat(merged[1]).slice(0, 10);
+                    self.activeIndex = -1;
+                });
+            }, 250);
+        },
+
+        close: function () {
+            this.results = [];
+            this.activeIndex = -1;
+        },
+
+        focusNext: function () {
+            if (this.results.length === 0) return;
+            this.activeIndex = (this.activeIndex + 1) % this.results.length;
+        },
+
+        focusPrev: function () {
+            if (this.results.length === 0) return;
+            this.activeIndex = this.activeIndex <= 0 ? this.results.length - 1 : this.activeIndex - 1;
+        },
+
+        selectActive: function () {
+            if (this.activeIndex >= 0 && this.activeIndex < this.results.length) {
+                window.location.href = this.results[this.activeIndex].url;
+            }
+        },
+
+        highlightMatch: function (text, query) {
+            if (!query || !text) return text;
+            var escaped = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            return text.replace(new RegExp("(" + escaped + ")", "gi"), '<mark class="bg-accent-blue-soft text-ink rounded px-0.5">$1</mark>');
+        },
+    };
+}
 
 // Auto-fit: scale the app to the viewport so smaller desktop displays
 // (e.g. 1280x720) get the density the design assumes (~1440x900).

@@ -14,11 +14,12 @@
 
 </head>
 
-<body x-data="{ sidebarOpen: false, showVitalsModal: false }" 
+<body x-data="{ sidebarOpen: false, sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true', showVitalsModal: false }" 
       :class="{ 'overflow-hidden': sidebarOpen }" 
       class="min-h-screen overflow-x-hidden font-sans text-ink antialiased bg-page" 
       x-on:open-vitals-modal.window="showVitalsModal = true" 
-      x-on:close-vitals-modal.window="showVitalsModal = false">
+      x-on:close-vitals-modal.window="showVitalsModal = false"
+      x-effect="localStorage.setItem('sidebarCollapsed', sidebarCollapsed)">
     
     @php
         /** @var \App\Models\User|null $authUser */
@@ -42,17 +43,18 @@
         </div>
 
         {{-- Sidebar --}}
-        <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'" 
-               class="app-sidebar transform fixed lg:sticky top-0 h-[calc(100vh/var(--app-zoom,1))] overflow-y-auto w-[200px] shrink-0 flex flex-col z-50 transition-all duration-300 ease-out border-r border-border shadow-md">
+        <aside :class="[sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0', sidebarCollapsed ? 'sidebar-collapsed' : '']"
+               :style="sidebarCollapsed ? 'width: 4rem' : 'width: 200px'"
+               class="app-sidebar transform fixed lg:sticky top-0 h-[calc(100vh/var(--app-zoom,1))] overflow-y-auto shrink-0 flex flex-col z-50 transition-all duration-300 ease-out border-r border-border shadow-md">
             
-            <div class="flex items-center justify-between p-3 lg:p-4 border-b border-border">
-                <a href="{{ route('dashboard') }}" class="flex items-center gap-2">
+            <div class="flex items-center justify-between p-3 lg:p-4 border-b border-border" :class="sidebarCollapsed ? 'justify-center' : ''">
+                <a href="{{ route('dashboard') }}" class="flex items-center gap-2" :class="sidebarCollapsed ? 'justify-center' : ''">
                     <div class="logo-mark" style="background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.25);">
                         <img src="{{ asset('img/logo.svg') }}" alt="Santa Ana logo">
                     </div>
-                    <span class="font-display font-semibold text-sm text-white">BHCIS</span>
+                    <span x-show="!sidebarCollapsed" x-transition:enter="transition-opacity duration-150" class="font-display font-semibold text-sm text-white">BHCIS</span>
                 </a>
-                <button @click="sidebarOpen = false" class="lg:hidden p-1.5 rounded-lg hover:bg-white/10 transition-colors text-white/90">
+                <button @click="sidebarOpen = false" x-show="!sidebarCollapsed" class="lg:hidden p-1.5 rounded-lg hover:bg-white/10 transition-colors text-white/90">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
@@ -60,13 +62,12 @@
             <nav class="flex-1 p-2 pt-2 space-y-0.5 overflow-y-auto" aria-label="Main navigation">
 
                 {{-- Dashboard - always visible --}}
-                <a href="{{ route('dashboard') }}" aria-current="{{ request()->routeIs('dashboard') ? 'page' : 'false' }}" aria-label="Dashboard" class="nav-link flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium transition-colors duration-200 text-ink-muted hover:bg-black/5">
-                    <i class="fa-solid fa-house text-sm opacity-70" aria-hidden="true"></i>
-                    <span>Dashboard</span>
-                </a>
+                <x-layouts.nav-link url="{{ route('dashboard') }}" label="Dashboard" icon="fa-solid fa-house"
+                                    :active="request()->routeIs('dashboard')" />
 
                 {{-- Community category items --}}
                 @if ($can('patients') || $can('household') || $can('zones'))
+                    <p class="sidebar-category-label px-2.5 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-white/40" aria-hidden="true">Community</p>
                     @if ($can('patients'))
                         <x-layouts.nav-link url="{{ route('patients.index') }}" label="Patients" icon="fa-solid fa-user-injured"
                                             :active="request()->routeIs('patients*')" />
@@ -85,6 +86,7 @@
 
                 {{-- Health Care Services category items --}}
                 @if ($can('consultations') || $can('immunizations') || $can('maternal'))
+                    <p class="sidebar-category-label px-2.5 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-white/40" aria-hidden="true">Health Care Services</p>
                     @if ($can('consultations'))
                         <x-layouts.nav-link url="{{ route('consultations.index') }}" label="Consultations" icon="fa-solid fa-stethoscope"
                                             :active="request()->routeIs('consultations*')" />
@@ -108,6 +110,7 @@
 
                 {{-- Reports & Inventory category items --}}
                 @if ($can('medicines') || $can('reports'))
+                    <p class="sidebar-category-label px-2.5 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-white/40" aria-hidden="true">Reports & Inventory</p>
                     @if ($can('medicines'))
                         <x-layouts.nav-link url="{{ route('medicines.index') }}" label="Medicines" icon="fa-solid fa-pills"
                                             :active="request()->routeIs('medicines*')" />
@@ -121,6 +124,7 @@
 
                 {{-- Administration category items --}}
                 @if ($can('users'))
+                    <p class="sidebar-category-label px-2.5 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-white/40" aria-hidden="true">Administration</p>
                     <x-layouts.nav-link url="{{ route('users.index') }}" label="Users" icon="fa-solid fa-user-gear"
                                         :active="request()->routeIs('users*')" />
                     <x-layouts.nav-link url="{{ route('roles.index') }}" label="Roles" icon="fa-solid fa-user-shield"
@@ -134,6 +138,19 @@
                     <x-layouts.nav-link url="{{ route('settings.index') }}" label="Settings" icon="fa-solid fa-gear"
                                         :active="request()->routeIs('settings*')" />
                 </div>
+
+                {{-- Collapse toggle (desktop only) --}}
+                <div class="hidden lg:block pt-2 mt-2 border-t border-white/10">
+                    <button @click="sidebarCollapsed = !sidebarCollapsed"
+                            class="nav-link w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium transition-colors duration-200 text-white/60 hover:text-white hover:bg-white/10"
+                            :aria-label="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'">
+                        <svg class="w-5 h-5 mx-auto shrink-0 transition-transform duration-200" :class="{ 'rotate-180': sidebarCollapsed }" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M11 19l-7-7 7-7"/>
+                            <path d="M18 19l-7-7 7-7" x-show="!sidebarCollapsed"/>
+                        </svg>
+                        <span x-show="!sidebarCollapsed" x-transition:enter="transition-opacity duration-150" class="sidebar-collapse-label">Collapse</span>
+                    </button>
+                </div>
             </nav>
         </aside>
 
@@ -141,39 +158,68 @@
         <div class="flex-1 flex flex-col min-w-0">
             
             {{-- Header --}}
-            <header class="app-header sticky top-0 z-40 shrink-0 flex justify-between items-center px-4 lg:px-6 py-1 border-b border-white/10 shadow-sm"
-                    style="background: linear-gradient(180deg, #0b4438 0%, #0a3d32 100%);">
+            <header class="app-header sticky top-0 z-40 shrink-0 flex items-center gap-3 px-4 lg:px-6 py-1 border-b border-white/10 shadow-sm">
                 <button @click="sidebarOpen = true" class="lg:hidden p-2 rounded-lg hover:bg-white/10 transition-colors text-white/90">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
                 </button>
 
+                @if ($authUser)
+                    @php
+                        $roleName = $authUser->role?->role_name ?? 'User';
+                        $username = (string) $authUser->username;
+                        $initials = mb_strtoupper(mb_substr($username, 0, 1));
+                        $notifications = Cache::remember(
+                            "header_notifications_{$authUser->id}",
+                            now()->addMinute(),
+                            fn () => $authUser->notifications()->latest()->take(5)->get(),
+                        );
+                        $unreadCount = Cache::remember(
+                            "header_unread_count_{$authUser->id}",
+                            now()->addMinute(),
+                            fn () => $authUser->notifications()->whereNull('read_at')->count(),
+                        );
+                    @endphp
+
+                    {{-- Global Search --}}
+                    <div x-data="globalSearch()" class="relative hidden sm:block">
+                        <div class="relative">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-xs text-white/50" aria-hidden="true"></i>
+                            <input type="search" x-model="query" @input.debounce.300ms="search()" @click.away="close()"
+                                   @keydown.escape="close()" @keydown.arrow-down.prevent="focusNext()" @keydown.arrow-up.prevent="focusPrev()" @keydown.enter.prevent="selectActive()"
+                                   placeholder="Search patients, households..."
+                                   class="w-56 lg:w-72 rounded-lg border border-white/20 bg-white/10 pl-9 pr-3 py-1.5 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all"
+                                   role="combobox" aria-autocomplete="list" aria-haspopup="listbox" :aria-expanded="(results.length > 0).toString()">
+                        </div>
+                        <div x-show="results.length > 0" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
+                             class="absolute top-full left-0 mt-2 w-full rounded-xl border border-border shadow-lg bg-surface-elevated z-50 max-h-80 overflow-y-auto"
+                             role="listbox">
+                                <template x-for="(item, index) in results" :key="item.url">
+                                    <a :href="item.url" class="flex items-center gap-3 px-4 py-2.5 text-sm text-ink hover:bg-black/5 transition-colors border-b border-border last:border-0"
+                                       :class="{ 'bg-teal-soft': index === activeIndex }" role="option" :aria-selected="(index === activeIndex).toString()">
+                                        <span class="flex-1 min-w-0">
+                                            <span x-html="highlightMatch(item.label, query)" class="block truncate"></span>
+                                            <span x-show="item.subtext" x-text="item.subtext" class="block text-xs text-ink-muted truncate"></span>
+                                        </span>
+                                    </a>
+                                </template>
+                        </div>
+                    </div>
+                @endif
+
                 <div class="ml-auto flex items-center gap-4">
                     @if ($authUser)
-                        @php
-                            $roleName = $authUser->role?->role_name ?? 'User';
-                            $username = (string) $authUser->username;
-                            $initials = mb_strtoupper(mb_substr($username, 0, 1));
-                            $notifications = Cache::remember(
-                                "header_notifications_{$authUser->id}",
-                                now()->addMinute(),
-                                fn () => $authUser->notifications()->latest()->take(5)->get(),
-                            );
-                            $unreadCount = Cache::remember(
-                                "header_unread_count_{$authUser->id}",
-                                now()->addMinute(),
-                                fn () => $authUser->notifications()->whereNull('read_at')->count(),
-                            );
-                        @endphp
-                        
                         {{-- Notifications Dropdown --}}
                         <div x-data="{ notificationsOpen: false }" class="relative">
                             <button type="button"
                                     @click="notificationsOpen = !notificationsOpen"
                                     @click.away="notificationsOpen = false"
+                                    @keydown.escape="notificationsOpen = false"
+                                    :aria-expanded="notificationsOpen.toString()"
+                                    aria-haspopup="true"
                                     class="relative p-2 rounded-lg hover:bg-white/10 transition-colors text-white/90 hover:text-white">
                                 <i class="fa-solid fa-bell text-lg" aria-hidden="true"></i>
                                 @if ($unreadCount > 0)
-                                    <span class="absolute top-1 right-1 inline-flex items-center justify-center h-5 w-5 text-xs font-bold rounded-full bg-red-500 text-white">
+                                    <span class="absolute top-1 right-1 inline-flex items-center justify-center h-5 w-5 text-xs font-bold rounded-full text-white" style="background: var(--color-danger);">
                                         {{ $unreadCount > 9 ? '9+' : $unreadCount }}
                                     </span>
                                 @endif
@@ -186,6 +232,8 @@
                                  x-transition:leave="transition ease-in duration-150"
                                  x-transition:leave-start="opacity-100 transform translate-y-0"
                                  x-transition:leave-end="opacity-0 transform translate-y-1"
+                                 @keydown.escape="notificationsOpen = false"
+                                 role="menu"
                                  class="absolute right-0 mt-3 w-80 rounded-xl border border-border shadow-md bg-surface-elevated z-50"
                                  style="display: none;">
                                 
@@ -249,6 +297,9 @@
                             <button type="button"
                                     @click="profileOpen = !profileOpen"
                                     @click.away="profileOpen = false"
+                                    @keydown.escape="profileOpen = false"
+                                    :aria-expanded="profileOpen.toString()"
+                                    aria-haspopup="true"
                                     class="flex items-center gap-3 rounded-xl px-3 py-2 hover:shadow-sm transition-all duration-200  border border-white/20 hover:bg-white/15 text-white">
                                 @if ($authUser->profile_photo_path)
                                     <img src="/storage/{{ $authUser->profile_photo_path }}" alt="{{ $username }}" class="h-8 w-8 rounded-full object-cover">
@@ -277,6 +328,8 @@
                                  x-transition:leave="transition ease-in duration-150"
                                  x-transition:leave-start="opacity-100 transform translate-y-0"
                                  x-transition:leave-end="opacity-0 transform translate-y-1"
+                                 @keydown.escape="profileOpen = false"
+                                 role="menu"
                                  class="absolute right-0 mt-3 w-52 rounded-xl border border-border shadow-md bg-surface-elevated z-50"
                                  style="display: none;">
                                 
