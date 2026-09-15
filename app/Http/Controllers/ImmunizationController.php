@@ -31,12 +31,11 @@ class ImmunizationController extends Controller
     {
         $this->authorizeImmunizations();
 
-        $mode = $this->resolveMode($request);
         $zoneId = $request->filled('zone_id') ? (int) $request->input('zone_id') : null;
 
         [$from, $to, $month, $dateFrom, $dateTo, $monthOptions] = $this->resolveDateWindow($request);
 
-        $categories = $mode === 'child' ? ['Child', 'Both'] : ['Adult', 'Both'];
+        $categories = ['Child', 'Adult', 'Both'];
 
         $queues = [];
         foreach (['due', 'overdue', 'no_show'] as $key) {
@@ -72,7 +71,6 @@ class ImmunizationController extends Controller
         $zones = Zone::orderBy('zone_number')->get();
 
         return view('immunizations.index', [
-            'mode' => $mode,
             'zones' => $zones,
             'zoneId' => $zoneId,
             'month' => $month,
@@ -368,7 +366,7 @@ class ImmunizationController extends Controller
         } else {
             $cleared = $this->service->clearNoShow($patient, $vaccine);
             $message = $cleared !== null
-                ? 'No-show cleared; it stays in the patient history.'
+                ? 'No-show cleared; it stays in the patient history. You can now administer the dose.'
                 : 'No unresolved no-show to clear.';
         }
 
@@ -456,17 +454,5 @@ class ImmunizationController extends Controller
         if (! auth()->check() || ! auth()->user()->hasPermission('immunizations')) {
             abort(403, 'Unauthorized');
         }
-    }
-
-    private function resolveMode(Request $request): string
-    {
-        $mode = $request->session()->get('immunizations.mode', 'child');
-
-        if ($request->has('mode') && in_array($request->input('mode'), ['child', 'adult'], true)) {
-            $mode = $request->input('mode');
-            $request->session()->put('immunizations.mode', $mode);
-        }
-
-        return in_array($mode, ['child', 'adult'], true) ? $mode : 'child';
     }
 }

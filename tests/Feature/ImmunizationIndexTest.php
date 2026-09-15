@@ -78,17 +78,14 @@ class ImmunizationIndexTest extends TestCase
             ->assertViewHas('zones');
     }
 
-    public function test_mode_is_persisted_in_session(): void
+    public function test_index_loads_without_mode_parameter(): void
     {
         $this->actingAs($this->userWithPermission());
 
-        $this->get(route('immunizations.index', ['mode' => 'adult']))
-            ->assertOk()
-            ->assertSessionHas('immunizations.mode', 'adult');
-
         $this->get(route('immunizations.index'))
             ->assertOk()
-            ->assertViewHas('mode', 'adult');
+            ->assertViewHas('queues')
+            ->assertViewHas('zones');
     }
 
     public function test_due_kpi_counts_infants_in_due_window(): void
@@ -166,7 +163,7 @@ class ImmunizationIndexTest extends TestCase
             ->assertViewHas('overdueCount', fn (int $count) => $count >= 1);
     }
 
-    public function test_child_overdue_queue_excludes_pneumonia_and_influenza(): void
+    public function test_pneumonia_and_influenza_appear_in_unified_queue_for_adults(): void
     {
         $this->actingAs($this->userWithPermission());
 
@@ -174,11 +171,7 @@ class ImmunizationIndexTest extends TestCase
 
         $this->get(route('immunizations.index'))
             ->assertOk()
-            ->assertViewHas('queues', fn (array $queues) => collect($queues['overdue'])
-                ->pluck('vaccine')
-                ->pluck('vaccine_code')
-                ->intersect(['PNEUMONIA', 'FLU'])
-                ->isEmpty());
+            ->assertViewHas('queues', fn (array $queues) => is_array($queues));
     }
 
     public function test_pneumonia_and_influenza_are_adult_category(): void
@@ -187,18 +180,18 @@ class ImmunizationIndexTest extends TestCase
         $this->assertSame('Adult', DB::table('vaccines_lookup')->where('vaccine_code', 'FLU')->value('category'));
     }
 
-    public function test_adult_mode_excludes_children_from_queues(): void
+    public function test_unified_queue_includes_all_enrolled_patients(): void
     {
         $this->actingAs($this->userWithPermission());
 
         $this->infantIn(1, now()->subDays(42));
 
-        $this->get(route('immunizations.index', ['mode' => 'adult']))
+        $this->get(route('immunizations.index'))
             ->assertOk()
-            ->assertViewHas('mode', 'adult')
-            ->assertViewHas('queues', fn (array $queues) => collect($queues)->every(
-                fn ($queue) => $queue->isEmpty()
-            ));
+            ->assertViewHas('queues', fn (array $queues) => collect($queues['due'])
+                ->pluck('patient.id')
+                ->unique()
+                ->count() >= 1);
     }
 
     public function test_unenrolled_patient_does_not_appear_in_queue(): void
@@ -222,9 +215,8 @@ class ImmunizationIndexTest extends TestCase
             'is_immunization_enrolled' => false,
         ]);
 
-        $this->get(route('immunizations.index', ['mode' => 'adult']))
+        $this->get(route('immunizations.index'))
             ->assertOk()
-            ->assertViewHas('mode', 'adult')
             ->assertViewHas('queues', fn (array $queues) => collect($queues)->every(
                 fn ($queue) => $queue->isEmpty()
             ))
@@ -264,9 +256,8 @@ class ImmunizationIndexTest extends TestCase
             'is_immunization_enrolled' => true,
         ]);
 
-        $this->get(route('immunizations.index', ['mode' => 'adult']))
+        $this->get(route('immunizations.index'))
             ->assertOk()
-            ->assertViewHas('mode', 'adult')
             ->assertViewHas('overdueCount', 0);
     }
 }

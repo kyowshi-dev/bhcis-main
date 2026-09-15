@@ -13,6 +13,7 @@
     x-init="initReopen({{ $adminErrors ? 'true' : 'false' }})"
     @keydown.escape.window="adminOpen = false"
     x-on:open-administer.window="openAdminister($event.detail)"
+    x-init="$data.isChild = {{ ($patient->age ?? 0) < 18 ? 'true' : 'false' }}"
 >
     <template x-teleport="body">
         <div x-show="adminOpen"
@@ -85,10 +86,10 @@
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label for="administer_weight" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">
-                                    Weight (kg) <span style="color: var(--danger);">*</span>
+                                    Weight (kg) <span x-show="isChild" style="color: var(--danger);">*</span>
                                 </label>
                                 <input id="administer_weight" name="child_weight_kg" type="number" step="0.01" min="0" max="100"
-                                       value="{{ old('child_weight_kg') }}" placeholder="e.g. 6.5" required
+                                       value="{{ old('child_weight_kg') }}" placeholder="e.g. 6.5" :required="isChild"
                                        class="w-full rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
                                        style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
                                 @error('child_weight_kg')
@@ -98,10 +99,10 @@
 
                             <div>
                                 <label for="administer_height" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">
-                                    Height (cm) <span style="color: var(--danger);">*</span>
+                                    Height (cm) <span x-show="isChild" style="color: var(--danger);">*</span>
                                 </label>
                                 <input id="administer_height" name="child_height_cm" type="number" step="0.1" min="20" max="200"
-                                       value="{{ old('child_height_cm') }}" placeholder="e.g. 65" required
+                                       value="{{ old('child_height_cm') }}" placeholder="e.g. 65" :required="isChild"
                                        class="w-full rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
                                        style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
                                 @error('child_height_cm')
@@ -158,6 +159,7 @@
             vaccineName: '',
             doseNumber: null,
             outOfWindow: false,
+            isChild: true,
             init() {
                 this.$watch('adminOpen', (open) => {
                     document.body.classList.toggle('overflow-hidden', open);

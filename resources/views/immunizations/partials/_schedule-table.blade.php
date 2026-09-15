@@ -13,6 +13,13 @@
 <div>
     <h2 class="font-display font-semibold text-lg mb-1" style="color: var(--ink);">Immunization schedule</h2>
     <p class="text-sm mb-3" style="color: var(--ink-muted);">Current status, next dose due, and doses given for each vaccine.</p>
+    <div class="flex flex-wrap items-center gap-3 mb-3 text-xs" style="color: var(--ink-muted);">
+        <span class="inline-flex items-center gap-1"><i class="fa-solid fa-circle-check" style="color: var(--ink-muted);" aria-hidden="true"></i> Complete</span>
+        <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full" style="background: var(--accent-blue);"></span> Due</span>
+        <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full" style="background: var(--danger);"></span> Overdue</span>
+        <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full" style="background: var(--amber);"></span> Out of window</span>
+        <span class="inline-flex items-center gap-1"><i class="fa-solid fa-user-clock" style="color: var(--danger);" aria-hidden="true"></i> No-show</span>
+    </div>
     <div class="rounded-xl border overflow-hidden" style="background: var(--bg-surface-elevated); border-color: var(--border);">
         <div class="overflow-x-auto">
             <table class="min-w-full text-sm">
@@ -153,6 +160,7 @@
                                                     <i class="fa-solid fa-arrow-right-to-bracket" aria-hidden="true"></i> Mark done elsewhere
                                                 </button>
                                             </form>
+                                            <p class="text-xs mt-1" style="color: var(--ink-subtle);">For doses given at another facility</p>
                                         @endif
                                     </div>
                                 @endif
