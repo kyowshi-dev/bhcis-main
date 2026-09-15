@@ -11,6 +11,7 @@ use App\Services\PatientQueryService;
 use App\Services\PatientService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -23,13 +24,15 @@ class PatientController extends Controller
 
         $sort = $request->input('sort', 'created');
         $dir = $request->input('dir', $sort === 'name' ? 'asc' : 'desc');
+        $showTrashed = $request->boolean('trashed');
 
-        $patients = PatientQueryService::paginateIndex($sort, $dir, auth()->user(), pageSize(20));
+        $patients = PatientQueryService::paginateIndex($sort, $dir, auth()->user(), pageSize(20), $showTrashed);
 
         return view('patients.index', [
             'patients' => $patients,
             'patientSort' => $sort,
             'patientDir' => $dir,
+            'showTrashed' => $showTrashed,
         ]);
     }
 
@@ -93,5 +96,41 @@ class PatientController extends Controller
             ->get();
 
         return view('patients.show', compact('patient', 'history'));
+    }
+
+    public function destroy(int $id): RedirectResponse
+    {
+        $patient = Patient::findOrFail($id);
+        $this->authorize('delete', $patient);
+
+        $patient->delete();
+
+        return redirect()
+            ->route('patients.index')
+            ->with('success', 'Patient archived successfully.');
+    }
+
+    public function restore(int $id): RedirectResponse
+    {
+        $patient = Patient::withTrashed()->findOrFail($id);
+        $this->authorize('restore', $patient);
+
+        $patient->restore();
+
+        return redirect()
+            ->route('patients.show', $patient)
+            ->with('success', 'Patient restored successfully.');
+    }
+
+    public function forceDestroy(int $id): RedirectResponse
+    {
+        $patient = Patient::withTrashed()->findOrFail($id);
+        $this->authorize('forceDelete', $patient);
+
+        $patient->forceDelete();
+
+        return redirect()
+            ->route('patients.index')
+            ->with('success', 'Patient permanently deleted.');
     }
 }
