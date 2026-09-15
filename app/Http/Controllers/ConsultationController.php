@@ -182,7 +182,7 @@ class ConsultationController extends Controller
             ->with('success', 'Clinical vitals saved as a new version.');
     }
 
-    public function updateVitalVersion(VitalsRequest $request, Consultation $consultation, int $vitalId): RedirectResponse
+    public function updateVitalVersion(VitalsRequest $request, Consultation $consultation, $vitalId): RedirectResponse
     {
         $this->authorizePermission('consultations');
 
@@ -194,7 +194,7 @@ class ConsultationController extends Controller
             ->with('success', 'Vitals version updated successfully.');
     }
 
-    public function deleteVitalVersion(Consultation $consultation, int $vitalId): RedirectResponse
+    public function deleteVitalVersion(Consultation $consultation, $vitalId): RedirectResponse
     {
         $this->authorizePermission('consultations');
 
