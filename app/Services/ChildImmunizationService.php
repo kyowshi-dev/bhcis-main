@@ -577,6 +577,10 @@ class ChildImmunizationService
             }
 
             foreach ($vaccines as $vaccine) {
+                if (! $this->vaccineMatchesAge($patient, $vaccine)) {
+                    continue;
+                }
+
                 $matrix = $this->matrixFor($patient, $vaccine);
                 $earliest = $matrix['earliest'];
 
