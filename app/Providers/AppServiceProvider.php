@@ -65,6 +65,7 @@ class AppServiceProvider extends ServiceProvider
         Route::bind('postnatal', function (string $value) {
             return PostnatalRecord::findOrFail($value);
         });
+
     }
 
     /**

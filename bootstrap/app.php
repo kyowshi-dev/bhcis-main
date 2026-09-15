@@ -4,7 +4,6 @@ use App\Http\Middleware\DisableBackCache;
 use App\Http\Middleware\PermissionMiddleware;
 use App\Http\Middleware\RoleMiddleware;
 use App\Http\Middleware\SecurityHeaders;
-use App\Http\Middleware\TrackPageVisit;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -32,9 +31,6 @@ return Application::configure(basePath: dirname(__DIR__))
         // Apply DisableBackCache to all authenticated routes
         // This prevents back-button bypass after logout (OWASP A01)
         $middleware->appendToGroup('web', DisableBackCache::class);
-
-        // Record successful page loads in the session trail for breadcrumbs
-        $middleware->appendToGroup('web', TrackPageVisit::class);
 
         // Add hardening security headers to every web response
         $middleware->appendToGroup('web', SecurityHeaders::class);

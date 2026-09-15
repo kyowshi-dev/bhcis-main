@@ -7,11 +7,20 @@ use Throwable;
 
 class BreadcrumbHelper
 {
-    private const TRAIL_KEY = 'breadcrumbs.trail';
-
-    private const TRAIL_LIMIT = 6;
-
     private const DASHBOARD = 'dashboard';
+
+    /**
+     * Routes that belong under a category label (non-clickable) in the breadcrumb.
+     * Used to insert "Maternal Care" between Dashboard and the sub-module index.
+     */
+    private const CATEGORY_PARENTS = [
+        'maternal.prenatal.index' => 'Maternal Care',
+        'maternal.prenatal.patient' => 'Maternal Care',
+        'maternal.postnatal.index' => 'Maternal Care',
+        'maternal.postnatal.patient' => 'Maternal Care',
+        'maternal.family-planning.index' => 'Maternal Care',
+        'maternal.family-planning.patient' => 'Maternal Care',
+    ];
 
     /**
      * Route name -> page label for every HTML page in the app.
@@ -64,18 +73,21 @@ class BreadcrumbHelper
         'profile.edit' => 'Edit Profile',
         'profile.settings' => 'Session Settings',
         'notifications.index' => 'Notifications',
+        'privacy.index' => 'Privacy Settings',
+        'privacy.policy' => 'Privacy Policy',
+        'privacy.purposes' => 'Data Processing Purposes',
     ];
 
     /**
-     * Static hierarchy used when there is no session trail (deep links).
-     * Only pages with a parent are listed; the chain is rooted at Dashboard.
+     * Static hierarchy: child route => parent route.
+     * The chain is always rooted at Dashboard.
      */
     private const PARENTS = [
         'households.create' => 'households.index',
         'households.edit' => 'households.index',
         'patients.create' => 'patients.index',
         'patients.show' => 'patients.index',
-        'consultations.create' => 'patients.index',
+        'consultations.create' => 'patients.show',
         'consultations.show' => 'consultations.index',
         'consultations.edit' => 'consultations.show',
         'immunizations.enroll-infant.create' => 'immunizations.index',
@@ -97,6 +109,9 @@ class BreadcrumbHelper
         'activity-logs.show' => 'activity-logs.index',
         'settings.account' => 'settings.index',
         'settings.backups' => 'settings.index',
+        'privacy.index' => 'settings.index',
+        'privacy.policy' => 'settings.index',
+        'privacy.purposes' => 'settings.index',
         'profile.edit' => 'profile.show',
         'profile.settings' => 'profile.show',
     ];
@@ -107,81 +122,12 @@ class BreadcrumbHelper
     }
 
     /**
-     * Record the current page in the per-session navigation trail.
-     * Called from TrackPageVisit middleware on successful HTML GET responses.
-     */
-    public static function recordCurrentVisit(): void
-    {
-        $routeName = Route::currentRouteName();
-
-        if (! self::isPageRoute($routeName) || ! auth()->check()) {
-            return;
-        }
-
-        $url = request()->url();
-        $trail = session(self::TRAIL_KEY, []);
-
-        if ($trail === []) {
-            if ($routeName === self::DASHBOARD) {
-                session([self::TRAIL_KEY => [self::crumb(self::DASHBOARD)]]);
-
-                return;
-            }
-
-            // First page of the session (deep link): start from its static hierarchy.
-            session([self::TRAIL_KEY => self::fallbackChain()]);
-
-            return;
-        }
-
-        if ($routeName === self::DASHBOARD) {
-            // Navigating back to the dashboard resets the trail.
-            session([self::TRAIL_KEY => [self::crumb(self::DASHBOARD)]]);
-
-            return;
-        }
-
-        $last = end($trail);
-        if ($last !== false && $last['url'] === $url) {
-            return;
-        }
-
-        // Revisiting an earlier page truncates the trail after it (back navigation).
-        $existingIndex = array_search($url, array_column($trail, 'url'), true);
-        if ($existingIndex !== false) {
-            session([self::TRAIL_KEY => array_slice($trail, 0, $existingIndex + 1)]);
-
-            return;
-        }
-
-        $trail[] = self::crumb($routeName, $url);
-        if (count($trail) > self::TRAIL_LIMIT) {
-            $trail = array_slice($trail, -self::TRAIL_LIMIT);
-        }
-
-        session([self::TRAIL_KEY => $trail]);
-    }
-
-    /**
+     * Build the breadcrumb chain for the current route by walking up the
+     * static parent hierarchy. No session state is used.
+     *
      * @return array<int, array{name: string, url: string|null}>
      */
     public static function getBreadcrumbs(): array
-    {
-        $trail = session(self::TRAIL_KEY, []);
-
-        if (count($trail) > 1) {
-            return $trail;
-        }
-
-        // No trail yet (e.g. view rendered without a recorded visit):
-        // fall back to the static hierarchy for the current route.
-        return self::fallbackChain();
-    }
-
-    /**
-     * @return array<int, array{name: string, url: string|null}>
-     */
-    private static function fallbackChain(): array
     {
         $routeName = Route::currentRouteName();
 
@@ -189,13 +135,18 @@ class BreadcrumbHelper
             return [];
         }
 
-        $chain = [self::crumb($routeName, request()->url())];
-
+        $chain = [];
         $current = $routeName;
-        while (isset(self::PARENTS[$current])) {
-            $parent = self::PARENTS[$current];
-            $chain[] = self::crumb($parent, self::parentUrl($parent));
-            $current = $parent;
+
+        // Walk up the parent hierarchy to Dashboard.
+        while ($current !== null && $current !== self::DASHBOARD) {
+            $chain[] = self::crumb($current);
+            $current = self::PARENTS[$current] ?? null;
+        }
+
+        // Insert non-clickable category label if this route belongs to a category group.
+        if (isset(self::CATEGORY_PARENTS[$routeName])) {
+            $chain[] = ['name' => self::CATEGORY_PARENTS[$routeName], 'url' => null];
         }
 
         $chain[] = self::crumb(self::DASHBOARD);
@@ -208,33 +159,17 @@ class BreadcrumbHelper
      */
     private static function crumb(string $routeName, ?string $url = null): array
     {
+        if ($url === null) {
+            try {
+                $url = route($routeName);
+            } catch (Throwable) {
+                $url = null;
+            }
+        }
+
         return [
             'name' => self::PAGE_LABELS[$routeName],
-            'url' => $url ?? route($routeName),
+            'url' => $url,
         ];
-    }
-
-    private static function parentUrl(string $routeName): ?string
-    {
-        $route = Route::getRoutes()->getByName($routeName);
-
-        if ($route === null) {
-            return null;
-        }
-
-        $params = [];
-        foreach ($route->parameterNames() as $param) {
-            $value = request()->route($param);
-            if ($value === null) {
-                return null;
-            }
-            $params[$param] = $value;
-        }
-
-        try {
-            return route($routeName, $params);
-        } catch (Throwable) {
-            return null;
-        }
     }
 }
