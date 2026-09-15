@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
 /**
@@ -36,7 +37,7 @@ use Illuminate\Support\Carbon;
  */
 class OutwardReferral extends Model
 {
-    use LogsActivity;
+    use LogsActivity, SoftDeletes;
 
     public const STATUS_PENDING = 'pending';
 
