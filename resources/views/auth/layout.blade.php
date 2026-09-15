@@ -33,6 +33,7 @@
             border-radius: 1.25rem;
             box-shadow: 0 24px 60px -16px rgba(0, 0, 0, 0.45);
             padding: clamp(1.5rem, 3vw, 2.5rem);
+            zoom: 0.75;
         }
 
         .auth-title {
