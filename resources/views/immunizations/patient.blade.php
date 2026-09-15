@@ -13,9 +13,7 @@
 <div class="space-y-5 lg:space-y-6" x-data="{}">
     <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
-            @if (! $isBare)
-                <a href="{{ route('patients.show', $patient->id) }}" class="text-sm font-medium hover:underline mb-1 inline-block" style="color: var(--primary);">Back to patient</a>
-            @else
+            @if ($isBare)
                 <p class="text-xs font-medium mb-1" style="color: var(--ink-muted);">Patient immunization record</p>
             @endif
             <div class="flex flex-wrap items-center gap-3">
@@ -92,7 +90,7 @@
     function confirmClearNoShow(form) {
         Swal.fire({
             title: 'Clear no-show?',
-            text: 'The missed appointment stays in the patient history; the patient returns to the queue.',
+            html: '<p class="text-sm">The missed appointment stays in history. You can then administer the dose as normal.</p>',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Yes, clear',
