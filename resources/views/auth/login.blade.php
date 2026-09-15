@@ -81,6 +81,15 @@
             PHINMA COC Students
         </a>
     </p>
+    <p class="text-center text-xs mt-2" style="color: var(--ink-subtle);">
+        Capstone project for academic purposes only. Not an official DOH system.
+    </p>
+
+    <div class="text-center mt-4 text-xs" style="color: var(--ink-muted);">
+        <a href="{{ route('privacy.policy') }}" class="hover:underline" style="color: var(--primary);">Privacy Policy</a>
+        <span class="mx-1">|</span>
+        <a href="{{ route('privacy.liability') }}" class="hover:underline" style="color: var(--primary);">Liability &amp; Disclaimer</a>
+    </div>
 </div>
 
 <script>
