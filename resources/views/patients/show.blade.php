@@ -132,6 +132,26 @@
                     View / Add Immunization
                 </a>
             </div>
+
+            <div class="mt-4 lg:mt-6 pt-3 lg:pt-4 border-t">
+                <h4 class="text-xs font-bold text-ink-subtle uppercase mb-2">Data Management</h4>
+                <div class="space-y-2">
+                    <form action="{{ route('patients.destroy', $patient->id) }}" method="POST" class="w-full confirm-delete-form" data-message="Archive this patient? They will be moved to trash and hidden from the main list.">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="inline-flex items-center justify-center w-full px-3 py-2 rounded-lg text-xs lg:text-sm font-medium transition" style="background: var(--amber-soft); color: var(--amber);">
+                            <i class="fa-solid fa-box-archive mr-1.5" aria-hidden="true"></i> Archive Patient
+                        </button>
+                    </form>
+                    <form action="{{ route('patients.forceDestroy', $patient->id) }}" method="POST" class="w-full confirm-delete-form" data-message="PERMANENTLY delete this patient? This cannot be undone. All their records will be lost forever." data-confirm-text="Permanently Delete">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="inline-flex items-center justify-center w-full px-3 py-2 rounded-lg text-xs lg:text-sm font-medium transition" style="background: var(--danger-soft, #fef2f2); color: var(--danger);">
+                            <i class="fa-solid fa-trash-can mr-1.5" aria-hidden="true"></i> Delete Permanently
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -188,3 +208,22 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.querySelectorAll('.confirm-delete-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            Swal.fire({
+                title: form.dataset.message || 'Are you sure?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: 'var(--danger)',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: form.dataset.confirmText || 'Delete',
+                cancelButtonText: 'Cancel',
+            }).then(result => { if (result.isConfirmed) form.submit(); });
+        });
+    });
+</script>
+@endpush

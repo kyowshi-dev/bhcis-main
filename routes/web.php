@@ -12,6 +12,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\PostnatalController;
 use App\Http\Controllers\PrenatalController;
+use App\Http\Controllers\PrivacyController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReferralController;
 use App\Http\Controllers\ReportController;
@@ -113,6 +114,17 @@ Route::middleware('auth')->group(function () {
     Route::get('/patients/{id}', [PatientController::class, 'show'])
         ->middleware('permission:patients')
         ->name('patients.show');
+
+    // 3d. Patient delete / restore
+    Route::delete('/patients/{id}', [PatientController::class, 'destroy'])
+        ->middleware('permission:patients')
+        ->name('patients.destroy');
+    Route::post('/patients/{id}/restore', [PatientController::class, 'restore'])
+        ->middleware('permission:patients')
+        ->name('patients.restore');
+    Route::delete('/patients/{id}/force', [PatientController::class, 'forceDestroy'])
+        ->middleware('permission:patients')
+        ->name('patients.forceDestroy');
 
     // 4. CONSULTATION MODULE
     // Consultation History (list) – must be before /consultations/{id}
@@ -479,6 +491,10 @@ Route::middleware('auth')->group(function () {
 
     // 15. MISC
 
+    // --- PRIVACY MANAGEMENT ---
+    Route::get('/privacy', [PrivacyController::class, 'index'])->middleware('permission:users')->name('privacy.index');
+    Route::put('/privacy', [PrivacyController::class, 'update'])->middleware('permission:users')->name('privacy.update');
+
 }); // <--- End of Auth Group
 
 // --- SESSION STATUS (public route: must report expiry, never redirect to HTML) ---
@@ -491,6 +507,11 @@ Route::get('/session/status', [SessionController::class, 'status'])
     ])
     ->middleware(ReadOnlySession::class)
     ->name('session.status');
+
+// --- PUBLIC PRIVACY PAGES (No login required) ---
+Route::get('/privacy/policy', [PrivacyController::class, 'policy'])->name('privacy.policy');
+Route::get('/privacy/purposes', [PrivacyController::class, 'purposes'])->name('privacy.purposes');
+Route::get('/privacy/liability', [PrivacyController::class, 'liability'])->name('privacy.liability');
 
 // --- CONSULTATION LIVE REQUESTS (outside the auth group) ---
 // Polled every ~12s by the frontend; the read-only session keeps it from

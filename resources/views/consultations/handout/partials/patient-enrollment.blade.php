@@ -285,7 +285,37 @@
             </td>
         </tr>
         <tr>
-            <td colspan="12" class="section-header">II. Patient's Consent (Pahintulot ng Pasyente)</td>
+            <td colspan="12" class="section-header">III. Data Privacy Notice (PAHIBALO UG PRIVACY)</td>
+        </tr>
+        <tr>
+            <td colspan="6" style="padding:0; vertical-align:top;">
+                <div class="consent-col-title">IN ENGLISH</div>
+                <div class="consent-text">
+                    <p>In accordance with Republic Act No. 10173 (Data Privacy Act of 2012) and its Implementing Rules and Regulations, we collect and process your personal and sensitive personal information for the following purposes: (a) delivery of primary healthcare services; (b) maternal and child health monitoring; (c) immunization record-keeping; (d) consultation and referral management; and (e) compliance with DOH reporting requirements.</p>
+                    <p>Your data will be retained in accordance with DOH records retention guidelines. For concerns, contact the Barangay Health Center.</p>
+                </div>
+            </td>
+            <td colspan="6" style="padding:0; vertical-align:top;">
+                <div class="consent-col-title">SA FILIPINO</div>
+                <div class="consent-text">
+                    <p>Ayon sa Republic Act No. 10173 (Data Privacy Act of 2012) at ang mga Implementing Rules and Regulations nito, kinokoleksyon at pinoproseso namin ang iyong personal at sensitibong personal na impormasyon para sa mga sumusunod na layunin: (a) paghahatid ng mga serbisyong pangunang pangkalusugan; (b) pagsubaybay sa kalusugan ng ina at bata; (c) pagtatala ng bakuna; (d) pamamahala ng konsultasyon at referral; at (e) pagsunod sa mga kahulugan ng DOH.</p>
+                    <p>Ang iyong data ay itatabi ayon sa mga alituntunin ng DOH sa pagpapanatili ng mga rekord. Para sa mga alalahanin, makipag-ugnayan sa Barangay Health Center.</p>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="12" class="section-header">IV. System Disclaimer (Pagpasabot sa Sistema)</td>
+        </tr>
+        <tr>
+            <td colspan="12" style="padding:0; vertical-align:top;">
+                <div class="consent-text">
+                    <p><strong>Disclaimer:</strong> This Barangay Health Center Information System (BHCIS) is a clinical support and record-keeping tool. It does not replace the professional medical judgment of licensed healthcare providers. All clinical decisions remain the sole responsibility of the attending health professional. The system, its developers, and the Barangay Sta. Ana Health Center shall not be held liable for any clinical outcomes resulting from the use of information stored in this system. This is a capstone project developed for academic purposes and is not an official system of the Department of Health (DOH).</p>
+                    <p><strong>Pagpasabot:</strong> Ang Barangay Health Center Information System (BHCIS) usa ka himan para sa pagtabang sa klinikal nga serbisyo ug pagtala. Kini dili mopuli sa propesyonal nga paghukom sa mga lisensyadong tagapaghatag serbisyo sa panglawas. Ang tanan nga klinikal nga desisyon nahabilin sa ubos sa magtatabang nga propesyonal sa panglawas. Ang sistema, ang mga developers, ug ang Barangay Sta. Ana Health Center dili manubag sa bisan unsa nga klinikal nga resulta nga resulta sa paggamit sa impormasyon nga naa niini nga sistema. Kini usa ka capstone project nga gimugna para sa akademik nga mga katuyoan ug dili opisyal nga sistema sa Department of Health (DOH).</p>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="12" class="section-header">V. Patient's Consent (Pahintulot ng Pasyente)</td>
         </tr>
         <tr>
             <td colspan="6" style="padding:0; vertical-align:top;">

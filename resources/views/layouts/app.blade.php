@@ -131,6 +131,9 @@
                                         :active="request()->routeIs('roles*')" />
                     <x-layouts.nav-link url="{{ route('activity-logs.index') }}" label="Activity Logs" icon="fa-solid fa-clock-rotate-left"
                                         :active="request()->routeIs('activity-logs*')" />
+                    <x-layouts.nav-link url="{{ route('privacy.index') }}" label="Privacy Settings" icon="fa-solid fa-shield-halved"
+                                        :active="request()->routeIs('privacy.index')" />
+
                 @endif
 
                 {{-- Settings - always at bottom --}}
@@ -398,8 +401,12 @@
                 </div>
             </main>
             
-            <footer class="shrink-0 text-center py-3 text-xs border-t border-border" style="background: var(--bg-surface); color: var(--ink-subtle);">
+            <footer class="shrink-0 text-center py-3 text-sm border-t border-border" style="background: var(--bg-surface); color: var(--ink-subtle);">
                 &copy; {{ date('Y') }} Barangay Sta. Ana Health Center. All rights reserved.
+                <span class="mx-1">|</span>
+                <a href="{{ route('privacy.policy') }}" class="hover:underline" style="color: var(--ink-muted);">Privacy Policy</a>
+                <span class="mx-1">|</span>
+                <a href="{{ route('privacy.liability') }}" class="hover:underline" style="color: var(--ink-muted);">Liability</a>
             </footer>
         </div>
     </div>
