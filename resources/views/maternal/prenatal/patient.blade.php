@@ -21,10 +21,6 @@
                 </p>
             </div>
         </div>
-        <a href="{{ route('patients.show', $patient->id) }}" class="inline-flex items-center justify-center gap-1.5 rounded-lg border px-4 py-2 text-sm font-semibold transition hover:bg-black/[0.03]"
-           style="border-color: var(--border); color: var(--ink-muted);">
-            <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Patient profile
-        </a>
     </div>
 
     {{-- Current pregnancy (static summary) --}}
