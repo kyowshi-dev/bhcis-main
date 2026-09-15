@@ -12,8 +12,8 @@ class NameCharacters implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (preg_match('/^[\p{L}\p{M}][\p{L}\p{M}\s\-\.\']*$/u', (string) $value) !== 1) {
-            $fail('The :attribute may only contain letters, spaces, hyphens, periods, and apostrophes.');
+        if (preg_match('/^[\p{L}\p{M}][\p{L}\p{M}\s\-\.\'\/]*$/u', (string) $value) !== 1) {
+            $fail('The :attribute may only contain letters, spaces, hyphens, periods, apostrophes, and slashes.');
         }
     }
 }

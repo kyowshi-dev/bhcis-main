@@ -28,11 +28,18 @@
             <h1 class="font-display font-semibold text-2xl lg:text-3xl" style="color: var(--ink);">Patient Records</h1>
             <p class="text-sm mt-1" style="color: var(--ink-muted);">Search and manage patient information.</p>
         </div>
-        <a href="{{ url('/patients/create') }}"
-           class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200 hover:opacity-95 active:scale-[0.98] shrink-0"
-           style="background: var(--primary); box-shadow: 0 2px 8px rgba(196, 92, 65, 0.25);">
-            Enrol New Patient 
-        </a>
+        <div class="flex items-center gap-2 shrink-0">
+            <a href="{{ route('patients.index', array_filter(['sort' => $patientSort, 'dir' => $patientDir, 'trashed' => $showTrashed ? null : 1])) }}"
+               class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-200 border {{ $showTrashed ? 'border-amber bg-amber-50 text-amber' : 'border-border text-ink-muted hover:bg-black/[0.03]' }}">
+                <i class="fa-solid fa-box-archive" aria-hidden="true"></i>
+                {{ $showTrashed ? 'Showing Archived' : 'Archived' }}
+            </a>
+            <a href="{{ url('/patients/create') }}"
+               class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200 hover:opacity-95 active:scale-[0.98]"
+               style="background: var(--primary); box-shadow: 0 2px 8px rgba(196, 92, 65, 0.25);">
+                Enrol New Patient 
+            </a>
+        </div>
     </div>
 
     <div class="rounded-xl" x-data="patientSearch()">
@@ -119,8 +126,13 @@
                 </thead>
                 <tbody class="divide-y divide-[var(--border)]">
                     @forelse ($patients as $patient)
-                        <tr class="transition-colors hover:bg-black/[0.02]">
-                            <td class="px-4 py-2.5 font-medium whitespace-nowrap" style="color: var(--ink);">{{ \App\Helpers\PatientCode::format((int) $patient->id) }}</td>
+                        <tr class="transition-colors hover:bg-black/[0.02] {{ $patient->trashed() ? 'opacity-60' : '' }}">
+                            <td class="px-4 py-2.5 font-medium whitespace-nowrap" style="color: var(--ink);">
+                                {{ \App\Helpers\PatientCode::format((int) $patient->id) }}
+                                @if($patient->trashed())
+                                    <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber">Archived</span>
+                                @endif
+                            </td>
                             <td class="px-4 py-2.5" style="color: var(--ink);">
                                 <div class="font-medium">{{ fullName($patient->last_name, $patient->first_name, $patient->middle_name, $patient->suffix) }}</div>
                                 <div class="text-xs mt-0.5 line-clamp-2 text-ink-muted" style="color: var(--ink-muted);">
@@ -138,7 +150,14 @@
                                 @if ($patient->last_visit) {{ \Carbon\Carbon::parse($patient->last_visit)->format('Y-m-d') }} @else - @endif
                             </td>
                             <td class="px-4 py-2.5 text-right whitespace-nowrap">
-                                <a href="{{ route('patients.show', $patient->id) }}" class="font-semibold text-sm transition-colors hover:underline" style="color: var(--primary);">View</a>
+                                @if($patient->trashed())
+                                    <form action="{{ route('patients.restore', $patient->id) }}" method="POST" class="inline" onclick="return confirm('Restore this patient?')">
+                                        @csrf
+                                        <button type="submit" class="font-semibold text-sm transition-colors hover:underline" style="color: var(--primary);">Restore</button>
+                                    </form>
+                                @else
+                                    <a href="{{ route('patients.show', $patient->id) }}" class="font-semibold text-sm transition-colors hover:underline" style="color: var(--primary);">View</a>
+                                @endif
                             </td>
                         </tr>
                     @empty

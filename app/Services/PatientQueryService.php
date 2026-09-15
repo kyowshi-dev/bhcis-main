@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 
 final class PatientQueryService
 {
-    public static function paginateIndex(string $sort, string $dir, ?User $user = null, int $perPage = 20): LengthAwarePaginator
+    public static function paginateIndex(string $sort, string $dir, ?User $user = null, int $perPage = 20, bool $showTrashed = false): LengthAwarePaginator
     {
         $query = Patient::query()
             ->join('households', 'patients.household_id', '=', 'households.id')
@@ -25,6 +25,10 @@ final class PatientQueryService
                     ->whereColumn('consultations.patient_id', 'patients.id'),
                 'last_visit'
             );
+
+        if ($showTrashed) {
+            $query->withTrashed();
+        }
 
         if ($user !== null) {
             $user->scopeAccessiblePatients($query);
