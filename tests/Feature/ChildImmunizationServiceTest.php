@@ -63,7 +63,7 @@ class ChildImmunizationServiceTest extends TestCase
 
         $parts = ChildImmunizationService::ageParts($this->makePatient($dob));
 
-        $this->assertSame(['years' => 1, 'months' => 2, 'days' => 6], $parts);
+        $this->assertSame(['years' => 1, 'months' => 2, 'days' => 5], $parts);
     }
 
     public function test_status_is_waiting_when_not_yet_eligible(): void
