@@ -49,34 +49,20 @@ Aesthetic preferences never carry the same authority as security, privacy, acces
 - Make the smallest reasonable change that satisfies the request.
 - Do not modify unrelated backend behavior, clinical calculations, permissions, database behavior, or workflows unless the task requires it.
 
-## Commands
+## Verification gates
 
-- `composer run dev` - runs `php artisan serve`, `queue:listen`, `pail`, and `npm run dev` together via concurrently
-- `composer run test` - `config:clear` + `php artisan test` (PHPUnit; do NOT use Pest, convert any Pest tests)
-- Single test: `php artisan test --compact --filter=testName`
-- `vendor/bin/pint --dirty` before finalizing any PHP changes (never use `--test`)
-- `composer run phpstan` (or `vendor/bin/phpstan analyse --no-progress --memory-limit=1G`) once as a final verification gate after PHP changes - same pattern as running tests; do NOT iterate on it interactively
-- `npm run build` - required after blade/js changes; ViteException → run this or `composer run dev`
-- `composer setup` - full fresh setup (composer install, .env, key, migrate, npm build)
+Run before finalizing changes; exact commands live in `docs/ENGINEERING.md`:
 
-## Architecture notes
+- After PHP changes: test suite (PHPUnit; convert any Pest tests), then `vendor/bin/pint --dirty`, then PHPStan once as a final gate.
+- After blade/JS changes: `npm run build` (a ViteException means run it).
+- Changing security headers/CSP can silently break Alpine.js interactivity - verify in a real browser, not just HTTP status (`docs/ENGINEERING.md`).
 
-- Global helpers autoloaded from `app/Helpers/helpers.php` (`user()`) and `app/Helpers/BreadcrumbHelper.php`; other domain helpers live in `app/Helpers/`
-- Services for cross-cutting/domain logic live in `app/Services/` (`PdfService`, `IcdApiService`, `ReferralService`, `VitalsService`); keep controllers thin and move reusable logic into services
-- PDFs go through `app/Services/PdfService.php` (spatie/laravel-pdf + browsershot/puppeteer - needs node_modules installed)
-- ICD diagnosis lookup: remote WHO ICD API via `BHCIS_ICD_API_*` env vars; falls back to local `diagnosis_lookup` table when disabled
-- Roles/permissions are data-driven (`Permission` model + `hasPermission()` helper); permission-gate nav items and actions in the UI as defense in depth, and enforce on the server (`permission:*` middleware plus `throttle:` on sensitive routes)
-- Session auth: routes requiring login sit inside `Route::middleware('auth')->group(...)`; password-reset flows stay consistent with session auth
-- Clinical writes: keep `AuditLog` logging; consultations carry a status enum (incl. `in_progress`) and `notified_at` for due/referral notifications
-- Referrals: use the `OutwardReferral` model (own table), not legacy referral columns
-- Notifications are DB-backed (`notifications` table, `NotificationController`)
+## Architecture (high level)
 
-## Security headers / CSP rules
-
-- Alpine.js 3 evaluates `x-data`/`x-on` expressions via `new Function`, so `script-src` MUST include `'unsafe-eval'` (plus `'unsafe-inline'` for inline handlers) or every interactive page silently breaks - this happened once: adding a CSP without `unsafe-eval` crashed Alpine on the dashboard
-- `layouts/bare.blade.php` and `consultations/handout.blade.php` load Alpine from the jsDelivr CDN, so `script-src` MUST also allow `https:` or those pages lose Alpine (handout sheet toggles) - check all Alpine sources (bundled via Vite vs CDN) when changing `script-src`
-- After adding/changing security headers, verify with a real browser check (console + JS behavior) on an interactive page (dashboard) and a CDN-Alpine page (handout), not just HTTP status tests
-- When removing a feature that shipped frontend assets (e.g. charts), delete its JS imports/assets too - orphaned `resources/js/charts.js` imports a stale vendor path and stale cached pages can produce Livewire `MethodNotFoundException` 500s (e.g. `toJSON`) until a hard refresh
+- Controllers stay thin; reusable and domain logic lives in `app/Services/`; helpers live in `app/Helpers/`
+- Permissions are data-driven (`Permission` model + `hasPermission()`): gate UI as defense in depth, enforce on the server (`permission:*` middleware plus `throttle:` on sensitive routes)
+- Referrals use the `OutwardReferral` model (own table), not legacy referral columns
+- Detailed backend conventions (PDF, ICD, notifications, session auth, CSP implementation, commands, tooling): `docs/ENGINEERING.md`
 
 ## On-demand skills
 
@@ -85,12 +71,9 @@ Aesthetic preferences never carry the same authority as security, privacy, acces
 ## Docs
 
 - `.opencode/skills/bhccr-ui-style/SKILL.md` - authoritative UI/UX and design-system reference; read before touching any view
+- `docs/ENGINEERING.md` - commands, detailed backend architecture, CSP/security-header implementation, tooling
 - `docs/AGENTS.md` - Laravel Boost guidelines (uses `artisan boost:mcp` MCP server per `.mcp.json`)
 - `docs/database_and_routes.md` - DB schema + routes inventory
 - `docs/security/` - security audit and hardening notes; `docs/CLAUDE.md`, `docs/REFACTOR_*` for related guidance
 
-## Tooling
-
-- `cloudflared` (Cloudflare Tunnel) is installed at `~/.local/bin/cloudflared` and on PATH. If missing/corrupt, reinstall: `curl -sL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o ~/.local/bin/cloudflared && chmod +x ~/.local/bin/cloudflared`. Verify with `cloudflared --version` (downloads smaller than ~40MB are truncated - re-download).
-
-Tests use in-memory sqlite (`phpunit.xml`). Don't create docs files unless asked.
+Don't create docs files unless asked.
