@@ -85,8 +85,13 @@
                 @endif
 
                 {{-- Health Care Services category items --}}
-                @if ($can('consultations') || $can('immunizations') || $can('maternal'))
+                @if ($can('consultations') || $can('immunizations') || $can('maternal') || $can('nurse_batch_entry'))
                     <p class="sidebar-category-label px-2.5 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-white/40" aria-hidden="true">Health Care Services</p>
+                    @if ($can('nurse_batch_entry'))
+                        <x-layouts.nav-link url="{{ route('batch-entry.index') }}" label="Batch Entry" icon="fa-solid fa-file-medical"
+                                            :active="request()->routeIs('batch-entry*')" />
+                    @endif
+
                     @if ($can('consultations'))
                         <x-layouts.nav-link url="{{ route('consultations.index') }}" label="Consultations" icon="fa-solid fa-stethoscope"
                                             :active="request()->routeIs('consultations*')" />

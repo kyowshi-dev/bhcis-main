@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BatchEntryController;
 use App\Http\Controllers\ConsultationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FamilyPlanningController;
@@ -125,6 +126,26 @@ Route::middleware('auth')->group(function () {
     Route::delete('/patients/{id}/force', [PatientController::class, 'forceDestroy'])
         ->middleware('permission:patients_destroy')
         ->name('patients.forceDestroy');
+
+    // 3e. BATCH DATA ENTRY (Nurse/Encoder - complement to paper workflow)
+    Route::get('/batch-entry', [BatchEntryController::class, 'index'])
+        ->middleware('permission:nurse_batch_entry')
+        ->name('batch-entry.index');
+    Route::post('/batch-entry/patient', [BatchEntryController::class, 'storePatient'])
+        ->middleware('permission:nurse_batch_entry')
+        ->name('batch-entry.patient.store');
+    Route::get('/batch-entry/patient/search-household', [BatchEntryController::class, 'searchHousehold'])
+        ->middleware('permission:nurse_batch_entry', 'throttle:60,1')
+        ->name('batch-entry.patient.search-household');
+    Route::post('/batch-entry/household', [BatchEntryController::class, 'createHousehold'])
+        ->middleware('permission:nurse_batch_entry')
+        ->name('batch-entry.household.store');
+    Route::get('/batch-entry/patient/{patient}/edit', [BatchEntryController::class, 'editPatient'])
+        ->middleware('permission:nurse_batch_entry')
+        ->name('batch-entry.patient.edit');
+    Route::put('/batch-entry/patient/{patient}', [BatchEntryController::class, 'updatePatient'])
+        ->middleware('permission:nurse_batch_entry')
+        ->name('batch-entry.patient.update');
 
     // 4. CONSULTATION MODULE
     // Consultation History (list) – must be before /consultations/{id}
