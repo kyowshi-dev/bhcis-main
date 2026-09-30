@@ -18,7 +18,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  * @property-read Collection<int, Patient> $patients
  * @property-read int|null $patients_count
- * @property-read Zone $zone
+ * @property-read Zone|null $zone
  *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Household newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Household newQuery()
