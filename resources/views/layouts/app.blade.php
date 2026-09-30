@@ -45,7 +45,7 @@
         {{-- Sidebar --}}
         <aside :class="[sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0', sidebarCollapsed ? 'sidebar-collapsed' : '']"
                :style="sidebarCollapsed ? 'width: 4rem' : 'width: 200px'"
-               class="app-sidebar transform fixed lg:sticky top-0 h-[calc(100vh/var(--app-zoom,1))] overflow-y-auto shrink-0 flex flex-col z-50 transition-all duration-300 ease-out border-r border-border shadow-md">
+               class="app-sidebar transform fixed lg:sticky top-0 h-screen overflow-y-auto shrink-0 flex flex-col z-50 transition-all duration-300 ease-out border-r border-border shadow-md">
             
             <div class="flex items-center justify-between p-3 lg:p-4 border-b border-border" :class="sidebarCollapsed ? 'justify-center' : ''">
                 <a href="{{ route('dashboard') }}" class="flex items-center gap-2" :class="sidebarCollapsed ? 'justify-center' : ''">
