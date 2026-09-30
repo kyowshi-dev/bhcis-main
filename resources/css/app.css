@@ -551,15 +551,6 @@ textarea:focus-visible,
     }
 }
 
-/* Auto-fit zoom (layout.js) must never leak into printed output:
-   DOH print/PDF forms always render at true scale. */
-@media print {
-    html {
-        zoom: 1 !important;
-        --app-zoom: 1 !important;
-    }
-}
-
 /* Short desktop screens (e.g. 1280x720): tighten vertical rhythm so
    dashboards fit without zooming the browser. */
 @media (min-width: 1024px) and (max-height: 800px) {
