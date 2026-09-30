@@ -40,7 +40,7 @@ class DashboardRoutingTest extends TestCase
     public function test_midwife_role_gets_midwife_dashboard(): void
     {
         $midwife = $this->createUserWithNamedRole('Midwife', [
-            'patients', 'consultations', 'immunizations', 'reports', 'print_handouts', 'dashboard_handouts',
+            'patients', 'consultations', 'immunizations', 'maternal', 'reports', 'print_handouts', 'dashboard_handouts',
         ]);
 
         $this->actingAs($midwife)
@@ -49,6 +49,18 @@ class DashboardRoutingTest extends TestCase
             ->assertSee('Maternal & Family Planning Register')
             ->assertSee('Active Pregnancies')
             ->assertDontSee('Results Ready');
+    }
+
+    public function test_midwife_dashboard_hides_maternal_registers_without_permission(): void
+    {
+        $midwife = $this->createUserWithNamedRole('Midwife', ['patients', 'consultations']);
+
+        $this->actingAs($midwife)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Maternal & Family Planning Register')
+            ->assertDontSee('Active Pregnancies')
+            ->assertDontSee('Open Prenatal Register');
     }
 
     public function test_nurse_role_gets_nurse_dashboard(): void

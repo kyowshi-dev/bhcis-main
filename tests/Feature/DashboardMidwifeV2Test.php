@@ -108,7 +108,7 @@ class DashboardMidwifeV2Test extends TestCase
             ->assertSee('Active Pregnancies')
             ->assertSee('Postnatal Mothers')
             ->assertSee('FP Clients')
-            ->assertSee('Follow-ups Due This Week');
+            ->assertSee('Follow-ups Due or Overdue');
     }
 
     public function test_midwife_dashboard_includes_resident_search_and_quick_links(): void
@@ -192,7 +192,84 @@ class DashboardMidwifeV2Test extends TestCase
             ->get('/dashboard')
             ->assertOk()
             ->assertViewHas('postnatalMothers', 1)
+            ->assertViewHas('postnatalPreview', fn ($rows) => $rows->count() === 1)
+            ->assertSee('Aquino')
             ->assertViewHas('followUpsDue', 2);
+    }
+
+    public function test_quick_links_render_as_expandable_register_panels(): void
+    {
+        $user = $this->midwifeUser();
+
+        $this->actingAs($user)
+            ->get('/dashboard')
+            ->assertOk()
+            ->assertSee('x-data="registerPanels()"', false)
+            ->assertSee('aria-expanded="false"', false)
+            ->assertSee('aria-controls="register-panel-prenatal"', false)
+            ->assertSee('aria-controls="register-panel-fp"', false)
+            ->assertSee('aria-controls="register-panel-postnatal"', false)
+            ->assertSee('id="register-panel-prenatal"', false)
+            ->assertSee('id="register-panel-fp"', false)
+            ->assertSee('id="register-panel-postnatal"', false)
+            ->assertSee('role="button"', false);
+    }
+
+    public function test_prenatal_preview_panel_shows_active_pregnancy(): void
+    {
+        $this->activePregnancy($this->mother('Santos'));
+
+        $user = $this->midwifeUser();
+
+        $this->actingAs($user)
+            ->get('/dashboard')
+            ->assertOk()
+            ->assertViewHas('prenatalPreview', fn ($rows) => $rows->count() === 1)
+            ->assertSee('Santos')
+            ->assertSee('Showing 1 of 1', false);
+    }
+
+    public function test_fp_preview_panel_shows_active_client(): void
+    {
+        $patient = $this->mother('Diaz');
+        FamilyPlanningClient::create([
+            'patient_id' => $patient->id,
+            'type_of_client' => FamilyPlanningClient::TYPE_NEW_ACCEPTOR,
+            'method' => 'IUD',
+            'is_active' => true,
+        ]);
+
+        $user = $this->midwifeUser();
+
+        $this->actingAs($user)
+            ->get('/dashboard')
+            ->assertOk()
+            ->assertViewHas('fpPreview', fn ($rows) => $rows->count() === 1)
+            ->assertSee('IUD');
+    }
+
+    public function test_register_panels_render_empty_states_when_registers_are_empty(): void
+    {
+        $user = $this->midwifeUser();
+
+        $this->actingAs($user)
+            ->get('/dashboard')
+            ->assertOk()
+            ->assertSee('No active pregnancies', false)
+            ->assertSee('No family planning clients yet', false)
+            ->assertSee('No postnatal records', false);
+    }
+
+    public function test_register_panels_hidden_without_maternal_permission(): void
+    {
+        $user = $this->createUserWithNamedRole('Midwife', ['patients']);
+
+        $this->actingAs($user)
+            ->get('/dashboard')
+            ->assertOk()
+            ->assertDontSee('Open Prenatal Register')
+            ->assertDontSee('register-panel-prenatal', false)
+            ->assertViewMissing('prenatalPreview');
     }
 
     public function test_bhw_role_still_sees_bhw_dashboard(): void
