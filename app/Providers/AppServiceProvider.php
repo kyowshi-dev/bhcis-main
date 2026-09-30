@@ -13,6 +13,8 @@ use App\Policies\ImmunizationPolicy;
 use App\Policies\MedicinePolicy;
 use App\Policies\PatientPolicy;
 use App\Policies\UserPolicy;
+use Brick\Math\Internal\Calculator\BcMathCalculator;
+use Brick\Math\Internal\CalculatorRegistry;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
@@ -25,7 +27,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        if (extension_loaded('bcmath')) {
+            CalculatorRegistry::set(new BcMathCalculator);
+        }
     }
 
     /**
