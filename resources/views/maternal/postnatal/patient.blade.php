@@ -22,6 +22,10 @@
         </div>
     </div>
 
+    <x-flash />
+
+    <x-maternal-nav-tabs />
+
     @if ($current !== null)
         <x-card>
             <div class="flex flex-wrap items-center justify-between gap-3 mb-4">

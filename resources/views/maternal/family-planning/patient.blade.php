@@ -22,6 +22,10 @@
         </div>
     </div>
 
+    <x-flash />
+
+    <x-maternal-nav-tabs />
+
     @if ($client !== null)
         <x-card>
             <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -196,9 +200,11 @@
 </div>
 
 <x-modal name="register-client-modal" title="Register family planning client"
+         x-data="{ open: {{ old('intent') === 'register-client' ? 'true' : 'false' }} }"
          x-on:open-register-client.window="open = true" x-on:close.window="open = false">
     <form method="POST" action="{{ route('maternal.family-planning.store', $patient->id) }}" class="space-y-3">
         @csrf
+        <input type="hidden" name="intent" value="register-client">
         <div>
             <label for="type_of_client" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Type of client <span style="color: var(--danger);">*</span></label>
             <select id="type_of_client" name="type_of_client" x-data x-ref="typeSelect" @change="$refs.reasonWrap.classList.toggle('hidden', $event.target.value !== 'drop_out')"
@@ -244,10 +250,12 @@
 
 @if ($client !== null)
     <x-modal name="edit-client-modal" title="Edit client record"
+         x-data="{ open: {{ old('intent') === 'edit-client' ? 'true' : 'false' }} }"
          x-on:open-edit-client.window="open = true" x-on:close.window="open = false">
         <form method="POST" action="{{ route('maternal.family-planning.update', $client->id) }}" class="space-y-3">
             @csrf
             @method('PUT')
+            <input type="hidden" name="intent" value="edit-client">
             <div>
                 <label for="edit_type_of_client" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Type of client <span style="color: var(--danger);">*</span></label>
                 <select id="edit_type_of_client" name="type_of_client" class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"

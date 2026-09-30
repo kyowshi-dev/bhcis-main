@@ -29,7 +29,7 @@ class PrenatalVisitService
     public function update(PrenatalVisit $visit, array $data): PrenatalVisit
     {
         $visit->update([
-            'consultation_id' => $data['consultation_id'] ?? null,
+            'consultation_id' => $data['consultation_id'] ?? $visit->consultation_id,
             'visit_date' => $data['visit_date'],
             'fundic_height_cm' => $data['fundic_height_cm'] ?? null,
             'fetal_heart_tone_bpm' => $data['fetal_heart_tone_bpm'] ?? null,

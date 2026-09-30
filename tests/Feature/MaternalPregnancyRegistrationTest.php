@@ -135,6 +135,67 @@ class MaternalPregnancyRegistrationTest extends TestCase
         $this->assertSame(1, Pregnancy::where('patient_id', $patient->id)->count());
     }
 
+    public function test_pregnancy_requires_obstetric_history_fields(): void
+    {
+        $this->actingAs($this->authorizedUser());
+        $patient = $this->patient();
+
+        $this->post(route('maternal.pregnancies.store', $patient->id), $this->validPayload([
+            'gravidity' => '',
+            'parity' => '',
+        ]))->assertSessionHasErrors(['gravidity', 'parity']);
+
+        $this->assertDatabaseCount('pregnancies', 0);
+    }
+
+    public function test_register_modal_reopens_with_intent_on_validation_failure(): void
+    {
+        $this->actingAs($this->authorizedUser());
+        $patient = $this->patient();
+
+        $this->post(route('maternal.pregnancies.store', $patient->id), $this->validPayload([
+            'lmp' => '',
+        ]))->assertSessionHasErrors('lmp');
+
+        $this->get(route('maternal.prenatal.patient', $patient->id))
+            ->assertOk()
+            ->assertSee('name="intent" value="register-pregnancy"', false);
+    }
+
+    public function test_edit_pregnancy_modal_offers_status_control(): void
+    {
+        $this->actingAs($this->authorizedUser());
+        $patient = $this->patient();
+
+        Pregnancy::create($this->validPayload(['patient_id' => $patient->id]) + ['recorded_by' => null]);
+
+        $this->get(route('maternal.prenatal.patient', $patient->id))
+            ->assertOk()
+            ->assertSee('id="upd_status"', false)
+            ->assertSee('name="intent" value="edit-pregnancy"', false);
+    }
+
+    public function test_registration_flash_and_validation_errors_are_rendered(): void
+    {
+        $this->actingAs($this->authorizedUser());
+        $patient = $this->patient();
+
+        $this->post(route('maternal.pregnancies.store', $patient->id), $this->validPayload([
+            'lmp' => '',
+        ]))->assertSessionHasErrors('lmp');
+
+        $this->get(route('maternal.prenatal.patient', $patient->id))
+            ->assertOk()
+            ->assertSee('Please review the highlighted fields.');
+
+        $this->post(route('maternal.pregnancies.store', $patient->id), $this->validPayload())
+            ->assertRedirect(route('maternal.prenatal.patient', $patient->id));
+
+        $this->get(route('maternal.prenatal.patient', $patient->id))
+            ->assertOk()
+            ->assertSee('Pregnancy registered.');
+    }
+
     public function test_prenatal_index_loads_active_pregnancies_for_authorized_user(): void
     {
         $this->actingAs($this->authorizedUser());

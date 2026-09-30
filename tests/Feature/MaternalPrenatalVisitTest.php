@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Consultation;
 use App\Models\HealthWorker;
 use App\Models\Household;
 use App\Models\Patient;
@@ -326,5 +327,49 @@ class MaternalPrenatalVisitTest extends TestCase
             'syphilis_result' => 'negative',
             'penicillin' => 'no',
         ])->assertSessionHasErrors('edc');
+    }
+
+    public function test_visit_update_preserves_consultation_link(): void
+    {
+        $this->actingAs($this->authorizedUser());
+        $pregnancy = $this->pregnancy();
+
+        $consultation = Consultation::create([
+            'patient_id' => $pregnancy->patient_id,
+            'worker_id' => HealthWorker::where('user_id', auth()->id())->value('id'),
+            'status' => 'completed',
+        ]);
+
+        $this->post(route('maternal.prenatal.visits.store', $pregnancy->id), [
+            'visit_date' => now()->toDateString(),
+            'mode_of_transaction' => 'Walk-in',
+            'nature_of_visit' => 'New Consultation/Case',
+            'bp_systolic' => 120,
+            'bp_diastolic' => 80,
+            'temperature' => 36.5,
+            'weight' => 60,
+            'height' => 160,
+            'fundic_height_cm' => 24.5,
+            'fetal_heart_tone_bpm' => 140,
+            'next_visit_date' => now()->addWeek()->toDateString(),
+        ])->assertRedirect(route('maternal.prenatal.patient', $pregnancy->patient_id));
+
+        $visit = PrenatalVisit::where('pregnancy_id', $pregnancy->id)->firstOrFail();
+
+        DB::table('prenatal_visits')->where('id', $visit->id)->update([
+            'consultation_id' => $consultation->id,
+        ]);
+
+        $this->put(route('maternal.prenatal.visits.update', $visit->id), [
+            'visit_date' => now()->toDateString(),
+            'fundic_height_cm' => 25.5,
+            'fetal_heart_tone_bpm' => 142,
+            'next_visit_date' => now()->addWeeks(2)->toDateString(),
+        ])->assertRedirect(route('maternal.prenatal.patient', $pregnancy->patient_id));
+
+        $visit->refresh();
+
+        $this->assertSame($consultation->id, $visit->consultation_id);
+        $this->assertSame(25.5, (float) $visit->fundic_height_cm);
     }
 }
