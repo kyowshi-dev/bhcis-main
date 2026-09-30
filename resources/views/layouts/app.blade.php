@@ -103,7 +103,14 @@
                     @endif
 
                     @if ($can('maternal'))
-                        <x-layouts.nav-link url="{{ route('maternal.prenatal.index') }}" label="Maternal Care" icon="fa-solid fa-person-pregnant"
+                        @php
+                            $maternalSectionUrl = request()->routeIs('maternal.postnatal*')
+                                ? route('maternal.postnatal.index')
+                                : (request()->routeIs('maternal.family-planning*')
+                                    ? route('maternal.family-planning.index')
+                                    : route('maternal.prenatal.index'));
+                        @endphp
+                        <x-layouts.nav-link url="{{ $maternalSectionUrl }}" label="Maternal Care" icon="fa-solid fa-person-pregnant"
                                             :active="request()->routeIs('maternal*')" />
                     @endif
 

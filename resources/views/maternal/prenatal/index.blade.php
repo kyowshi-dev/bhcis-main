@@ -4,11 +4,19 @@
 
 @section('content')
 <div class="space-y-5 lg:space-y-6">
+    <x-flash />
+
     <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
             <h1 class="font-display font-semibold text-2xl lg:text-3xl" style="color: var(--ink);">Prenatal</h1>
             <p class="text-sm mt-1" style="color: var(--ink-muted);">Active pregnancies, EDC, and next visit schedule.</p>
         </div>
+        @if (auth()->user()?->hasPermission('patients'))
+            <a href="{{ route('patients.index') }}" class="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition hover:shadow-md w-full sm:w-auto"
+               style="background: var(--primary);">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i> Register pregnancy
+            </a>
+        @endif
     </div>
 
     <x-maternal-nav-tabs />

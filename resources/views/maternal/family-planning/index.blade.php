@@ -4,6 +4,8 @@
 
 @section('content')
 <div class="space-y-5 lg:space-y-6">
+    <x-flash />
+
     <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
             <h1 class="font-display font-semibold text-2xl lg:text-3xl" style="color: var(--ink);">Family planning</h1>

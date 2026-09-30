@@ -23,6 +23,10 @@
         </div>
     </div>
 
+    <x-flash />
+
+    <x-maternal-nav-tabs />
+
     {{-- Current pregnancy (static summary) --}}
     @if ($active !== null)
         @php
@@ -378,31 +382,33 @@
 @endif
 
 <x-modal name="register-pregnancy-modal" title="Register pregnancy"
+         x-data="{ open: {{ old('intent') === 'register-pregnancy' ? 'true' : 'false' }} }"
          x-on:open-register-pregnancy.window="open = true" x-on:close.window="open = false">
     <form method="POST" action="{{ route('maternal.pregnancies.store', $patient->id) }}" class="space-y-3">
         @csrf
+        <input type="hidden" name="intent" value="register-pregnancy">
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
             @foreach ([['gravidity', 'Gravidity'], ['parity', 'Parity'], ['term', 'Term'], ['preterm', 'Preterm'], ['livebirth', 'Live births'], ['abortion', 'Abortions']] as [$field, $label])
                 <div>
                     <label for="reg_{{ $field }}" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">{{ $label }} <span style="color: var(--danger);">*</span></label>
-                    <input id="reg_{{ $field }}" type="number" min="0" max="25" name="{{ $field }}" value="{{ old($field) }}"
+                    <input id="reg_{{ $field }}" type="number" min="0" max="25" name="{{ $field }}" value="{{ old($field) }}" required
                            class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
                            style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
                     @error($field) <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p> @enderror
                 </div>
             @endforeach
         </div>
-        <div x-data="edcCalculator()" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div x-data="edcCalculator()" x-init="if (! edc && ! edcTouched && lmp) edc = suggestEdc()" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
                 <label for="lmp" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">LMP <span style="color: var(--danger);">*</span></label>
-                <input id="lmp" type="date" name="lmp" max="{{ now()->toDateString() }}" value="{{ old('lmp') }}" x-model="lmp"
+                <input id="lmp" type="date" name="lmp" max="{{ now()->toDateString() }}" value="{{ old('lmp') }}" x-model="lmp" @change="onLmpChange" required
                        class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
                        style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
                 @error('lmp') <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label for="edc" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">EDC <span class="text-xs font-normal" style="color: var(--ink-subtle);">(auto: LMP + 280d, editable)</span></label>
-                <input id="edc" type="date" name="edc" value="{{ old('edc') }}" x-model="edc"
+                <input id="edc" type="date" name="edc" value="{{ old('edc') }}" x-model="edc" @input="edcTouched = true"
                        class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
                        style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
                 <p class="mt-1 text-xs" style="color: var(--ink-subtle);" x-text="edcHint"></p>
@@ -467,32 +473,47 @@
 
 @if ($active !== null)
     <x-modal name="edit-pregnancy-modal" title="Edit pregnancy"
+             x-data="{ open: {{ old('intent') === 'edit-pregnancy' ? 'true' : 'false' }} }"
              x-on:open-edit-pregnancy.window="open = true" x-on:close.window="open = false">
         <form method="POST" action="{{ route('maternal.pregnancies.update', $active->id) }}" class="space-y-3">
             @csrf
             @method('PUT')
+            <input type="hidden" name="intent" value="edit-pregnancy">
+            <div>
+                <label for="upd_status" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Status <span style="color: var(--danger);">*</span></label>
+                <select id="upd_status" name="status" class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                        style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
+                    <option value="active" @selected(old('status', $active->status) === 'active')>Active - ongoing pregnancy</option>
+                    <option value="delivered" @selected(old('status', $active->status) === 'delivered')>Delivered</option>
+                    <option value="closed" @selected(old('status', $active->status) === 'closed')>Closed</option>
+                </select>
+                @error('status') <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p> @enderror
+            </div>
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 @foreach ([['gravidity', 'Gravidity'], ['parity', 'Parity'], ['term', 'Term'], ['preterm', 'Preterm'], ['livebirth', 'Live births'], ['abortion', 'Abortions']] as [$field, $label])
                     <div>
                         <label for="upd_{{ $field }}" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">{{ $label }} <span style="color: var(--danger);">*</span></label>
-                        <input id="upd_{{ $field }}" type="number" min="0" max="25" name="{{ $field }}" value="{{ old($field, $active->{$field}) }}"
+                        <input id="upd_{{ $field }}" type="number" min="0" max="25" name="{{ $field }}" value="{{ old($field, $active->{$field}) }}" required
                                class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
                                style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
+                        @error($field) <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p> @enderror
                     </div>
                 @endforeach
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                     <label for="upd_lmp" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">LMP <span style="color: var(--danger);">*</span></label>
-                    <input id="upd_lmp" type="date" name="lmp" max="{{ now()->toDateString() }}" value="{{ old('lmp', $active->lmp?->format('Y-m-d')) }}"
+                    <input id="upd_lmp" type="date" name="lmp" max="{{ now()->toDateString() }}" value="{{ old('lmp', $active->lmp?->format('Y-m-d')) }}" required
                            class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
                            style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
+                    @error('lmp') <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label for="upd_edc" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">EDC</label>
                     <input id="upd_edc" type="date" name="edc" value="{{ old('edc', $active->edc?->format('Y-m-d')) }}"
                            class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
                            style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
+                    @error('edc') <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p> @enderror
                 </div>
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -534,10 +555,12 @@
 @endif
 
 <x-modal name="profile-modal" title="Obstetric history"
+         x-data="{ open: {{ old('intent') === 'profile' ? 'true' : 'false' }} }"
          x-on:open-profile.window="open = true" x-on:close.window="open = false">
     <form method="POST" action="{{ route('maternal.profile.update', $patient->id) }}" class="space-y-3">
         @csrf
         @method('PUT')
+        <input type="hidden" name="intent" value="profile">
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div>
                 <label for="menarche_age" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Menarche (age)</label>
@@ -613,13 +636,21 @@
         return {
             lmp: '{{ old('lmp') }}',
             edc: '{{ old('edc') }}',
-            get edcHint() {
+            edcTouched: {{ old('edc') !== null && old('edc') !== '' ? 'true' : 'false' }},
+            suggestEdc() {
                 if (! this.lmp) return '';
                 const d = new Date(this.lmp + 'T00:00:00');
                 d.setDate(d.getDate() + 280);
-                const iso = d.toISOString().slice(0, 10);
-                if (! this.edc) this.edc = iso;
-                return 'Suggested EDC: ' + iso;
+                return d.toISOString().slice(0, 10);
+            },
+            onLmpChange() {
+                if (! this.edcTouched) {
+                    this.edc = this.suggestEdc();
+                }
+            },
+            get edcHint() {
+                const iso = this.suggestEdc();
+                return iso ? 'Suggested EDC: ' + iso : '';
             }
         };
     }

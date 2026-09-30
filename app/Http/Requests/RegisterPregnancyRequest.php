@@ -18,12 +18,12 @@ class RegisterPregnancyRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'gravidity' => ['nullable', 'integer', 'min:0', 'max:25'],
-            'parity' => ['nullable', 'integer', 'min:0', 'max:25'],
-            'term' => ['nullable', 'integer', 'min:0', 'max:25'],
-            'preterm' => ['nullable', 'integer', 'min:0', 'max:25'],
-            'livebirth' => ['nullable', 'integer', 'min:0', 'max:25'],
-            'abortion' => ['nullable', 'integer', 'min:0', 'max:25'],
+            'gravidity' => ['required', 'integer', 'min:1', 'max:25'],
+            'parity' => ['required', 'integer', 'min:0', 'max:25'],
+            'term' => ['required', 'integer', 'min:0', 'max:25'],
+            'preterm' => ['required', 'integer', 'min:0', 'max:25'],
+            'livebirth' => ['required', 'integer', 'min:0', 'max:25'],
+            'abortion' => ['required', 'integer', 'min:0', 'max:25'],
             'lmp' => ['required', 'date', 'before_or_equal:today'],
             'edc' => ['nullable', 'date', 'after:lmp'],
             'aog_weeks' => ['nullable', 'integer', 'min:0', 'max:45'],

@@ -1,7 +1,7 @@
 @php
     $tabs = [
         ['label' => 'Prenatal', 'url' => route('maternal.prenatal.index'), 'active' => request()->routeIs('maternal.prenatal*')],
-        ['label' => 'Postpartum', 'url' => route('maternal.postnatal.index'), 'active' => request()->routeIs('maternal.postnatal*')],
+        ['label' => 'Postnatal', 'url' => route('maternal.postnatal.index'), 'active' => request()->routeIs('maternal.postnatal*')],
         ['label' => 'Family Planning', 'url' => route('maternal.family-planning.index'), 'active' => request()->routeIs('maternal.family-planning*')],
     ];
 @endphp
