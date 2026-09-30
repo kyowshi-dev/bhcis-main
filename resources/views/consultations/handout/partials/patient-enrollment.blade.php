@@ -1,5 +1,5 @@
 {{--
-    Patient Enrollment Section - iClinicSys FORM 1
+    Patient Enrolment Record - BHCIS print sheet
 --}}
 @php
     use Illuminate\Support\Str;
@@ -20,291 +20,266 @@
     $statusType = $patient->status_type ?? '';
     $contactNumber = $patient->household_contact_number ?? '';
     $householdNo = $patient->household_record_id ?? '';
+
+    $patientName = fullName($patient->last_name ?? null, $patient->first_name ?? null, $patient->middle_name ?? null, $patient->suffix ?? null);
+
+    $meta = [
+        'Patient' => $patientName,
+        'Age / Sex' => trim((($age ?? null) ?? '').' '.($patient->sex ?? ''), ' '),
+        'Zone' => $zoneLabel ?? '-',
+        'Household No.' => $householdNo ? 'HH'.str_pad((string) $householdNo, 4, '0', STR_PAD_LEFT) : '-',
+        'Date Printed' => now()->format('m/d/Y'),
+    ];
+
+    $instructions = [
+        'en' => 'For new patients only. Please print legibly and mark appropriate boxes with "X".',
+        'fil' => 'Para sa bagong pasyente lamang. Sulatan nang malinaw at lagyan ng "X" ang naaangkop na kahon.',
+    ];
 @endphp
 
 <section class="iclinic-form" aria-label="Patient Enrolment Record">
-    @include('consultations.handout.partials._doh-header', [
-        'formTitle' => 'PATIENT ENROLMENT RECORD',
-        'serialDigits' => 5,
+    @include('consultations.handout.partials._bhcis-header', [
+        'formTitle' => 'Patient Enrolment Record',
+        'meta' => $meta,
+        'instructions' => $instructions,
     ])
 
     <table class="form-table" style="border-top:0;">
+        {{-- I. Personal Information --}}
         <tr>
-            <td colspan="12" class="section-header">I. Patient Information (Impormasyon ng Pasyente)</td>
+            <td colspan="12" class="section-header">I. Personal Information (Impormasyon ng Pasyente)</td>
         </tr>
         <tr>
-            <td colspan="6" style="width:52%;">
+            <td colspan="4">
                 <p class="field-label">Last Name <span class="field-help">(Apelyido)</span></p>
                 <p class="field-value text-bold">{{ $patient->last_name ?? '' }}</p>
             </td>
-            <td colspan="6" style="width:48%;">
-                <p class="field-label">Suffix <span class="field-help">(e.g. Jr., Sr., II, III)</span></p>
+            <td colspan="2">
+                <p class="field-label">Suffix <span class="field-help">(Jr., Sr., II)</span></p>
                 <p class="field-value">{{ $patient->suffix ?? '' }}</p>
             </td>
+            <td colspan="4">
+                <p class="field-label">First Name <span class="field-help">(Pangalan)</span></p>
+                <p class="field-value text-bold">{{ $patient->first_name ?? '' }}</p>
+            </td>
+            <td colspan="2">
+                <p class="field-label">Middle Name <span class="field-help">(Gitnang Pangalan)</span></p>
+                <p class="field-help">Maiden name for married women</p>
+                <p class="field-value">{{ $patient->middle_name ?? '' }}</p>
+            </td>
         </tr>
         <tr>
-            <td colspan="6" style="padding:0;">
-                <table class="form-table nested-table" style="border:0;">
-                    <tr>
-                        <td colspan="12">
-                            <p class="field-label">First Name <span class="field-help">(Pangalan)</span></p>
-                            <p class="field-value text-bold">{{ $patient->first_name ?? '' }}</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="12">
-                            <p class="field-label">Middle Name <span class="field-help">(Gitnang Pangalan)</span></p>
-                            <p class="field-value">{{ $patient->middle_name ?? '' }}</p>
-                        </td>
-                    </tr>
-                </table>
+            <td colspan="3">
+                <p class="field-label">Birth Date <span class="field-help">(Kapanganakan)</span></p>
+                <p class="field-value">{{ $dobFormatted }} <span class="field-help">(mm/dd/yyyy)</span></p>
+            </td>
+            <td colspan="4">
+                <p class="field-label">Birthplace <span class="field-help">(Lugar ng Kapanganakan)</span></p>
+                <p class="field-value">{{ $patient->birth_place ?? '' }}</p>
+            </td>
+            <td colspan="2">
+                <p class="field-label">Blood Type</p>
+                <p class="field-value">{{ $patient->blood_type ?? '' }}</p>
+            </td>
+            <td colspan="3">
+                <p class="field-label">Sex <span class="field-help">(Kasarian)</span></p>
+                @include('consultations.handout.partials._mark', ['checked' => $isFemale, 'label' => 'Female (Babae)'])
+                @include('consultations.handout.partials._mark', ['checked' => $isMale, 'label' => 'Male (Lalaki)'])
+            </td>
+        </tr>
+        <tr>
+            <td colspan="12">
+                <p class="field-label">Civil Status <span class="field-help">(Katayuang Sibil)</span></p>
+                <div class="marks-2col">
+                    @include('consultations.handout.partials._mark', ['checked' => $civilStatus === 'Single', 'label' => 'Single (Walang Asawa)', 'inline' => false])
+                    @include('consultations.handout.partials._mark', ['checked' => $civilStatus === 'Married', 'label' => 'Married (May Asawa)', 'inline' => false])
+                    @include('consultations.handout.partials._mark', ['checked' => in_array($civilStatus, ['Widowed', 'Widow/er'], true), 'label' => 'Widow/er (Balo)', 'inline' => false])
+                    @include('consultations.handout.partials._mark', ['checked' => $civilStatus === 'Separated', 'label' => 'Separated (Hiwalay)', 'inline' => false])
+                    @include('consultations.handout.partials._mark', ['checked' => $civilStatus === 'Annulled', 'label' => 'Annulled (Anulado)', 'inline' => false])
+                    @include('consultations.handout.partials._mark', ['checked' => in_array($civilStatus, ['Common Law', 'Co-Habitation'], true), 'label' => 'Co-Habitation (Paninirahang magkasama)', 'inline' => false])
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6">
+                <p class="field-label">Spouse's Name <span class="field-help">(Asawa)</span></p>
+                <p class="field-value">{{ $patient->spouse_name ?? '' }}</p>
             </td>
             <td colspan="6">
-                <p class="field-help">Please write Maiden Name (for married women)</p>
-                <p class="field-help">Pangalan sa pagkadalaga (para sa mga babaeng may-asawa)</p>
-                <p class="field-value">&nbsp;</p>
+                <p class="field-label">Mother's Name <span class="field-help">(Pangalan ng Ina)</span></p>
+                <p class="field-value">{{ $patient->mother_name ?? '' }}</p>
+            </td>
+        </tr>
+
+        {{-- II. Education & Employment --}}
+        <tr>
+            <td colspan="12" class="section-header">II. Education &amp; Employment (Edukasyon at Trabaho)</td>
+        </tr>
+        <tr>
+            <td colspan="12">
+                <p class="field-label">Educational Attainment <span class="field-help">(Antas ng Edukasyon)</span></p>
+                <div class="marks-2col">
+                    @include('consultations.handout.partials._mark', ['checked' => in_array($education, ['None', 'No Formal Education'], true), 'label' => 'No Formal Education (Walang Pormal na Edukasyon)', 'inline' => false])
+                    @include('consultations.handout.partials._mark', ['checked' => $education === 'Elementary', 'label' => 'Elementary (Elementarya)', 'inline' => false])
+                    @include('consultations.handout.partials._mark', ['checked' => $education === 'High School', 'label' => 'High School (Mayskul)', 'inline' => false])
+                    @include('consultations.handout.partials._mark', ['checked' => $education === 'Vocational', 'label' => 'Vocational (Bokasyonal)', 'inline' => false])
+                    @include('consultations.handout.partials._mark', ['checked' => $education === 'College', 'label' => 'College (Kolehiyo)', 'inline' => false])
+                    @include('consultations.handout.partials._mark', ['checked' => $education === 'Post Graduate', 'label' => 'Post Graduate', 'inline' => false])
+                </div>
             </td>
         </tr>
         <tr>
-            <td colspan="6" style="padding:0;">
-                <table class="form-table nested-table" style="border:0;">
-                    <tr>
-                        <td colspan="4" style="width:34%;">
-                            <p class="field-label">Sex <span class="field-help">(Kasarian)</span></p>
-                        </td>
-                        <td colspan="4">
-                            @include('consultations.handout.partials._mark', ['checked' => $isFemale, 'label' => 'Female (Babae)'])
-                        </td>
-                        <td colspan="4">
-                            @include('consultations.handout.partials._mark', ['checked' => $isMale, 'label' => 'Male (Lalaki)'])
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="4">
-                            <p class="field-label">Birth Date <span class="field-help">(Kapanganakan)</span></p>
-                        </td>
-                        <td colspan="8">
-                            <p class="field-value">{{ $dobFormatted }} <span class="field-help">(mm/dd/yyyy)</span></p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="4">
-                            <p class="field-label">Birthplace <span class="field-help">(Lugar ng Kapanganakan)</span></p>
-                        </td>
-                        <td colspan="8">
-                            <p class="field-value">{{ $patient->birth_place ?? '' }}</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="4">
-                            <p class="field-label">Blood Type</p>
-                        </td>
-                        <td colspan="8">
-                            <p class="field-value">{{ $patient->blood_type ?? '' }}</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="4">
-                            <p class="field-label">Civil Status <span class="field-help">(Kayangang Sibil)</span></p>
-                        </td>
-                        <td colspan="8" style="padding:2px 3px;">
-                            <div class="marks-2col">
-                                @include('consultations.handout.partials._mark', ['checked' => $civilStatus === 'Single', 'label' => 'Single (Walang Asawa)', 'inline' => false])
-                                @include('consultations.handout.partials._mark', ['checked' => in_array($civilStatus, ['Widowed', 'Widow/er'], true), 'label' => 'Widow/er (Balo)', 'inline' => false])
-                                @include('consultations.handout.partials._mark', ['checked' => $civilStatus === 'Married', 'label' => 'Married (May Asawa)', 'inline' => false])
-                                @include('consultations.handout.partials._mark', ['checked' => $civilStatus === 'Separated', 'label' => 'Separated (Hiwalay)', 'inline' => false])
-                                @include('consultations.handout.partials._mark', ['checked' => $civilStatus === 'Annulled', 'label' => 'Annulled (Anulado)', 'inline' => false])
-                                @include('consultations.handout.partials._mark', ['checked' => in_array($civilStatus, ['Common Law', 'Co-Habitation'], true), 'label' => 'Co-Habitation (Paninirahang magkasama)', 'inline' => false])
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="4">
-                            <p class="field-label">Spouse's Name <span class="field-help">(Asawa)</span></p>
-                        </td>
-                        <td colspan="8">
-                            <p class="field-value">{{ $patient->spouse_name ?? '' }}</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="4">
-                            <p class="field-label">Educational Attainment <span class="field-help">(Antas ng Edukasyon)</span></p>
-                        </td>
-                        <td colspan="8" style="padding:2px 3px;">
-                            <div class="marks-2col">
-                                @include('consultations.handout.partials._mark', ['checked' => in_array($education, ['None', 'No Formal Education'], true), 'label' => 'No Formal Education (Walang Pormal na Edukasyon)', 'inline' => false])
-                                @include('consultations.handout.partials._mark', ['checked' => $education === 'Elementary', 'label' => 'Elementary (Elementarya)', 'inline' => false])
-                                @include('consultations.handout.partials._mark', ['checked' => $education === 'High School', 'label' => 'High School (Mayskul)', 'inline' => false])
-                                @include('consultations.handout.partials._mark', ['checked' => $education === 'Vocational', 'label' => 'Vocational (Bokasyonal)', 'inline' => false])
-                                @include('consultations.handout.partials._mark', ['checked' => $education === 'College', 'label' => 'College (Kolehiyo)', 'inline' => false])
-                                @include('consultations.handout.partials._mark', ['checked' => $education === 'Post Graduate', 'label' => 'Post Graduate', 'inline' => false])
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="4">
-                            <p class="field-label">Employment Status <span class="field-help">(Katayuan sa Pagtatrabaho)</span></p>
-                        </td>
-                        <td colspan="8" style="padding:2px 3px;">
-                            <div class="marks-2col">
-                                @include('consultations.handout.partials._mark', ['checked' => str_contains($employment, 'student'), 'label' => 'Student', 'inline' => false])
-                                @include('consultations.handout.partials._mark', ['checked' => str_contains($employment, 'unknown'), 'label' => 'Unknown (Hindi malaman)', 'inline' => false])
-                                @include('consultations.handout.partials._mark', ['checked' => str_contains($employment, 'employ'), 'label' => 'Employed (May trabaho)', 'inline' => false])
-                                @include('consultations.handout.partials._mark', ['checked' => str_contains($employment, 'retir'), 'label' => 'Retired (Retirado)', 'inline' => false])
-                                @include('consultations.handout.partials._mark', [
-                                    'checked' => in_array($employment, ['none', 'unemployed', 'none/unemployed', '']) || str_contains($employment, 'unemploy'),
-                                    'label' => 'None/Unemployed (Walang Trabaho)',
-                                    'inline' => false,
-                                ])
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="4">
-                            <p class="field-label">Family Member <span class="field-help">(Posisyon sa Pamilya)</span></p>
-                        </td>
-                        <td colspan="8" style="padding:2px 3px;">
-                            <div class="marks-2col">
-                                @include('consultations.handout.partials._mark', ['checked' => $relationship === 'Father', 'label' => 'Father (Ama)', 'inline' => false])
-                                @include('consultations.handout.partials._mark', ['checked' => $relationship === 'Mother', 'label' => 'Mother (Ina)', 'inline' => false])
-                                @include('consultations.handout.partials._mark', ['checked' => $relationship === 'Son', 'label' => 'Son (Anak na lalaki)', 'inline' => false])
-                                @include('consultations.handout.partials._mark', ['checked' => $relationship === 'Daughter', 'label' => 'Daughter (Anak na babae)', 'inline' => false])
-                                @include('consultations.handout.partials._mark', ['checked' => $relationship === 'Others', 'label' => 'Others (Iba)', 'inline' => false])
-                            </div>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-            <td colspan="6" style="padding:0;">
-                <table class="form-table nested-table" style="border:0;">
-                    <tr>
-                        <td colspan="12">
-                            <p class="field-label">Mother's Name <span class="field-help">(Pangalan ng Ina)</span></p>
-                            <p class="field-value">{{ $patient->mother_name ?? '' }}</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="12" style="min-height:56px;">
-                            <p class="field-label">Residential Address <span class="field-help">(Tirahan)</span></p>
-                            <p class="field-value whitespace-pre">{{ $patient->residential_address ?? '' }}</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="12">
-                            <p class="field-label">Contact Number</p>
-                            <p class="field-value">{{ $contactNumber }}</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="6">
-                            <p class="field-label">DSWD NHTS?</p>
-                        </td>
-                        <td colspan="3">
-                            @include('consultations.handout.partials._mark', ['checked' => $hasNhts, 'label' => 'Yes'])
-                        </td>
-                        <td colspan="3">
-                            @include('consultations.handout.partials._mark', ['checked' => ! $hasNhts, 'label' => 'No'])
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="12">
-                            <p class="field-label">Facility Household No.</p>
-                            <p class="field-value">{{ $householdNo ? 'HH'.str_pad((string) $householdNo, 4, '0', STR_PAD_LEFT) : '' }}</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="6">
-                            <p class="field-label">4Ps Member?</p>
-                        </td>
-                        <td colspan="3">
-                            @include('consultations.handout.partials._mark', ['checked' => $has4ps, 'label' => 'Yes'])
-                        </td>
-                        <td colspan="3">
-                            @include('consultations.handout.partials._mark', ['checked' => ! $has4ps, 'label' => 'No'])
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="12">
-                            <p class="field-label">Household No.</p>
-                            <p class="field-value">{{ $householdNo }}</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="6">
-                            <p class="field-label">PhilHealth Member?</p>
-                        </td>
-                        <td colspan="3">
-                            @include('consultations.handout.partials._mark', ['checked' => $isPhilhealth, 'label' => 'Yes'])
-                        </td>
-                        <td colspan="3">
-                            @include('consultations.handout.partials._mark', ['checked' => ! $isPhilhealth, 'label' => 'No'])
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="6">
-                            <p class="field-label">Status Type:</p>
-                        </td>
-                        <td colspan="3">
-                            @include('consultations.handout.partials._mark', ['checked' => $statusType === 'Member', 'label' => 'Member'])
-                        </td>
-                        <td colspan="3">
-                            @include('consultations.handout.partials._mark', ['checked' => $statusType === 'Dependent', 'label' => 'Dependent'])
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="12">
-                            <p class="field-label">PhilHealth No.</p>
-                            <p class="field-value">{{ $patient->philhealth_no ?? '' }}</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="6">
-                            <p class="field-label">If Member, please indicate category</p>
-                        </td>
-                        <td colspan="6" style="padding:2px 3px;">
-                            <div class="marks-stack">
-                                @include('consultations.handout.partials._mark', ['checked' => $philhealthCategory === 'FE - Private', 'label' => 'FE – Private:', 'inline' => false])
-                                @include('consultations.handout.partials._mark', ['checked' => $philhealthCategory === 'FE - Government', 'label' => 'FE – Government:', 'inline' => false])
-                                @include('consultations.handout.partials._mark', ['checked' => $philhealthCategory === 'IE', 'label' => 'IE:', 'inline' => false])
-                                @include('consultations.handout.partials._mark', ['checked' => $philhealthCategory === 'Others', 'label' => 'Others:', 'inline' => false])
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="6">
-                            <p class="field-label">Primary Care Benefit (PCB) Member?</p>
-                        </td>
-                        <td colspan="3">
-                            @include('consultations.handout.partials._mark', ['checked' => $isPcb, 'label' => 'Yes'])
-                        </td>
-                        <td colspan="3">
-                            @include('consultations.handout.partials._mark', ['checked' => ! $isPcb, 'label' => 'No'])
-                        </td>
-                    </tr>
-                </table>
+            <td colspan="12">
+                <p class="field-label">Employment Status <span class="field-help">(Katayuan sa Pagtatrabaho)</span></p>
+                <div class="marks-2col">
+                    @include('consultations.handout.partials._mark', ['checked' => str_contains($employment, 'employ') && ! str_contains($employment, 'unemploy'), 'label' => 'Employed (May trabaho)', 'inline' => false])
+                    @include('consultations.handout.partials._mark', ['checked' => in_array($employment, ['none', 'unemployed', 'none/unemployed', '']) || str_contains($employment, 'unemploy'), 'label' => 'None/Unemployed (Walang Trabaho)', 'inline' => false])
+                    @include('consultations.handout.partials._mark', ['checked' => str_contains($employment, 'student'), 'label' => 'Student', 'inline' => false])
+                    @include('consultations.handout.partials._mark', ['checked' => str_contains($employment, 'retir'), 'label' => 'Retired (Retirado)', 'inline' => false])
+                    @include('consultations.handout.partials._mark', ['checked' => str_contains($employment, 'unknown'), 'label' => 'Unknown (Hindi malaman)', 'inline' => false])
+                </div>
             </td>
         </tr>
         <tr>
-            <td colspan="12" class="section-header">III. Data Privacy Notice (PAHIBALO UG PRIVACY)</td>
+            <td colspan="12">
+                <p class="field-label">Family Member <span class="field-help">(Posisyon sa Pamilya)</span></p>
+                <div class="marks-2col">
+                    @include('consultations.handout.partials._mark', ['checked' => $relationship === 'Father', 'label' => 'Father (Ama)', 'inline' => false])
+                    @include('consultations.handout.partials._mark', ['checked' => $relationship === 'Mother', 'label' => 'Mother (Ina)', 'inline' => false])
+                    @include('consultations.handout.partials._mark', ['checked' => $relationship === 'Son', 'label' => 'Son (Anak na lalaki)', 'inline' => false])
+                    @include('consultations.handout.partials._mark', ['checked' => $relationship === 'Daughter', 'label' => 'Daughter (Anak na babae)', 'inline' => false])
+                    @include('consultations.handout.partials._mark', ['checked' => $relationship === 'Others', 'label' => 'Others (Iba)', 'inline' => false])
+                </div>
+            </td>
+        </tr>
+
+        {{-- III. Address & Contact --}}
+        <tr>
+            <td colspan="12" class="section-header">III. Address &amp; Contact (Tirahan at Kontak)</td>
+        </tr>
+        <tr>
+            <td colspan="8" style="min-height:34px;">
+                <p class="field-label">Residential Address <span class="field-help">(Tirahan)</span></p>
+                <p class="field-value whitespace-pre">{{ $patient->residential_address ?? '' }}</p>
+            </td>
+            <td colspan="4">
+                <p class="field-label">Contact Number</p>
+                <p class="field-value">{{ $contactNumber }}</p>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6">
+                <p class="field-label">Facility Household No.</p>
+                <p class="field-value">{{ $householdNo ? 'HH'.str_pad((string) $householdNo, 4, '0', STR_PAD_LEFT) : '' }}</p>
+            </td>
+            <td colspan="6">
+                <p class="field-label">Household No.</p>
+                <p class="field-value">{{ $householdNo }}</p>
+            </td>
+        </tr>
+
+        {{-- IV. Household & Social Protection --}}
+        <tr>
+            <td colspan="12" class="section-header">IV. Household &amp; Social Protection (Sosyal na Proteksyon)</td>
+        </tr>
+        <tr>
+            <td colspan="3">
+                <p class="field-label">DSWD NHTS?</p>
+            </td>
+            <td colspan="2">
+                @include('consultations.handout.partials._mark', ['checked' => $hasNhts, 'label' => 'Yes'])
+            </td>
+            <td colspan="1">
+                @include('consultations.handout.partials._mark', ['checked' => ! $hasNhts, 'label' => 'No'])
+            </td>
+            <td colspan="3">
+                <p class="field-label">4Ps Member?</p>
+            </td>
+            <td colspan="2">
+                @include('consultations.handout.partials._mark', ['checked' => $has4ps, 'label' => 'Yes'])
+            </td>
+            <td colspan="1">
+                @include('consultations.handout.partials._mark', ['checked' => ! $has4ps, 'label' => 'No'])
+            </td>
+        </tr>
+
+        {{-- V. Health Coverage --}}
+        <tr>
+            <td colspan="12" class="section-header">V. Health Coverage (Sagot sa Kalusugan)</td>
+        </tr>
+        <tr>
+            <td colspan="3">
+                <p class="field-label">PhilHealth Member?</p>
+            </td>
+            <td colspan="2">
+                @include('consultations.handout.partials._mark', ['checked' => $isPhilhealth, 'label' => 'Yes'])
+            </td>
+            <td colspan="1">
+                @include('consultations.handout.partials._mark', ['checked' => ! $isPhilhealth, 'label' => 'No'])
+            </td>
+            <td colspan="3">
+                <p class="field-label">Status Type</p>
+            </td>
+            <td colspan="2">
+                @include('consultations.handout.partials._mark', ['checked' => $statusType === 'Member', 'label' => 'Member'])
+            </td>
+            <td colspan="1">
+                @include('consultations.handout.partials._mark', ['checked' => $statusType === 'Dependent', 'label' => 'Dependent'])
+            </td>
+        </tr>
+        <tr>
+            <td colspan="5">
+                <p class="field-label">PhilHealth No.</p>
+                <p class="field-value">{{ $patient->philhealth_no ?? '' }}</p>
+            </td>
+            <td colspan="3">
+                <p class="field-label">PCB Member?</p>
+            </td>
+            <td colspan="2">
+                @include('consultations.handout.partials._mark', ['checked' => $isPcb, 'label' => 'Yes'])
+            </td>
+            <td colspan="2">
+                @include('consultations.handout.partials._mark', ['checked' => ! $isPcb, 'label' => 'No'])
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4">
+                <p class="field-label">If Member, indicate category</p>
+            </td>
+            <td colspan="8">
+                <div class="marks-2col">
+                    @include('consultations.handout.partials._mark', ['checked' => $philhealthCategory === 'FE - Private', 'label' => 'FE - Private', 'inline' => false])
+                    @include('consultations.handout.partials._mark', ['checked' => $philhealthCategory === 'FE - Government', 'label' => 'FE - Government', 'inline' => false])
+                    @include('consultations.handout.partials._mark', ['checked' => $philhealthCategory === 'IE', 'label' => 'IE', 'inline' => false])
+                    @include('consultations.handout.partials._mark', ['checked' => $philhealthCategory === 'Others', 'label' => 'Others', 'inline' => false])
+                </div>
+            </td>
+        </tr>
+
+        {{-- VI. Data Privacy Notice --}}
+        <tr>
+            <td colspan="12" class="section-header">VI. Data Privacy Notice (PAHIBALO SA PRIVACY NG DATA)</td>
         </tr>
         <tr>
             <td colspan="6" style="padding:0; vertical-align:top;">
                 <div class="consent-col-title">IN ENGLISH</div>
                 <div class="consent-text">
-                    <p>In accordance with Republic Act No. 10173 (Data Privacy Act of 2012) and its Implementing Rules and Regulations, we collect and process your personal and sensitive personal information for the following purposes: (a) delivery of primary healthcare services; (b) maternal and child health monitoring; (c) immunization record-keeping; (d) consultation and referral management; and (e) compliance with DOH reporting requirements.</p>
-                    <p>Your data will be retained in accordance with DOH records retention guidelines. For concerns, contact the Barangay Health Center.</p>
+                    <p>In accordance with Republic Act No. 10173 (Data Privacy Act of 2012) and its Implementing Rules and Regulations, we collect and process your personal and sensitive personal information for the following purposes: (a) delivery of primary healthcare services; (b) maternal and child health monitoring; (c) immunization record-keeping; (d) consultation and referral management; and (e) preparation of barangay and FHSIS-style health reports.</p>
+                    <p>Your data will be retained in accordance with applicable records retention guidelines. For concerns, contact the Barangay Sta. Ana Health Center.</p>
                 </div>
             </td>
             <td colspan="6" style="padding:0; vertical-align:top;">
                 <div class="consent-col-title">SA FILIPINO</div>
                 <div class="consent-text">
-                    <p>Ayon sa Republic Act No. 10173 (Data Privacy Act of 2012) at ang mga Implementing Rules and Regulations nito, kinokoleksyon at pinoproseso namin ang iyong personal at sensitibong personal na impormasyon para sa mga sumusunod na layunin: (a) paghahatid ng mga serbisyong pangunang pangkalusugan; (b) pagsubaybay sa kalusugan ng ina at bata; (c) pagtatala ng bakuna; (d) pamamahala ng konsultasyon at referral; at (e) pagsunod sa mga kahulugan ng DOH.</p>
-                    <p>Ang iyong data ay itatabi ayon sa mga alituntunin ng DOH sa pagpapanatili ng mga rekord. Para sa mga alalahanin, makipag-ugnayan sa Barangay Health Center.</p>
+                    <p>Ayon sa Republic Act No. 10173 (Data Privacy Act of 2012) at ang mga Implementing Rules and Regulations nito, kinokoleksyon at pinoproseso namin ang iyong personal at sensitibong personal na impormasyon para sa mga sumusunod na layunin: (a) paghahatid ng mga serbisyong pangunang pangkalusugan; (b) pagsubaybay sa kalusugan ng ina at bata; (c) pagtatala ng bakuna; (d) pamamahala ng konsultasyon at referral; at (e) paghahanda ng mga ulat sa barangay at FHSIS.</p>
+                    <p>Ang iyong data ay itatabi ayon sa mga alituntunin sa pagpapanatili ng mga rekord. Para sa mga alalahanin, makipag-ugnayan sa Barangay Sta. Ana Health Center.</p>
                 </div>
             </td>
         </tr>
+
+        {{-- VII. System Disclaimer --}}
         <tr>
-            <td colspan="12" class="section-header">IV. System Disclaimer (Pagpasabot sa Sistema)</td>
+            <td colspan="12" class="section-header">VII. System Disclaimer (Pagpasabot sa Sistema)</td>
         </tr>
         <tr>
             <td colspan="12" style="padding:0; vertical-align:top;">
@@ -314,24 +289,26 @@
                 </div>
             </td>
         </tr>
+
+        {{-- VIII. Patient's Consent --}}
         <tr>
-            <td colspan="12" class="section-header">V. Patient's Consent (Pahintulot ng Pasyente)</td>
+            <td colspan="12" class="section-header">VIII. Patient's Consent (Pahintulot ng Pasyente)</td>
         </tr>
         <tr>
             <td colspan="6" style="padding:0; vertical-align:top;">
                 <div class="consent-col-title">IN ENGLISH</div>
                 <div class="consent-text">
-                    <p>I have read and understood the <em>Patient's Information</em> after I have been made aware of its contents. During an informational conversation I was informed in a very comprehensible way about the essence and importance of the Integrated Clinic Information System (iClinicSys) by the CHU/RHU representative. All my questions during the conversation were answered sufficiently and I had been given enough time to decide on this.</p>
-                    <p>Furthermore, I permit the CHU/RHU to encode the information concerning my person and the collected data regarding disease symptoms and consultations for said information system.</p>
-                    <p>I wish to be informed about the medical results concerning me personally or my direct descendants. Also, I can cancel my consent at the CHU/RHU any time without giving reasons and without concerning any disadvantage for my medical treatment.</p>
+                    <p>I have read and understood the <em>Patient's Information</em> after I have been made aware of its contents. During an informational conversation I was informed in a comprehensible way about the essence and importance of the Barangay Health Center Information System (BHCIS) by the barangay health worker. All my questions during the conversation were answered sufficiently and I had been given enough time to decide on this.</p>
+                    <p>Furthermore, I permit the Barangay Sta. Ana Health Center to encode the information concerning my person and the collected data regarding disease symptoms and consultations into the said information system.</p>
+                    <p>I wish to be informed about the medical results concerning me personally or my direct descendants. I may cancel my consent at any time without giving reasons and without any disadvantage to my medical treatment.</p>
                 </div>
             </td>
             <td colspan="6" style="padding:0; vertical-align:top;">
                 <div class="consent-col-title">SA FILIPINO</div>
                 <div class="consent-text">
-                    <p>Aking nabasa at naintindihan ang Impormasyon ng Pasyente matapos akoy bigyang-kaalaman ng mga nalalaman nito. Sa isang pag-uusap kasama ang kinatawan ng CHU/RHU, ako ay bingyang-paunawa nang mahusay tungkol sa kakanyahan at kahalagahan ng Integrated Clinic Information System (iClinicSys). Lahat ng aking mga katanungan sa panahon ng pag-uusap ay nasagot ng sapat at ako ay binigyan ng sapat na oras upang magpasya nito.</p>
-                    <p>Higit pa rito, pinapayagan ko ang CHU/RHU upang i-encode ang mga impormasyon patungkol sa akin at mga nakolektang impormasyon tungkol sa mga sintomas ng aking sakit at konsultasyon kaagnay dito para sa nasabing information system.</p>
-                    <p>Nais kong malaman at malapalaam sa aking direktang kapamilya ang aking mga medikal na resulta. Gayundin, msan kong kanselahin ang aking pahintulot sa CHU/RHU anumang oras na walang ibinibigay na dahilan at walang kinaiaman sa anumang kawalan para sa aking medikal na pagpapagamot.</p>
+                    <p>Aking nabasa at naintindihan ang <em>Impormasyon ng Pasyente</em> matapos akong bigyan ng kaalaman tungkol sa mga nilalaman nito. Sa isang pag-uusap, ako ay nabigyan ng malinaw na paliwanag tungkol sa kakanyahan at kahalagahan ng Barangay Health Center Information System (BHCIS) ng barangay health worker. Lahat ng aking mga katanungan sa panahon ng pag-uusap ay nasagot nang sapat at ako ay binigyan ng sapat na oras upang magpasya.</p>
+                    <p>Higit pa rito, pinapayagan ko ang Barangay Sta. Ana Health Center na i-encode ang mga impormasyon patungkol sa akin at ang nakolektang impormasyon tungkol sa mga sintomas ng aking sakit at konsultasyon kaagnay nito para sa nasabing sistema.</p>
+                    <p>Nais kong malaman ang aking mga medikal na resulta o ang resulta ng aking direktang kapamilya. Maaari kong kanselahin ang aking pahintulot anumang oras nang walang ibinibigay na dahilan at walang kawalan para sa aking medikal na pagpapagamot.</p>
                 </div>
             </td>
         </tr>
@@ -343,15 +320,15 @@
             </td>
             <td colspan="6" class="text-center" style="min-height:48px;">
                 <div class="sig-line"></div>
-                <p class="field-label text-upper">Name of CHU/RHU Representative</p>
-                <p class="field-help text-upper">Kinatawan ng CHU / RHU</p>
+                <p class="field-label text-upper">Name of Health Center Representative</p>
+                <p class="field-help text-upper">Kinatawan ng Barangay Health Center</p>
             </td>
         </tr>
     </table>
 
     <div class="form-footer form-footer-flex">
-        <span>Clinic Information System</span>
-        <span>| FORM 1 |</span>
+        <span>BHCIS System Sta. Ana - Barangay Health Center Information System</span>
         <span>Page 1</span>
+        <span>Printed {{ now()->format('m/d/Y g:i A') }}</span>
     </div>
 </section>

@@ -8,9 +8,14 @@
 @endphp
 
 <section class="iclinic-form" aria-label="Family Planning Client Record">
-    @include('consultations.handout.partials._doh-header', [
-        'formTitle' => 'FAMILY PLANNING CLIENT RECORD',
-        'serialDigits' => 4,
+    @include('consultations.handout.partials._bhcis-header', [
+        'formTitle' => 'Family Planning Client Record',
+        'meta' => [
+            'Patient' => $patientName,
+            'Age / Sex' => trim($patient->age.' '.($patient->sex ?? ''), ' '),
+            'Zone' => 'Zone '.($patient->household?->zone?->zone_number ?? $patient->household?->zone_id ?? '-'),
+            'Recorded' => $client->created_at->format('m/d/Y'),
+        ],
     ])
 
     <table class="form-table" style="border-top:0;">
@@ -42,7 +47,7 @@
             </td>
             <td>
                 <p class="field-label">Birthdate</p>
-                <p class="field-value">{{ $patient->date_of_birth }}</p>
+                <p class="field-value">{{ $patient->date_of_birth?->format('m/d/Y') }}</p>
             </td>
             <td colspan="2">
                 <p class="field-label">Civil Status</p>
@@ -161,7 +166,7 @@
     </table>
 
     <div class="form-footer form-footer-flex">
-        <span>Barangay Health Center - Sta. Ana</span>
+        <span>BHCIS System Sta. Ana - Barangay Health Center Information System</span>
         <span>Recorded: {{ $client->created_at->format('M d, Y g:i A') }}</span>
     </div>
 </section>

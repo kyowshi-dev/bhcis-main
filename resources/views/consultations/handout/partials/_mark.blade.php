@@ -1,4 +1,4 @@
-{{-- iClinicSys checkbox / option mark (read-only display) --}}
+{{-- Read-only checkbox / option mark for print forms. --}}
 @php
     $checked = $checked ?? false;
     $label = $label ?? '';

@@ -10,9 +10,14 @@
 @endphp
 
 <section class="iclinic-form" aria-label="Prenatal Record">
-    @include('consultations.handout.partials._doh-header', [
-        'formTitle' => 'PRENATAL RECORD',
-        'serialDigits' => 4,
+    @include('consultations.handout.partials._bhcis-header', [
+        'formTitle' => 'Prenatal Record',
+        'meta' => [
+            'Patient' => $patientName,
+            'Age / Sex' => trim($patient->age.' '.($patient->sex ?? ''), ' '),
+            'Zone' => 'Zone '.($patient->household?->zone?->zone_number ?? $patient->household?->zone_id ?? '-'),
+            'Registered' => $pregnancy->created_at->format('m/d/Y'),
+        ],
     ])
 
     <table class="form-table" style="border-top:0;">
@@ -160,7 +165,7 @@
     </table>
 
     <div class="form-footer form-footer-flex">
-        <span>Barangay Health Center - Sta. Ana</span>
+        <span>BHCIS System Sta. Ana - Barangay Health Center Information System</span>
         <span>Registered: {{ $pregnancy->created_at->format('M d, Y g:i A') }}</span>
     </div>
 </section>

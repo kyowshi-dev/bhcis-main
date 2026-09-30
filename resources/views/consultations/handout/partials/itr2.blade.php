@@ -1,6 +1,6 @@
 {{--
     Individual Treatment Record (ITR 2) - Family Planning / Prenatal / Immunization / Postpartum
-    iClinicSys FORM 2, Page 2
+    BHCIS print sheet
 --}}
 @php
     $pregnancy = $pregnancy ?? null;
@@ -72,16 +72,27 @@
     $attendantAtBirth = \App\Models\PostnatalRecord::ATTENDANTS[$postnatalRecord->attendant_at_birth ?? ''] ?? ($postnatalRecord->attendant_at_birth ?? '');
     $dangerSignsMother = implode(', ', $postnatalRecord->danger_signs_mother ?? []);
     $dangerSignsBaby = implode(', ', $postnatalRecord->danger_signs_baby ?? []);
+
+    $patientName = fullName($patient->last_name ?? null, $patient->first_name ?? null, $patient->middle_name ?? null, $patient->suffix ?? null);
+
+    $meta = [
+        'Patient' => $patientName,
+        'Age / Sex' => trim((($age ?? null) ?? '').' '.($patient->sex ?? ''), ' '),
+        'Consultation' => 'C'.str_pad((string) $consultation->id, 4, '0', STR_PAD_LEFT),
+        'Date' => ($consultationAt ?? \Carbon\Carbon::parse($consultation->updated_at ?? $consultation->created_at))->format('m/d/Y'),
+        'Zone' => $zoneLabel ?? '-',
+    ];
 @endphp
 
 <section class="iclinic-form" aria-label="Individual Treatment Record 2">
-    @include('consultations.handout.partials._doh-header', [
-        'formTitle' => 'INDIVIDUAL TREATMENT RECORD (ITR 2)',
-        'serialDigits' => 5,
+    @include('consultations.handout.partials._bhcis-header', [
+        'formTitle' => 'Individual Treatment Record (ITR 2)',
+        'meta' => $meta,
     ])
 
     <table class="form-table" style="border-top:0;">
         <tr>
+            {{-- Left column: Family Planning + Prenatal --}}
             <td colspan="7" style="padding:0;">
                 <table class="form-table nested-table" style="border:0;">
                     <tr>
@@ -96,11 +107,11 @@
                         <td colspan="5">{{ $fpClient->method ?? '' }}</td>
                     </tr>
                     <tr>
-                        <td colspan="3" class="label-cell">If Drop-Out, state reason:</td>
+                        <td colspan="3" class="label-cell">If Drop-Out, state reason</td>
                         <td colspan="5">{{ $fpClient->drop_out_reason ?? '' }}</td>
                     </tr>
                     <tr>
-                        <td colspan="3" class="label-cell">Schedule of Next Visit:</td>
+                        <td colspan="3" class="label-cell">Schedule of Next Visit</td>
                         <td colspan="5">{{ $fmtDate($fpClient->schedule_next_visit ?? null) }}</td>
                     </tr>
 
@@ -144,7 +155,7 @@
                         <td colspan="2">{{ $pregnancy->others ?? '' }}</td>
                     </tr>
                     <tr>
-                        <td colspan="2" class="label-cell">Syphilis Result:</td>
+                        <td colspan="2" class="label-cell">Syphilis Result</td>
                         <td colspan="3">
                             @include('consultations.handout.partials._mark', ['checked' => $syphilisNegative, 'label' => 'Negative'])
                         </td>
@@ -198,19 +209,21 @@
                         <td colspan="2"></td>
                     </tr>
                     <tr>
-                        <td colspan="2" class="label-cell">Period/ Duration</td>
+                        <td colspan="2" class="label-cell">Period / Duration</td>
                         <td colspan="2"></td>
                         <td colspan="2" class="label-cell">Birth Control Method</td>
                         <td colspan="2"></td>
                     </tr>
                     <tr>
-                        <td colspan="2" class="label-cell">Interval/ Cycle</td>
+                        <td colspan="2" class="label-cell">Interval / Cycle</td>
                         <td colspan="2"></td>
                         <td colspan="2" class="label-cell">Menopause? (Yes/No)</td>
                         <td colspan="2"></td>
                     </tr>
                 </table>
             </td>
+
+            {{-- Right column: Immunization --}}
             <td colspan="5" style="padding:0;">
                 <table class="form-table nested-table" style="border:0;">
                     <tr>
@@ -222,7 +235,7 @@
                     </tr>
                     <tr>
                         <td class="label-cell text-center">Immunization</td>
-                        <td class="label-cell text-center">Date</td>
+                        <td class="label-cell text-center">Date Given</td>
                     </tr>
                     @foreach ($childVaccineRows as [$rowLabel, $rowCodes, $rowNeedle])
                         <tr>
@@ -236,7 +249,7 @@
                     </tr>
                     <tr>
                         <td class="label-cell text-center">Immunization</td>
-                        <td class="label-cell text-center">Date</td>
+                        <td class="label-cell text-center">Date Given</td>
                     </tr>
                     @foreach ($adultVaccineRows as [$rowLabel, $rowCodes, $rowNeedle])
                         <tr>
@@ -248,83 +261,85 @@
             </td>
         </tr>
 
+        {{-- Postpartum --}}
         <tr>
-            <td colspan="12" class="section-header" style="border-top:0;">Postpartum</td>
+            <td colspan="12" class="section-header">Postpartum (Pagkatapos ng Panganak)</td>
         </tr>
         <tr>
-            <td colspan="3" rowspan="4" style="vertical-align:top;">
-                <p class="field-label">Prenatal Outcome</p>
-                <p class="field-value">{{ $outcome }}</p>
-            </td>
-            <td colspan="9" class="label-cell text-center">Child Information</td>
+            <td colspan="6" class="label-cell text-center">Delivery</td>
+            <td colspan="6" class="label-cell text-center">Child Information</td>
         </tr>
         <tr>
-            <td colspan="2" class="label-cell">Last Name</td>
+            <td colspan="3" class="label-cell">Prenatal Outcome</td>
+            <td colspan="3">{{ $outcome }}</td>
+            <td colspan="3" class="label-cell">Last Name</td>
             <td colspan="3" class="field-value text-bold">{{ $postnatalRecord->child_last_name ?? '' }}</td>
-            <td colspan="2" class="label-cell">Sex (M / F)</td>
-            <td colspan="2">{{ $postnatalRecord->child_sex ?? '' }}</td>
-        </tr>
-        <tr>
-            <td colspan="2" class="label-cell">First Name</td>
-            <td colspan="3" class="field-value text-bold">{{ $postnatalRecord->child_first_name ?? '' }}</td>
-            <td colspan="2" class="label-cell">Birth length</td>
-            <td colspan="2">{{ $postnatalRecord->child_birth_length_cm ?? '' }}</td>
-        </tr>
-        <tr>
-            <td colspan="2" class="label-cell">Middle Name</td>
-            <td colspan="3">{{ $postnatalRecord->child_middle_name ?? '' }}</td>
-            <td colspan="2" class="label-cell">Birth weight</td>
-            <td colspan="2">{{ $postnatalRecord->child_birth_weight_kg ?? '' }}</td>
         </tr>
         <tr>
             <td colspan="3" class="label-cell">Prenatal Delivered</td>
             <td colspan="3"></td>
-            <td colspan="3" class="label-cell">Delivery Date</td>
-            <td colspan="3">{{ $fmtDate($postnatalRecord->delivery_date ?? null) }}</td>
+            <td colspan="3" class="label-cell">First Name</td>
+            <td colspan="3" class="field-value text-bold">{{ $postnatalRecord->child_first_name ?? '' }}</td>
         </tr>
         <tr>
             <td colspan="3" class="label-cell">Place Delivered</td>
             <td colspan="3">{{ $placeDelivered }}</td>
-            <td colspan="3" class="label-cell">Delivery Time</td>
-            <td colspan="3">{{ $postnatalRecord->delivery_time ?? '' }}</td>
+            <td colspan="3" class="label-cell">Middle Name</td>
+            <td colspan="3">{{ $postnatalRecord->child_middle_name ?? '' }}</td>
         </tr>
         <tr>
             <td colspan="3" class="label-cell">Mode of Delivery</td>
             <td colspan="3">{{ $modeOfDelivery }}</td>
-            <td colspan="3" class="label-cell">Date Initiated Breastfeeding</td>
-            <td colspan="3">{{ $fmtDate($postnatalRecord->breastfeeding_date ?? null) }}</td>
+            <td colspan="3" class="label-cell">Sex (M / F)</td>
+            <td colspan="3">{{ $postnatalRecord->child_sex ?? '' }}</td>
         </tr>
         <tr>
             <td colspan="3" class="label-cell">Attendant at Birth</td>
             <td colspan="3">{{ $attendantAtBirth }}</td>
-            <td colspan="3" class="label-cell">Time Initiated Breastfeeding</td>
-            <td colspan="3">{{ $postnatalRecord->breastfeeding_time ?? '' }}</td>
+            <td colspan="3" class="label-cell">Birth Length (cm)</td>
+            <td colspan="3">{{ $postnatalRecord->child_birth_length_cm ?? '' }}</td>
         </tr>
         <tr>
-            <td colspan="6" class="label-cell-sm">Date of postpartum visit within 24hrs after delivery</td>
+            <td colspan="3" class="label-cell">Delivery Date</td>
+            <td colspan="3">{{ $fmtDate($postnatalRecord->delivery_date ?? null) }}</td>
+            <td colspan="3" class="label-cell">Birth Weight (kg)</td>
+            <td colspan="3">{{ $postnatalRecord->child_birth_weight_kg ?? '' }}</td>
+        </tr>
+        <tr>
+            <td colspan="3" class="label-cell">Delivery Time</td>
+            <td colspan="3">{{ $postnatalRecord->delivery_time ?? '' }}</td>
+            <td colspan="3" class="label-cell">Breastfeeding Initiated</td>
+            <td colspan="3">
+                {{ $fmtDate($postnatalRecord->breastfeeding_date ?? null) }}
+                {{ $postnatalRecord->breastfeeding_time ?? '' }}
+            </td>
+        </tr>
+        <tr>
+            <td colspan="6" class="label-cell-sm">Postpartum visit within 24 hrs after delivery</td>
             <td colspan="2">{{ $fmtDate($postnatalRecord->postpartum_24h_date ?? null) }}</td>
             <td colspan="2" class="label-cell-sm">Danger Signs (Mother)</td>
             <td colspan="2" class="field-value-sm">{{ $dangerSignsMother }}</td>
         </tr>
         <tr>
-            <td colspan="6" class="label-cell-sm">Date of postpartum visit within 1 week after delivery</td>
+            <td colspan="6" class="label-cell-sm">Postpartum visit within 1 week after delivery</td>
             <td colspan="2">{{ $fmtDate($postnatalRecord->postpartum_7d_date ?? null) }}</td>
             <td colspan="2" class="label-cell-sm">Danger Signs (Baby)</td>
             <td colspan="2" class="field-value-sm">{{ $dangerSignsBaby }}</td>
         </tr>
         <tr>
             <td colspan="3" class="label-cell">Date Vitamin A Given</td>
-            <td colspan="2">{{ $fmtDate($postnatalRecord->vitamin_a_date ?? null) }}</td>
-            <td colspan="2" class="label-cell">Date Iron Given</td>
-            <td colspan="2">{{ $fmtDate($postnatalRecord->iron_date ?? null) }}</td>
-            <td colspan="2" class="label-cell-sm">No. of Iron Given</td>
-            <td colspan="1">{{ $postnatalRecord->iron_count ?? '' }}</td>
+            <td colspan="3">{{ $fmtDate($postnatalRecord->vitamin_a_date ?? null) }}</td>
+            <td colspan="3" class="label-cell">Iron Given (date / count)</td>
+            <td colspan="3">
+                {{ $fmtDate($postnatalRecord->iron_date ?? null) }}
+                {{ ($postnatalRecord->iron_count ?? null) !== null ? '· x'.$postnatalRecord->iron_count : '' }}
+            </td>
         </tr>
     </table>
 
     <div class="form-footer form-footer-flex">
-        <span>Clinic Information System</span>
-        <span>| FORM 2 |</span>
+        <span>BHCIS System Sta. Ana - Barangay Health Center Information System</span>
         <span>Page 2</span>
+        <span>Printed {{ now()->format('m/d/Y g:i A') }}</span>
     </div>
 </section>
