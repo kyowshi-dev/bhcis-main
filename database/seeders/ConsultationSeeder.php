@@ -26,15 +26,57 @@ class ConsultationSeeder extends Seeder
         $doctor = $healthWorkers->firstWhere('role', 'Doctor') ?? $healthWorkers->first();
         $encoder = $healthWorkers->firstWhere('role', 'BHW') ?? $nurse;
 
+        // Chief complaints are 1-indexed so the numbers match the age-bracket mapping below.
         $chiefComplaints = [
-            'Ubo ug sip-on',
-            'Sakit sa tiyan',
-            'Sakit sa ulo',
-            'Hilanat',
-            'Sakit sa lutahan',
-            'Pasmo',
-            'High blood',
-            'Diabetes follow-up',
+            1 => 'Gihilantan ug nagpasingot – sugod kagahapon sa buntag',
+            2 => 'Gisakit ang tiyan sa tuo nga bahin – sulod na sa tulo ka adlaw',
+            3 => 'Nagsuka ug nagkalibanga – sukad pa kagabii',
+            4 => 'Gihasol sa ubo nga adunay plema – sulod sa duha ka semana',
+            5 => 'Gisakit ang ulo ug gipanglipong – sukad pa sa miaging adlaw',
+            6 => 'Naglisod og gininhawa – sulod na sa upat ka oras',
+            7 => 'Gisakit ang dughan nga murag gipit-at – sukad pa ganiha',
+            8 => 'Katol ug pula ang panit sa tibuok lawas – sulod na sa lima ka adlaw',
+            9 => 'Gisakit ang ubos nga bahin sa likod – sulod sa usa ka semana',
+            10 => 'Gisakit ug gi-hapdosan ig pangihi – sukad pa kagahapon',
+            11 => 'Naghubag ug nagsakit ang tiil – sulod na sa tulo ka adlaw',
+            12 => 'Nagdugo ang ilong – sulod sa tulo ka oras',
+            13 => 'Sakit ang tutunlan ug naglisod og tulon – sukad pa kagabii',
+            14 => 'Gihasol sa uga nga ubo – sulod sa usa ka bulan',
+            15 => 'Gihasol sa pagkahalap sa panan-aw – sukad pa sa miaging semana',
+            16 => 'Nagsakit ang dunggan ug nagtubig – sulod na sa duha ka adlaw',
+            17 => 'Walay gana sa pagkaon ug hilabihan nga kaluya – sulod sa duha ka semana',
+            18 => 'Gisakit ang tuhod kon maglakaw – sulod na sa usa ka bulan',
+            19 => 'Nagkalibanga ug adunay sagol nga dugo – sukad pa kagahapon sa hapon',
+            20 => 'Nagsakit ang abaga ug naglisod og alsa sa kamot – sulod sa tulo ka adlaw',
+            21 => 'Sakit ang ngipon ug naghubag ang samag – sukad pa kagabii',
+            22 => 'Naglisod og katulog tungod sa kagul-anan ug kabaka – sulod sa tulo ka semana',
+            23 => 'Gisakit ang dapit sa dughan – sulod sa duha ka oras',
+            24 => 'Nagsakit ang bat-ang ug nagkiang sa paglakaw – sukad pa kagahapon',
+            25 => 'Sakit ang dughan kon mag-ubo o maggininhawa og lawom – sulod sa lima ka adlaw',
+            26 => 'Gipangbugnaw nga singot ug gipanglipong – sulod sa duha ka oras',
+            27 => 'Gisakit ang pus-on – sukad pa kagahapon sa gabii',
+            28 => 'Gihasol sa hilabihan nga kalipong nga nagtuyok ang palibot – sulod sa pito ka oras',
+            29 => 'Nagdugo ang lagos ug dali rang magpasa ang panit – sulod sa usa ka semana',
+            30 => 'Gisakit ang liog ug naglisod og lingi – sukad pa kagahapon sa buntag',
+            31 => 'Gihilantan ug gipamaol ang tibuok lawas – sulod sa tulo ka adlaw',
+            32 => 'Naghubag ug nagsakit ang tungod sa sapa-sapa sa tiil – sulod sa duha ka adlaw',
+            33 => 'Nagsuka-suka ug nagsakit ang tiyan – sukad pa ganiha sa udto',
+            34 => 'Sakit ang kilid sa tiyan nga nagpito padulong sa likod – sulod sa lima ka oras',
+            35 => 'Gihasol sa hilanat nga pabalik-balik – sulod sa duha ka semana',
+            36 => 'Gisakit ang pultahan sa kamot human natagak – sulod sa tulo ka oras',
+            37 => 'Naglisod sa pagpangihi ug gi-hapdosan – sukad pa sa miaging adlaw',
+            38 => 'Nagsakit ug nagpula ang duha ka mata – sulod sa duha ka adlaw',
+            39 => 'Nagsakit ang hawak ug ubos sa likod – sulod sa tulo ka semana',
+            40 => 'Gisakit ang dughan human nagbuhat og bug-at – sulod sa usa ka oras',
+        ];
+
+        // Age-bracket complaint mapping - every complaint number appears exactly once:
+        // Universal pool (all ages) plus the bracket matching the patient's age.
+        $universalComplaints = [1, 2, 3, 4, 5, 8, 10, 11, 12, 13, 14, 16, 19, 21, 25, 26, 29, 30, 31, 33, 35, 36, 37, 38];
+        $ageBracketComplaints = [
+            [23, 35, [22, 27, 34]],
+            [36, 55, [9, 20, 32, 39, 40]],
+            [56, 78, [6, 7, 15, 17, 18, 23, 24, 28]],
         ];
         $modeOfTransaction = ['Walk-in', 'Visited', 'Referral'];
 
@@ -49,6 +91,7 @@ class ConsultationSeeder extends Seeder
         $firstConsultationStatuses[2] = ConsultationStatus::Referred->value;
 
         foreach ($patients as $index => $patient) {
+            $complaintPool = $this->complaintPoolFor($patient, $chiefComplaints, $universalComplaints, $ageBracketComplaints);
             $statuses = [
                 $firstConsultationStatuses[$index],
                 ConsultationStatus::Completed->value,
@@ -65,7 +108,7 @@ class ConsultationSeeder extends Seeder
                     $nurse,
                     $doctor,
                     $status,
-                    $chiefComplaints,
+                    $complaintPool,
                     $modeOfTransaction,
                 );
             }
@@ -74,6 +117,35 @@ class ConsultationSeeder extends Seeder
         $this->insertConsultationsWithReferrals($consultations, $referredIndexes);
 
         $this->command?->info('Consultations seeded successfully: '.count($consultations).' records created.');
+    }
+
+    /**
+     * Build the chief-complaint pool for a patient: the universal list plus the
+     * complaints mapped to the patient's age bracket (universal only when the
+     * age falls outside 23-78).
+     *
+     * @param  array<int, string>  $chiefComplaints
+     * @param  list<int>  $universalComplaints
+     * @param  list<array{0: int, 1: int, 2: list<int>}>  $ageBracketComplaints  [minAge, maxAge, complaint numbers]
+     * @return list<string>
+     */
+    private function complaintPoolFor(
+        Patient $patient,
+        array $chiefComplaints,
+        array $universalComplaints,
+        array $ageBracketComplaints,
+    ): array {
+        $age = (int) $patient->age;
+        $numbers = $universalComplaints;
+
+        foreach ($ageBracketComplaints as [$minAge, $maxAge, $bracketNumbers]) {
+            if ($age >= $minAge && $age <= $maxAge) {
+                $numbers = array_merge($numbers, $bracketNumbers);
+                break;
+            }
+        }
+
+        return array_values(array_map(fn (int $number) => $chiefComplaints[$number], $numbers));
     }
 
     /**
@@ -86,7 +158,7 @@ class ConsultationSeeder extends Seeder
         HealthWorker $nurse,
         HealthWorker $doctor,
         string $status,
-        array $chiefComplaints,
+        array $complaintPool,
         array $modeOfTransaction,
     ): array {
         $createdAt = Carbon::now()->subDays(rand(1, 180));
@@ -109,7 +181,7 @@ class ConsultationSeeder extends Seeder
                 ConsultationStatus::Completed->value,
                 ConsultationStatus::Referred->value,
             ], true),
-            'complaint_text' => $chiefComplaints[array_rand($chiefComplaints)],
+            'complaint_text' => $complaintPool[array_rand($complaintPool)],
             'nature_of_visit' => rand(0, 1) ? 'Follow-up' : 'Initial Consultation',
             'notes' => 'Patient presented with symptoms. Advised on home care and follow-up.',
             'mode_of_transaction' => $status === ConsultationStatus::Referred->value

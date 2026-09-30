@@ -12,53 +12,76 @@ class PatientSeeder extends Seeder
     public function run(): void
     {
         $lastNames = [
-            'Santos', 'Reyes', 'Cruz', 'Bautista', 'Garcia', 'Mendoza', 'Torres', 'Flores',
-            'Ramos', 'Aquino', 'Navarro', 'Villanueva', 'Domingo', 'Salazar', 'Dela Cruz',
-            'Ocampo', 'Gutierrez', 'Marquez', 'Pascual', 'Castillo', 'Santiago', 'Romero',
-            'Rivera', 'Morales', 'Jimenez', 'Buenaventura', 'Lacson', 'Manalo', 'Padilla', 'Soriano',
+            'Casiño', 'Emano', 'Cabunoc', 'Achas', 'Neri', 'Flores', 'Asiñero', 'Naelga',
+            'Quilang', 'Salcedo', 'Nabong', 'Lucagbo', 'Sabio', 'Dagus', 'Tadeo', 'Ando',
+            'Pagtalunan', 'Emata', 'Fabela', 'Barros', 'Quinquiño', 'Cabanes', 'Valdehuesa', 'Ejem',
+            'Fernandez', 'Rivera', 'Gadian', 'Sanchez', 'Janio', 'del Rosario',
+            'Ragandang', 'Pagara', 'Lucaban', 'Bagay', 'dela Cruz', 'Abrogueña', 'Ramos', 'Garcia',
+            'Tagolimot', 'Raiz', 'Jagualing', 'Aquiman', 'Burias', 'Lee', 'Nacasabog', 'Bade',
+            'Tapulgo', 'Ubal-Ubal', 'Razalo', 'General', 'Labadan', 'Ybañez', 'Rodriguez', 'Pepito',
+            'Salva', 'Mahinay', 'Sabejon', 'Roa', 'Seno', 'Escabarte',
+            'Martinez', 'Eduave', 'Nacawili', 'Gonzales', 'Villanueva', 'Gaid', 'Abao', 'Reyes',
+            'Tan', 'Yañez', 'Go', 'Lim', 'Navarro', 'Torres', 'Lopez', 'Perez',
+            'Castillo', 'Santos', 'Mendoza', 'Bautista', 'De Guzman', 'Cruz', 'Domingo', 'Santiago',
+            'Soriano', 'Delos Santos', 'Diaz', 'Hernandez', 'Tolentino', 'Valdez', 'Ramirez', 'Morales',
+            'Mercado', 'Aguilar', 'Manalo', 'Gomez', 'Dizon', 'Javier', 'Corpuz', 'Gutierrez',
         ];
 
         $firstNamesMale = [
-            'Juan', 'Jose', 'Miguel', 'Carlo', 'Angelo', 'Paolo', 'Marco', 'Ryan',
-            'Bryan', 'Kenneth', 'Christian', 'Joshua', 'Daniel', 'Rafael', 'Emmanuel',
-            'Victor', 'Francis', 'Jerome', 'Dennis', 'Mario', 'Ernesto', 'Ramon',
-            'Eduardo', 'Ricardo', 'Roberto', 'Antonio', 'Carlos', 'Andres', 'Luis', 'Adrian',
+            'Bryce', 'Kirk', 'Arjohn', 'Paolo', 'Jonas', 'Paolo', 'Marco', 'Ryan',
+            'Bryan', 'James', 'Lorenzo', 'John Mark', 'Joshue James', 'Rafael', 'Emmanuel',
+            'Victor', 'Francis', 'Jerome', 'Mat', 'Marlon', 'Joe Neil', 'Raidon',
+            'Eduardo', 'Ferdinand', 'John Robert', 'Carlo', 'Carl', 'Xander', 'Luis', 'Adrian',
         ];
 
         $firstNamesFemale = [
-            'Maria', 'Ana', 'Juana', 'Rosa', 'Liza', 'Grace', 'Faith', 'Joy',
-            'Sarah', 'Michelle', 'Kristine', 'Catherine', 'Beverly', 'Marites', 'Nenita',
-            'Rosario', 'Teresita', 'Elena', 'Cristina', 'Andrea', 'Camille', 'Jasmine',
-            'Nicole', 'Stephanie', 'Joanna', 'Rachel', 'Angelica', 'Carmela', 'Divina', 'Mildred',
+            'Marian', 'Aaliyah', 'Bella', 'Camella', 'Dinah', 'Ella', 'Faith Marie', 'Gemma',
+            'Hanna Lea', 'Iza', 'Lou', 'Jonah', 'Kristine', 'Lolita', 'Melissa',
+            'Nadia', 'Perenz', 'Queen Heart', 'Cristina', 'Andrea', 'Camille', 'Jasmine',
+            'Nicole', 'Stephanie', 'Sheena', 'Reychel', 'Angelika', 'Shiellah', 'Leila', 'Raquelle',
         ];
 
         $patients = [];
         $zoneNumbers = DB::table('zones')->pluck('zone_number', 'id')->toArray();
 
-        // Generate 20 dummy patients - one per seeded household.
+        // 20 households - 40 patients (20 male, 20 female), some patients share a household.
+        $households = [];
         for ($i = 0; $i < 20; $i++) {
-            $zoneId = rand(1, count($zoneNumbers));
+            $zoneId = array_rand($zoneNumbers);
+            $lastName = $lastNames[array_rand($lastNames)];
             $householdId = DB::table('households')->insertGetId([
                 'zone_id' => $zoneId,
-                'family_name_head' => $lastNames[array_rand($lastNames)],
+                'family_name_head' => $lastName,
                 'contact_number' => '09'.rand(100000000, 999999999),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+            $households[] = ['id' => $householdId, 'zone_id' => $zoneId, 'last_name' => $lastName];
+        }
 
-            $isMale = rand(0, 1);
+        $sexes = array_merge(array_fill(0, 20, 'Male'), array_fill(0, 20, 'Female'));
+        shuffle($sexes);
+
+        for ($i = 0; $i < 40; $i++) {
+            // First 20 patients get their own household, the rest join an existing one.
+            $household = $i < 20 ? $households[$i] : $households[array_rand($households)];
+
+            $isMale = $sexes[$i] === 'Male';
             $firstName = $isMale ? $firstNamesMale[array_rand($firstNamesMale)] : $firstNamesFemale[array_rand($firstNamesFemale)];
-            $lastName = $lastNames[array_rand($lastNames)];
+            $lastName = $household['last_name'];
 
-            $birthDate = Carbon::createFromDate(rand(1950, 2023), rand(1, 12), rand(1, 28));
+            // Age is exactly 23-87: birthday falls between Jan 1 and today of (current year - age).
+            $age = rand(23, 87);
+            $birthDate = Carbon::createFromDate(now()->year - $age, 1, 1)
+                ->addDays(rand(0, (int) now()->startOfYear()->diffInDays(now()->startOfDay())));
             $isChild = $birthDate->diffInYears(now()) < 18;
-            $civilStatus = rand(0, 1) ? 'Single' : 'Married';
+            $civilStatus = $age >= 25 && rand(0, 1) ? 'Married' : 'Single';
             $isPhilhealthMember = rand(0, 1) === 1;
             $isPcbMember = rand(0, 1) === 1;
-            $zoneNumber = $zoneNumbers[$zoneId] ?? $zoneId;
+            $zoneNumber = $zoneNumbers[$household['zone_id']] ?? $household['zone_id'];
 
             $patients[] = [
-                'household_id' => $householdId,
+                'household_id' => $household['id'],
                 'last_name' => $lastName,
                 'first_name' => $firstName,
                 'middle_name' => $lastNames[array_rand($lastNames)],
