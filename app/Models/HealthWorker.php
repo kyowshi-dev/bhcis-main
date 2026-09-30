@@ -94,6 +94,16 @@ class HealthWorker extends Model
         return strtolower((string) $this->role) === 'bhw';
     }
 
+    public function isAdministrator(): bool
+    {
+        return in_array(strtolower((string) $this->role), ['administrator', 'admin'], true);
+    }
+
+    public function canModifyPrescriptions(): bool
+    {
+        return $this->isDoctor() || $this->isAdministrator();
+    }
+
     public function isClinical(): bool
     {
         return $this->isDoctor() || $this->isNurse();

@@ -116,7 +116,7 @@ final class ConsultationQueryService
             ->whereIn('diagnosis_records.consultation_id', $consultationIds)
             ->select(
                 'diagnosis_records.consultation_id',
-                'diagnosis_lookup.diagnosis_name as diagnosis_name',
+                DB::raw(self::diagnosisDisplayNameSql().' as diagnosis_name'),
                 'diagnosis_records.remarks'
             )
             ->orderBy('diagnosis_records.id')
@@ -147,7 +147,7 @@ final class ConsultationQueryService
             ->whereIn('prescriptions.consultation_id', $consultationIds)
             ->select(
                 'prescriptions.consultation_id',
-                'medicines_lookup.name as medicine_name',
+                DB::raw(self::medicineDisplayNameSql().' as medicine_name'),
                 'prescriptions.dosage',
                 'prescriptions.duration'
             )
@@ -196,6 +196,25 @@ final class ConsultationQueryService
             ->leftJoin('medicines_lookup', 'prescriptions.medicine_id', '=', 'medicines_lookup.id');
     }
 
+    /**
+     * The name a diagnosis row should be rendered as: an explicit free-text
+     * override always wins over the linked ICD-10 entry, and the linked entry
+     * wins over nothing so custom rows are never blank.
+     */
+    public static function diagnosisDisplayNameSql(): string
+    {
+        return "COALESCE(NULLIF(diagnosis_records.custom_diagnosis_name, ''), diagnosis_lookup.diagnosis_name)";
+    }
+
+    /**
+     * The name a prescription row should be rendered as. Mirrors
+     * {@see self::diagnosisDisplayNameSql()} for the medicine lookup.
+     */
+    public static function medicineDisplayNameSql(): string
+    {
+        return "COALESCE(NULLIF(prescriptions.custom_medicine_name, ''), medicines_lookup.name)";
+    }
+
     public static function previousVitalsFor(Patient $patient): ?\stdClass
     {
         return DB::table('vitals')
@@ -219,8 +238,8 @@ final class ConsultationQueryService
             ->where('diagnosis_records.consultation_id', $consultation->id)
             ->select(
                 'diagnosis_records.id',
-                'diagnosis_lookup.diagnosis_name as diagnosis_name',
-                'diagnosis_records.custom_diagnosis_name',
+                'diagnosis_records.diagnosis_id',
+                DB::raw(self::diagnosisDisplayNameSql().' as display_name'),
                 'diagnosis_records.remarks'
             )
             ->get();
@@ -232,8 +251,8 @@ final class ConsultationQueryService
             ->where('prescriptions.consultation_id', $consultation->id)
             ->select(
                 'prescriptions.id',
-                'medicines_lookup.name as medicine_name',
-                'prescriptions.custom_medicine_name',
+                'prescriptions.medicine_id',
+                DB::raw(self::medicineDisplayNameSql().' as display_name'),
                 'prescriptions.dosage',
                 'prescriptions.route',
                 'prescriptions.frequency',

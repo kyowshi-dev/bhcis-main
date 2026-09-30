@@ -22,6 +22,7 @@ class UpdatePrescriptionRequest extends FormRequest
     {
         return [
             'medicine_name' => ['required', 'string', 'max:255'],
+            'medicine_id' => ['nullable', 'integer', Rule::exists('medicines_lookup', 'id')->whereNull('deleted_at')],
             'dosage' => ['required', 'string', 'max:255'],
             'route' => ['required', 'string', Rule::in(MedicationRoute::values())],
             'frequency' => ['required', 'string', 'max:255'],
@@ -32,21 +33,33 @@ class UpdatePrescriptionRequest extends FormRequest
     }
 
     /**
-     * Reject adding a duplicate custom medicine to the same consultation.
+     * Reject saving a medicine that already appears on this consultation,
+     * whether the existing row is directory-linked or free text.
      */
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator) {
             $consultation = $this->route('consultation');
             $medicineName = trim((string) $this->input('medicine_name'));
+            $medicineId = $this->input('medicine_id');
 
             if ($consultation && $medicineName !== '') {
                 $existingId = (int) $this->route('prescriptionId');
 
                 $exists = DB::table('prescriptions')
-                    ->where('consultation_id', $consultation->id)
-                    ->where('id', '!=', $existingId)
-                    ->whereRaw('LOWER(custom_medicine_name) = ?', [strtolower($medicineName)])
+                    ->leftJoin('medicines_lookup', 'medicines_lookup.id', '=', 'prescriptions.medicine_id')
+                    ->where('prescriptions.consultation_id', $consultation->id)
+                    ->where('prescriptions.id', '!=', $existingId)
+                    ->where(function ($query) use ($medicineName, $medicineId) {
+                        $query->whereRaw(
+                            'LOWER(COALESCE(prescriptions.custom_medicine_name, medicines_lookup.name)) = ?',
+                            [strtolower($medicineName)]
+                        );
+
+                        if ($medicineId !== null) {
+                            $query->orWhere('prescriptions.medicine_id', (int) $medicineId);
+                        }
+                    })
                     ->exists();
 
                 if ($exists) {
