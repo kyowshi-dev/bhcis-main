@@ -184,7 +184,10 @@ class ConsultationController extends Controller
         $worker = $this->currentWorker();
 
         if ($error = ConsultationService::clinicalReviewError($consultation)) {
-            return redirect()->back()->withErrors(['consultation' => $error]);
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['consultation' => $error])
+                ->with('vitals_form', 'retake');
         }
 
         VitalsService::recordClinical($consultation, $request->validated(), $worker);

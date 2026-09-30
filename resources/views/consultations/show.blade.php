@@ -3,7 +3,7 @@
 @section('title', 'Consultation')
 
 @section('content')
-<div class="space-y-5 lg:space-y-6 animate-in opacity-0 pb-24" x-data="{ showRetakeVitals: false }">
+<div class="space-y-5 lg:space-y-6 animate-in opacity-0 pb-24" x-data="{ showRetakeVitals: {{ session('vitals_form') === 'retake' ? 'true' : 'false' }} }">
     @if (session('success'))
         <div class="rounded-xl border px-4 py-3 text-sm" style="background: var(--teal-soft); border-color: var(--border); color: var(--primary);">
             {{ session('success') }}
@@ -142,17 +142,9 @@
                                 <td class="px-2 py-2">
                                     <div class="flex items-center gap-2">
                                         <button type="button"
-                                            @click="$dispatch('open-edit-vital', {
-                                                id: {{ $vitalVersion->id }},
-                                                bp_systolic: {{ $vitalVersion->bp_systolic ?? 'null' }},
-                                                bp_diastolic: {{ $vitalVersion->bp_diastolic ?? 'null' }},
-                                                temperature: {{ $vitalVersion->temperature_c ?? 'null' }},
-                                                weight: {{ $vitalVersion->weight_kg ?? 'null' }},
-                                                height: {{ $vitalVersion->height_cm ?? 'null' }},
-                                                notes: @js($vitalVersion->notes ?? '')
-                                            })"
+                                            @click="$dispatch('open-edit-vital', { id: {{ $vitalVersion->id }} })"
                                             class="text-[11px] font-semibold text-[var(--primary)] hover:underline">Edit</button>
-<form action="{{ route('consultations.vitals.delete', ['consultation' => $consultation->id, 'vitalId' => $vitalVersion->id]) }}" method="POST" onsubmit="return confirmVitalsDelete(this);">
+                                        <form action="{{ route('consultations.vitals.delete', ['consultation' => $consultation->id, 'vitalId' => $vitalVersion->id]) }}" method="POST" onsubmit="return confirmVitalsDelete(this);">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="text-[11px] font-semibold text-[var(--danger)] hover:underline disabled:cursor-not-allowed disabled:opacity-50" @if (($vitalVersion->phase ?? null) === 'triage' || $allVitals->count() <= 1) disabled @endif>Delete</button>
@@ -167,23 +159,88 @@
 
             <div class="border-t px-4 py-4" style="border-color: var(--border);">
                 @if ($clinicalReviewOpen)
-                    <button type="button" @click="showRetakeVitals = !showRetakeVitals" class="rounded-lg bg-[var(--primary)] px-3 py-2 text-xs font-semibold text-white">
+                    <button type="button" @click="showRetakeVitals = !showRetakeVitals" :aria-expanded="showRetakeVitals.toString()" aria-controls="retakeVitalsForm"
+                            class="inline-flex items-center gap-2 rounded-lg bg-[var(--primary)] px-4 py-3 text-xs font-semibold text-white transition hover:opacity-90">
+                        <i class="fa-solid fa-heart-pulse" aria-hidden="true"></i>
                         <span x-show="!showRetakeVitals">Re-take vitals</span>
                         <span x-show="showRetakeVitals" style="display: none;">Hide re-take form</span>
                     </button>
 
-                    <form x-show="showRetakeVitals" x-transition style="display: none;" action="{{ route('consultations.vitals.retake', $consultation->id) }}" method="POST" class="mt-3 space-y-2">
+                    <form id="retakeVitalsForm" x-show="showRetakeVitals" x-transition style="display: none;"
+                          action="{{ route('consultations.vitals.retake', $consultation->id) }}" method="POST"
+                          class="mt-3 space-y-4 rounded-xl border p-4" style="border-color: var(--border); background: var(--bg-surface);">
                         @csrf
-                        <div class="grid grid-cols-2 gap-2 md:grid-cols-5">
-                            <input type="number" name="bp_systolic" min="0" max="300" step="1" placeholder="SYS" class="rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" style="border-color: var(--border);">
-                            <input type="number" name="bp_diastolic" min="0" max="200" step="1" placeholder="DIA" class="rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" style="border-color: var(--border);">
-                            <input type="number" name="temperature" min="30" max="45" step="0.1" placeholder="Temp °C" class="rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" style="border-color: var(--border);">
-                            <input type="number" name="weight" min="0" max="500" step="0.1" placeholder="Weight kg" class="rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" style="border-color: var(--border);">
-                            <input type="number" name="height" min="0" max="300" step="0.1" placeholder="Height cm" class="rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" style="border-color: var(--border);">
+                        <div class="flex flex-wrap items-start justify-between gap-2">
+                            <div>
+                                <p class="text-sm font-semibold" style="color: var(--ink);">Record a new vitals version</p>
+                                <p class="text-xs mt-0.5" style="color: var(--ink-muted);">Enter at least one reading - earlier versions stay in history.</p>
+                            </div>
+                            <p class="text-xs rounded-lg bg-teal-soft px-2 py-1" style="color: var(--ink-muted);">
+                                Latest: BP {{ $latestVitals?->bp_systolic ?? '-' }}/{{ $latestVitals?->bp_diastolic ?? '-' }} ·
+                                {{ $latestVitals?->temperature_c ?? '-' }}°C ·
+                                {{ $latestVitals?->weight_kg ?? '-' }}kg ·
+                                {{ $latestVitals?->height_cm ?? '-' }}cm
+                            </p>
                         </div>
-                        <textarea name="notes" rows="2" placeholder="Optional notes" class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" style="border-color: var(--border);"></textarea>
-                        <div class="flex justify-end">
-                            <button type="submit" class="rounded-xl bg-[var(--primary)] px-4 py-2 text-sm font-semibold text-white">Save new vitals version</button>
+
+                        <div class="grid grid-cols-2 gap-3 lg:grid-cols-5">
+                            <div>
+                                <label for="retake_bp_systolic" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Systolic (mmHg)</label>
+                                <input id="retake_bp_systolic" type="number" name="bp_systolic" value="{{ old('bp_systolic') }}" min="0" max="300" step="1" inputmode="numeric" placeholder="SYS"
+                                       class="w-full rounded-lg border px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" style="border-color: var(--border); color: var(--ink);">
+                                @error('bp_systolic')
+                                    <p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>
+                                @enderror
+                            </div>
+                            <div>
+                                <label for="retake_bp_diastolic" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Diastolic (mmHg)</label>
+                                <input id="retake_bp_diastolic" type="number" name="bp_diastolic" value="{{ old('bp_diastolic') }}" min="0" max="200" step="1" inputmode="numeric" placeholder="DIA"
+                                       class="w-full rounded-lg border px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" style="border-color: var(--border); color: var(--ink);">
+                                @error('bp_diastolic')
+                                    <p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>
+                                @enderror
+                            </div>
+                            <div>
+                                <label for="retake_temperature" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Temperature (°C)</label>
+                                <input id="retake_temperature" type="number" name="temperature" value="{{ old('temperature') }}" min="30" max="45" step="0.1" inputmode="decimal" placeholder="36.5"
+                                       class="w-full rounded-lg border px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" style="border-color: var(--border); color: var(--ink);">
+                                @error('temperature')
+                                    <p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>
+                                @enderror
+                            </div>
+                            <div>
+                                <label for="retake_weight" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Weight (kg)</label>
+                                <input id="retake_weight" type="number" name="weight" value="{{ old('weight') }}" min="0" max="500" step="0.1" inputmode="decimal" placeholder="60"
+                                       class="w-full rounded-lg border px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" style="border-color: var(--border); color: var(--ink);">
+                                @error('weight')
+                                    <p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>
+                                @enderror
+                            </div>
+                            <div>
+                                <label for="retake_height" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Height (cm)</label>
+                                <input id="retake_height" type="number" name="height" value="{{ old('height') }}" min="0" max="300" step="0.1" inputmode="decimal" placeholder="165"
+                                       class="w-full rounded-lg border px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" style="border-color: var(--border); color: var(--ink);">
+                                @error('height')
+                                    <p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="retake_notes" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Notes <span class="font-normal">(optional)</span></label>
+                            <textarea id="retake_notes" name="notes" rows="2" placeholder="e.g. Re-checked after 5 minutes of rest"
+                                      class="w-full rounded-lg border px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" style="border-color: var(--border); color: var(--ink);">{{ old('notes') }}</textarea>
+                            @error('notes')
+                                <p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                            <button type="button" @click="showRetakeVitals = false"
+                                    class="rounded-lg border px-4 py-3 text-sm font-semibold transition hover:bg-black/[0.03]"
+                                    style="border-color: var(--border); color: var(--ink-muted);">Cancel</button>
+                            <button type="submit"
+                                    class="rounded-lg bg-[var(--primary)] px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90">Save new vitals version</button>
                         </div>
                     </form>
                 @else
@@ -622,43 +679,72 @@
     </x-modal>
 
     <x-modal name="edit-vital-modal" title="Edit vitals"
-             x-on:open-edit-vital.window="open = true; const d = $event.detail; if (d) { editVitalId = d.id; editBpSystolic = d.bp_systolic; editBpDiastolic = d.bp_diastolic; editTemperature = d.temperature; editWeight = d.weight; editHeight = d.height; editNotes = d.notes || ''; }"
+             x-effect="if (open) { document.body.classList.add('overflow-hidden'); $nextTick(function () { var panel = $refs.panel; if (panel) { var focusable = panel.querySelector('[data-autofocus], input, select, textarea, button'); if (focusable) { focusable.focus(); } } }); } else { document.body.classList.remove('overflow-hidden'); }"
+             x-on:open-edit-vital.window="open = true; const d = $event.detail; if (d) { editVitalId = d.id; editBpSystolic = d.bp_systolic ?? ''; editBpDiastolic = d.bp_diastolic ?? ''; editTemperature = d.temperature ?? ''; editWeight = d.weight ?? ''; editHeight = d.height ?? ''; editNotes = d.notes || ''; }"
              x-on:close.window="open = false"
-             x-data="{ editVitalId: null, editBpSystolic: '', editBpDiastolic: '', editTemperature: '', editWeight: '', editHeight: '', editNotes: '' }">
-        <form :action="'{{ route('consultations.vitals.update', ['consultation' => $consultation->id, 'vitalId' => '__ID__']) }}'".replace('__ID__', editVitalId)" method="POST" class="space-y-3">
+             x-data="{
+                open: {{ session('vitals_form') === 'edit' ? 'true' : 'false' }},
+                editVitalId: {{ \Illuminate\Support\Js::from(((int) old('vital_id')) ?: null) }},
+                editBpSystolic: {{ \Illuminate\Support\Js::from(old('bp_systolic', '')) }},
+                editBpDiastolic: {{ \Illuminate\Support\Js::from(old('bp_diastolic', '')) }},
+                editTemperature: {{ \Illuminate\Support\Js::from(old('temperature', '')) }},
+                editWeight: {{ \Illuminate\Support\Js::from(old('weight', '')) }},
+                editHeight: {{ \Illuminate\Support\Js::from(old('height', '')) }},
+                editNotes: {{ \Illuminate\Support\Js::from(old('notes', '')) }}
+             }">
+        <form :action="'{{ route('consultations.vitals.update', ['consultation' => $consultation->id, 'vitalId' => '__ID__']) }}'.replace('__ID__', editVitalId)" method="POST" class="space-y-3">
             @csrf
             @method('PUT')
+            <input type="hidden" name="vital_id" :value="editVitalId">
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Systolic (mmHg)</label>
-                    <input type="number" name="bp_systolic" x-model="editBpSystolic" min="0" max="300" step="1" placeholder="SYS"
+                    <label for="edit_bp_systolic" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Systolic (mmHg)</label>
+                    <input id="edit_bp_systolic" type="number" name="bp_systolic" x-model="editBpSystolic" min="0" max="300" step="1" inputmode="numeric" placeholder="SYS"
                            class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2" style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);">
+                    @error('bp_systolic')
+                        <p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>
+                    @enderror
                 </div>
                 <div>
-                    <label class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Diastolic (mmHg)</label>
-                    <input type="number" name="bp_diastolic" x-model="editBpDiastolic" min="0" max="200" step="1" placeholder="DIA"
+                    <label for="edit_bp_diastolic" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Diastolic (mmHg)</label>
+                    <input id="edit_bp_diastolic" type="number" name="bp_diastolic" x-model="editBpDiastolic" min="0" max="200" step="1" inputmode="numeric" placeholder="DIA"
                            class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2" style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);">
+                    @error('bp_diastolic')
+                        <p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>
+                    @enderror
                 </div>
                 <div>
-                    <label class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Temperature (°C)</label>
-                    <input type="number" name="temperature" x-model="editTemperature" min="30" max="45" step="0.1" placeholder="Temp"
+                    <label for="edit_temperature" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Temperature (°C)</label>
+                    <input id="edit_temperature" type="number" name="temperature" x-model="editTemperature" min="30" max="45" step="0.1" inputmode="decimal" placeholder="36.5"
                            class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2" style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);">
+                    @error('temperature')
+                        <p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>
+                    @enderror
                 </div>
                 <div>
-                    <label class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Weight (kg)</label>
-                    <input type="number" name="weight" x-model="editWeight" min="0" max="500" step="0.1" placeholder="Weight"
+                    <label for="edit_weight" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Weight (kg)</label>
+                    <input id="edit_weight" type="number" name="weight" x-model="editWeight" min="0" max="500" step="0.1" inputmode="decimal" placeholder="60"
                            class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2" style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);">
+                    @error('weight')
+                        <p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>
+                    @enderror
                 </div>
                 <div class="col-span-2">
-                    <label class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Height (cm)</label>
-                    <input type="number" name="height" x-model="editHeight" min="0" max="300" step="0.1" placeholder="Height"
+                    <label for="edit_height" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Height (cm)</label>
+                    <input id="edit_height" type="number" name="height" x-model="editHeight" min="0" max="300" step="0.1" inputmode="decimal" placeholder="165"
                            class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2" style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);">
+                    @error('height')
+                        <p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>
+                    @enderror
                 </div>
             </div>
             <div>
-                <label class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Notes</label>
-                <textarea name="notes" x-model="editNotes" rows="2" placeholder="Notes"
+                <label for="edit_notes" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Notes</label>
+                <textarea id="edit_notes" name="notes" x-model="editNotes" rows="2" placeholder="Notes"
                           class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2" style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);"></textarea>
+                @error('notes')
+                    <p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>
+                @enderror
             </div>
             <div class="flex justify-end gap-2 pt-1">
                 <button type="button" @click="$dispatch('close')" class="rounded-lg border px-4 py-2 text-sm font-semibold transition hover:bg-black/[0.03]"
