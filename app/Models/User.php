@@ -193,16 +193,18 @@ class User extends Authenticatable
     // Zone-based data scoping (least privilege)
     //
     // Facility-level staff (Admin, Doctor, Nurse, Midwife) see all
-    // records. Zone-assigned workers (BHW) holding the `household`
-    // permission are restricted to patients, consultations, households
-    // and reports within the zones assigned to their health worker
-    // profile. `household` implies zone-level duty; `users` implies
-    // administrator (unrestricted).
+    // records. Zone-assigned workers (BHW) are restricted to patients,
+    // consultations, households and reports within the zones assigned
+    // to their health worker profile. The BHW role always implies
+    // zone-level duty regardless of specific permissions; `users`
+    // implies administrator (unrestricted).
     // ------------------------------------------------------------------
 
     public function isZoneScoped(): bool
     {
-        return $this->hasPermission('household') && ! $this->isAdmin();
+        return ! $this->isAdmin()
+            && ($this->hasPermission('household')
+                || strcasecmp((string) ($this->role->role_name ?? ''), 'BHW') === 0);
     }
 
     /**

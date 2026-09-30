@@ -45,8 +45,11 @@ class RoleManagementController extends Controller
             'permissions.*' => ['exists:permissions,id'],
         ]);
 
+        $submittedPermissionIds = array_map('intval', $validated['permissions'] ?? []);
+        $userManagementId = (int) Permission::where('name', 'users')->value('id');
+
         // Prevent removing the 'users' permission from the Admin role.
-        if ($role->role_name === 'Admin' && ! in_array(Permission::where('name', 'users')->value('id'), $validated['permissions'] ?? [], true)) {
+        if ($role->role_name === 'Admin' && ! in_array($userManagementId, $submittedPermissionIds, true)) {
             return redirect()
                 ->route('roles.edit', $role)
                 ->withErrors(['permissions' => 'The Admin role must keep the "User Management" permission.'])

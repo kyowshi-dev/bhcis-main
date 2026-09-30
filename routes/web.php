@@ -59,10 +59,10 @@ Route::middleware('auth')->group(function () {
     // 2. SEARCH API (For AJAX/autocomplete)
     // PII-bearing endpoints are permission-gated; all searches are rate-limited.
     Route::get('/search/patients', [SearchController::class, 'patients'])
-        ->middleware('permission:patients', 'throttle:60,1')
+        ->middleware('permission:patients,consultations', 'throttle:60,1')
         ->name('search.patients');
     Route::get('/search/households', [SearchController::class, 'households'])
-        ->middleware('permission:household', 'throttle:60,1')
+        ->middleware('permission:household,patients,consultations', 'throttle:60,1')
         ->name('search.households');
     Route::get('/search/diagnoses', [SearchController::class, 'diagnoses'])
         ->middleware('permission:consultations', 'throttle:60,1')
@@ -104,26 +104,26 @@ Route::middleware('auth')->group(function () {
 
     // 3b. Create Patient (Order matters: This must be BEFORE {id})
     Route::get('/patients/create', [PatientController::class, 'create'])
-        ->middleware('permission:patients')
+        ->middleware('permission:patients,consultations')
         ->name('patients.create');
     Route::post('/patients', [PatientController::class, 'store'])
-        ->middleware('permission:patients')
+        ->middleware('permission:patients,consultations')
         ->name('patients.store');
 
     // 3c. Show Patient Profile (Wildcard catches IDs like 1, 2, 100)
     Route::get('/patients/{id}', [PatientController::class, 'show'])
-        ->middleware('permission:patients')
+        ->middleware('permission:patients,consultations')
         ->name('patients.show');
 
     // 3d. Patient delete / restore
     Route::delete('/patients/{id}', [PatientController::class, 'destroy'])
-        ->middleware('permission:patients')
+        ->middleware('permission:patients_destroy')
         ->name('patients.destroy');
     Route::post('/patients/{id}/restore', [PatientController::class, 'restore'])
-        ->middleware('permission:patients')
+        ->middleware('permission:patients_destroy')
         ->name('patients.restore');
     Route::delete('/patients/{id}/force', [PatientController::class, 'forceDestroy'])
-        ->middleware('permission:patients')
+        ->middleware('permission:patients_destroy')
         ->name('patients.forceDestroy');
 
     // 4. CONSULTATION MODULE

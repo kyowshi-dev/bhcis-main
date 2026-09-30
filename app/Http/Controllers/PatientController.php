@@ -75,7 +75,12 @@ class PatientController extends Controller
             return back()->withInput()->withErrors($e->errors());
         }
 
-        return redirect()->route('patients.index')->with('success', 'Patient registered successfully!')->with('new_patient_id', $patient->id);
+        $redirectRoute = auth()->user()->canAccessPatient($patient)
+            ? 'patients.show'
+            : 'dashboard';
+
+        return redirect()->route($redirectRoute, $patient->id ?? '')
+            ->with('success', 'Patient registered successfully!');
     }
 
     // 4. View Single Patient Profile

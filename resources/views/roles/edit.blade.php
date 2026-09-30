@@ -50,20 +50,34 @@
             <p class="text-sm mt-1 mb-3" style="color: var(--ink-muted);">Users assigned to this role inherit these permissions.</p>
 
             <div id="permissionsList" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                @php
+                    $selectedPermissionIds = array_map('intval', old('permissions', $role->permissions->pluck('id')->all()));
+                @endphp
                 @foreach ($permissions as $permission)
+                    @php
+                        $isLocked = $role->role_name === 'Admin' && $permission->name === 'users';
+                    @endphp
                     <label class="flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors hover:bg-black/[0.03]"
                            style="border-color: var(--border); background: var(--bg-surface-elevated);">
+                        @if ($isLocked)
+                            <input type="hidden" name="permissions[]" value="{{ $permission->id }}">
+                        @endif
                         <input
                             type="checkbox"
                             name="permissions[]"
                             value="{{ $permission->id }}"
                             class="permission-checkbox h-4 w-4 mt-0.5 rounded border-border focus:ring-accent-blue"
-                            @checked(in_array($permission->id, old('permissions', $role->permissions->pluck('id')->all()), true))
-                            @disabled($role->role_name === 'Admin' && $permission->name === 'users')
+                            @checked($isLocked || in_array($permission->id, $selectedPermissionIds, true))
+                            @disabled($isLocked)
                             data-name="{{ $permission->name }}"
                         >
                         <div class="min-w-0">
-                            <div class="font-medium text-sm" style="color: var(--ink);">{{ ucfirst($permission->name) }}</div>
+                            <div class="font-medium text-sm" style="color: var(--ink);">
+                                {{ ucfirst($permission->name) }}
+                                @if ($isLocked)
+                                    <span class="text-xs font-normal" style="color: var(--ink-muted);">(required)</span>
+                                @endif
+                            </div>
                             <div class="text-xs mt-0.5" style="color: var(--ink-muted);">{{ $permission->description }}</div>
                         </div>
                     </label>

@@ -159,7 +159,7 @@
                                 <div class="font-medium text-sm truncate" style="color: var(--ink);">{{ ucwords($queue->name ?? $queue['name'] ?? 'Unknown patient') }}</div>
                                 <div class="text-xs mt-1 truncate" style="color: var(--ink-muted);">{{ $queue->identifier ?? $queue['identifier'] ?? 'No ID available' }}</div>
                             </div>
-                            @if (auth()->user()?->hasPermission('patients') && ($queue->patient_id ?? null))
+                            @if ((auth()->user()?->hasPermission('patients') || auth()->user()?->hasPermission('consultations')) && ($queue->patient_id ?? null))
                                 <a href="{{ route('patients.show', $queue->patient_id) }}" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border shrink-0 transition hover:bg-black/[0.02]" style="border-color: var(--border); color: var(--primary);">
                                     <i class="fa-solid fa-user" aria-hidden="true"></i>
                                     View patient

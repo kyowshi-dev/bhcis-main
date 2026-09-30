@@ -16,11 +16,17 @@ class SearchController extends Controller
     /**
      * Zone scoping helper for patient queries.
      *
-     * BHWs are allowed to search all patients, not just those
-     * in their assigned puroks/zones.
+     * Zone-scoped users (BHWs) may only search patients within
+     * their assigned zones.
      */
     private function scopePatientQuery(Builder $query): Builder
     {
+        $user = auth()->user();
+
+        if ($user !== null && $user->isZoneScoped()) {
+            $query->whereIn('household_id', $user->accessibleHouseholdIds());
+        }
+
         return $query;
     }
 

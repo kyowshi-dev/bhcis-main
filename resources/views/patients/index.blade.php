@@ -151,10 +151,12 @@
                             </td>
                             <td class="px-4 py-2.5 text-right whitespace-nowrap">
                                 @if($patient->trashed())
-                                    <form action="{{ route('patients.restore', $patient->id) }}" method="POST" class="inline" onclick="return confirm('Restore this patient?')">
-                                        @csrf
-                                        <button type="submit" class="font-semibold text-sm transition-colors hover:underline" style="color: var(--primary);">Restore</button>
-                                    </form>
+                                    @if (auth()->user()?->hasPermission('patients_destroy'))
+                                        <form action="{{ route('patients.restore', $patient->id) }}" method="POST" class="inline" onclick="return confirm('Restore this patient?')">
+                                            @csrf
+                                            <button type="submit" class="font-semibold text-sm transition-colors hover:underline" style="color: var(--primary);">Restore</button>
+                                        </form>
+                                    @endif
                                 @else
                                     <a href="{{ route('patients.show', $patient->id) }}" class="font-semibold text-sm transition-colors hover:underline" style="color: var(--primary);">View</a>
                                 @endif
