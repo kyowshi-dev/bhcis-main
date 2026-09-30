@@ -13,6 +13,11 @@ use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
+    /**
+     * Rows per register preview panel on the midwife dashboard.
+     */
+    private const PREVIEW_LIMIT = 15;
+
     public function index(Request $request): View
     {
         $user = auth()->user();
@@ -48,13 +53,21 @@ class DashboardController extends Controller
 
     private function midwifeDashboard(Request $request, User $user, Carbon $today): View
     {
-        $counts = app(MaternalQueryService::class)->overviewCounts();
+        $maternal = app(MaternalQueryService::class);
+        $counts = $maternal->overviewCounts();
 
         return view('dashboard_midwife_v2', [
             'activePregnancies' => $counts['activePregnancies'],
             'postnatalMothers' => $counts['postnatalMothers'],
             'fpClients' => $counts['fpClients'],
             'followUpsDue' => $counts['followUpsDue'],
+            ...($user->hasPermission('maternal') ? [
+                // Preview rows for the expandable register panels; totals come
+                // from overviewCounts() so KPI numbers and panel totals match.
+                'prenatalPreview' => $maternal->activePregnancies()->take(self::PREVIEW_LIMIT),
+                'fpPreview' => $maternal->familyPlanningClients()->take(self::PREVIEW_LIMIT),
+                'postnatalPreview' => $maternal->postnatalRecords()->take(self::PREVIEW_LIMIT),
+            ] : []),
         ]);
     }
 
