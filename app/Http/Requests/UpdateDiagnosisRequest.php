@@ -18,6 +18,7 @@ class UpdateDiagnosisRequest extends FormRequest
     {
         return [
             'diagnosis_name' => ['required', 'string', 'max:255'],
+            'diagnosis_id' => ['nullable', 'integer', 'exists:diagnosis_lookup,id'],
             'remarks' => ['nullable', 'string'],
         ];
     }

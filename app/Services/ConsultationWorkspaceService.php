@@ -43,7 +43,7 @@ final class ConsultationWorkspaceService
             'canReferExternally' => $healthWorker?->isClinical() ?? false,
             'canAcknowledgeIntake' => $healthWorker?->isNurse() ?? false,
             'canAddDiagnosis' => $healthWorker?->isDoctor() ?? false,
-            'canAddPrescription' => $healthWorker?->isDoctor() ?? false,
+            'canAddPrescription' => $healthWorker?->canModifyPrescriptions() ?? false,
         ];
     }
 
@@ -70,7 +70,7 @@ final class ConsultationWorkspaceService
             ->select(
                 'diagnosis_records.*',
                 'diagnosis_lookup.diagnosis_code as diagnosis_code',
-                'diagnosis_lookup.diagnosis_name as diagnosis_name',
+                DB::raw(ConsultationQueryService::diagnosisDisplayNameSql().' as diagnosis_name'),
                 DB::raw('(diagnosis_records.diagnosis_id IS NULL) as is_custom')
             )
             ->get();
@@ -82,7 +82,7 @@ final class ConsultationWorkspaceService
             ->where('prescriptions.consultation_id', $consultation->id)
             ->select(
                 'prescriptions.*',
-                'medicines_lookup.name as medicine_name',
+                DB::raw(ConsultationQueryService::medicineDisplayNameSql().' as medicine_name'),
                 DB::raw('(prescriptions.medicine_id IS NULL) as is_custom')
             )
             ->get();

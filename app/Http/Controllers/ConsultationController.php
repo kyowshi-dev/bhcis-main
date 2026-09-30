@@ -305,8 +305,8 @@ class ConsultationController extends Controller
         $this->authorizePermission('consultations');
 
         $worker = $this->currentWorker();
-        if (! $worker->isDoctor()) {
-            abort(403, 'Only doctors can add prescriptions.');
+        if (! $worker->canModifyPrescriptions()) {
+            abort(403, 'Only doctors and administrators can add prescriptions.');
         }
 
         if ($error = ConsultationService::clinicalReviewError($consultation)) {
@@ -327,10 +327,11 @@ class ConsultationController extends Controller
         $this->authorizePermission('consultations');
 
         return view('consultations.edit', [
-            'consultation' => $consultation,
+            'consultation' => $consultation->loadMissing('worker'),
             'patient' => Patient::query()->find($consultation->patient_id),
             'diagnoses' => ConsultationQueryService::diagnosesForEdit($consultation),
             'prescriptions' => ConsultationQueryService::prescriptionsForEdit($consultation),
+            'canModifyPrescriptions' => auth()->user()->healthWorker?->canModifyPrescriptions() ?? false,
         ]);
     }
 
@@ -383,7 +384,7 @@ class ConsultationController extends Controller
     {
         $this->authorizePermission('consultations');
 
-        $this->requireDoctor();
+        $this->requirePrescriptionAccess();
 
         if (! ConsultationService::deletePrescription($consultation, (int) $prescriptionId)) {
             if ($request->expectsJson()) {
@@ -412,10 +413,17 @@ class ConsultationController extends Controller
             return response()->json(['message' => 'Diagnosis not found'], 404);
         }
 
+        [$lookupId, $customName] = $this->resolveDiagnosisName(
+            trim((string) $request->input('diagnosis_name')),
+            $request->input('diagnosis_id'),
+            $record
+        );
+
         DB::table('diagnosis_records')
             ->where('id', $diagnosisId)
             ->update([
-                'custom_diagnosis_name' => $request->input('diagnosis_name'),
+                'diagnosis_id' => $lookupId,
+                'custom_diagnosis_name' => $customName,
                 'remarks' => $request->input('remarks'),
                 'updated_at' => now(),
             ]);
@@ -427,7 +435,7 @@ class ConsultationController extends Controller
     {
         $this->authorizePermission('consultations');
 
-        $this->requireDoctor();
+        $this->requirePrescriptionAccess();
 
         $record = DB::table('prescriptions')
             ->where('consultation_id', $consultation->id)
@@ -438,10 +446,17 @@ class ConsultationController extends Controller
             return response()->json(['message' => 'Prescription not found'], 404);
         }
 
+        [$lookupId, $customName] = $this->resolveMedicineName(
+            trim((string) $request->input('medicine_name')),
+            $request->input('medicine_id'),
+            $record
+        );
+
         DB::table('prescriptions')
             ->where('id', $prescriptionId)
             ->update([
-                'custom_medicine_name' => $request->input('medicine_name'),
+                'medicine_id' => $lookupId,
+                'custom_medicine_name' => $customName,
                 'dosage' => $request->input('dosage'),
                 'route' => $request->input('route'),
                 'frequency' => $request->input('frequency'),
@@ -460,10 +475,16 @@ class ConsultationController extends Controller
 
         $worker = $this->currentWorker();
 
+        [$lookupId, $customName] = $this->resolveDiagnosisName(
+            trim((string) $request->input('diagnosis_name')),
+            $request->input('diagnosis_id'),
+            (object) ['diagnosis_id' => null]
+        );
+
         DB::table('diagnosis_records')->insert([
             'consultation_id' => $consultation->id,
-            'diagnosis_id' => null,
-            'custom_diagnosis_name' => $request->input('diagnosis_name'),
+            'diagnosis_id' => $lookupId,
+            'custom_diagnosis_name' => $customName,
             'remarks' => $request->input('remarks'),
             'diagnosed_by' => $worker->id,
             'created_at' => now(),
@@ -477,12 +498,18 @@ class ConsultationController extends Controller
     {
         $this->authorizePermission('consultations');
 
-        $this->requireDoctor();
+        $this->requirePrescriptionAccess();
+
+        [$lookupId, $customName] = $this->resolveMedicineName(
+            trim((string) $request->input('medicine_name')),
+            $request->input('medicine_id'),
+            (object) ['medicine_id' => null]
+        );
 
         DB::table('prescriptions')->insert([
             'consultation_id' => $consultation->id,
-            'medicine_id' => null,
-            'custom_medicine_name' => $request->input('medicine_name'),
+            'medicine_id' => $lookupId,
+            'custom_medicine_name' => $customName,
             'dosage' => $request->input('dosage'),
             'route' => $request->input('route'),
             'frequency' => $request->input('frequency'),
@@ -496,10 +523,61 @@ class ConsultationController extends Controller
         return response()->json(['success' => true, 'message' => 'Prescription added successfully.']);
     }
 
-    private function requireDoctor(): void
+    /**
+     * Decide how a submitted diagnosis name maps onto the ICD-10 link.
+     *
+     * A selected lookup entry always wins; a submitted name that still matches
+     * the currently linked entry keeps that link; anything else is recorded as
+     * a free-text override so the rendered name can never disagree with what
+     * the health worker typed.
+     *
+     * @param  object{diagnosis_id: int|string|null}  $record
+     * @return array{0: int|null, 1: string|null}
+     */
+    private function resolveDiagnosisName(string $submittedName, int|string|null $requestedLookupId, object $record): array
     {
-        if (! $this->currentWorker()->isDoctor()) {
-            abort(403, 'Only doctors can modify prescriptions.');
+        if ($requestedLookupId !== null) {
+            return [(int) $requestedLookupId, null];
+        }
+
+        $linkedName = $record->diagnosis_id
+            ? DB::table('diagnosis_lookup')->where('id', $record->diagnosis_id)->value('diagnosis_name')
+            : null;
+
+        if ($linkedName !== null && strcasecmp($submittedName, (string) $linkedName) === 0) {
+            return [(int) $record->diagnosis_id, null];
+        }
+
+        return [null, $submittedName];
+    }
+
+    /**
+     * Decide how a submitted medicine name maps onto the medicine directory link.
+     *
+     * @param  object{medicine_id: int|string|null}  $record
+     * @return array{0: int|null, 1: string|null}
+     */
+    private function resolveMedicineName(string $submittedName, int|string|null $requestedLookupId, object $record): array
+    {
+        if ($requestedLookupId !== null) {
+            return [(int) $requestedLookupId, null];
+        }
+
+        $linkedName = $record->medicine_id
+            ? DB::table('medicines_lookup')->where('id', $record->medicine_id)->value('name')
+            : null;
+
+        if ($linkedName !== null && strcasecmp($submittedName, (string) $linkedName) === 0) {
+            return [(int) $record->medicine_id, null];
+        }
+
+        return [null, $submittedName];
+    }
+
+    private function requirePrescriptionAccess(): void
+    {
+        if (! $this->currentWorker()->canModifyPrescriptions()) {
+            abort(403, 'Only doctors and administrators can modify prescriptions.');
         }
     }
 

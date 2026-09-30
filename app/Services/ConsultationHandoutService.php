@@ -54,7 +54,7 @@ final class ConsultationHandoutService
         $diagnoses = ConsultationQueryService::diagnosisRecordsQuery()
             ->where('diagnosis_records.consultation_id', $consultation->id)
             ->select(
-                'diagnosis_lookup.diagnosis_name as diagnosis_name',
+                DB::raw(ConsultationQueryService::diagnosisDisplayNameSql().' as diagnosis_name'),
                 'diagnosis_lookup.diagnosis_code as diagnosis_code',
                 'diagnosis_records.remarks'
             )
@@ -64,7 +64,7 @@ final class ConsultationHandoutService
         $prescriptions = ConsultationQueryService::prescriptionsQuery()
             ->where('prescriptions.consultation_id', $consultation->id)
             ->select(
-                'medicines_lookup.name as medicine_name',
+                DB::raw(ConsultationQueryService::medicineDisplayNameSql().' as medicine_name'),
                 'prescriptions.dosage',
                 'prescriptions.route',
                 'prescriptions.frequency',

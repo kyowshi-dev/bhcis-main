@@ -216,6 +216,9 @@
                                 @if ($d->is_custom)
                                     <span class="ml-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide" style="background: var(--border); color: var(--ink-muted);">Custom</span>
                                 @endif
+                                @if ($d->remarks)
+                                    <p class="text-xs mt-1" style="color: var(--ink-muted);">{{ $d->remarks }}</p>
+                                @endif
                             </div>
                         </div>
                     @endforeach
@@ -441,7 +444,7 @@
             </form>
             @else
             @if ($clinicalReviewOpen && !($canAddPrescription ?? false))
-                <p class="mt-4 pt-4 border-t text-sm" style="border-color: var(--border); color: var(--ink-muted);">Only doctors can add prescriptions.</p>
+                <p class="mt-4 pt-4 border-t text-sm" style="border-color: var(--border); color: var(--ink-muted);">Only doctors and administrators can add prescriptions.</p>
             @else
                 <p class="mt-4 pt-4 border-t text-sm" style="border-color: var(--border); color: var(--ink-muted);">Prescription entry opens after nurse validation routes this case to the doctor queue.</p>
             @endif
