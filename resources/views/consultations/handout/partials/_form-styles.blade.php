@@ -62,7 +62,7 @@
     }
 
     .section-header {
-        background: #6b7280;
+        background: #0d4a3c;
         color: #fff;
         font-weight: bold;
         font-size: 8pt;
@@ -124,88 +124,87 @@
 
  
 
-    .form-header-block {
-        border: 1px solid #000;
-        border-bottom: 0;
-        text-align: center;
-        padding: 2px 4px;
+    .bhcis-brand-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
     }
 
-    .form-header-block .title-caption {
-        font-size: 9pt;
-        letter-spacing: 0.06em;
-        margin-bottom: 0;
+    .bhcis-logo {
+        width: 34px;
+        height: 34px;
+        display: block;
+        flex-shrink: 0;
     }
 
-    .form-header-block h1 {
-        font-size: 11pt;
+    .bhcis-brand-name {
+        font-size: 9.5pt;
         font-weight: bold;
-        letter-spacing: 0.06em;
-        margin: 0;
+        line-height: 1.1;
+    }
+
+    .bhcis-brand-facility {
+        font-size: 7.5pt;
+        line-height: 1.1;
+    }
+
+    .bhcis-brand-note {
+        font-size: 6.5pt;
+        font-style: italic;
+        color: #4b5563;
+        line-height: 1.1;
+        margin-top: 1px;
+    }
+
+    .bhcis-title-cell {
+        text-align: center;
+        vertical-align: middle !important;
+        padding: 4px 6px !important;
+    }
+
+    .bhcis-form-title {
+        font-size: 11.5pt;
+        font-weight: bold;
+        letter-spacing: 0.05em;
         text-transform: uppercase;
+        line-height: 1.15;
+    }
+
+    .bhcis-meta .meta-cell {
+        padding: 2px 5px;
+    }
+
+    .bhcis-meta .meta-label {
+        display: block;
+        font-size: 6.5pt;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #4b5563;
+        line-height: 1.1;
+    }
+
+    .bhcis-meta .meta-value {
+        display: block;
+        font-size: 9pt;
+        font-weight: bold;
+        line-height: 1.15;
+        min-height: 11px;
     }
 
     .instructions {
         border: 1px solid #000;
-        border-bottom: 0;
         padding: 2px 4px;
         font-size: 7pt;
         font-style: italic;
         line-height: 1.15;
     }
 
-    .doh-header-brand {
-        display: table;
-        width: 100%;
-    }
-
-    .doh-logo-wrap {
-        display: table-cell;
-        width: 42px;
-        vertical-align: middle;
-        padding-right: 4px;
-    }
-
-    .doh-logo-wrap .logo-circle {
-        width: 38px;
-        height: 38px;
-        border: 1px solid #000;
-        border-radius: 50%;
-        overflow: hidden;
-        text-align: center;
-        background: #fff;
-        line-height: 36px;
-    }
-
-    .doh-logo-wrap img {
-        width: 32px;
-        height: 32px;
-        vertical-align: middle;
-    }
-
-    .doh-brand {
-        display: table-cell;
-        vertical-align: middle;
-        line-height: 1.08;
-    }
-
-    .doh-brand .rep { font-size: 7pt; }
-    .doh-brand .dept {
-        font-size: 10pt;
-        font-weight: bold;
-        color: #1a5c2e;
-        line-height: 1;
-    }
-    .doh-brand .dept-fil {
-        font-size: 8pt;
-        font-style: italic;
-        line-height: 1;
-    }
-
     .form-footer {
         border: 1px solid #000;
         border-top: 0;
-        background: #9ca3af;
+        background: #0d4a3c;
+        color: #fff;
         font-size: 7pt;
         font-weight: bold;
         padding: 2px 4px;
@@ -327,6 +326,7 @@
         .no-print { display: none !important; }
         body { background: #fff !important; }
         .iclinic-sheet { box-shadow: none !important; }
+        main { padding: 0 !important; }
     }
 
     @media screen {

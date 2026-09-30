@@ -8,7 +8,7 @@ The system complements their paper-log workflow; it does not replace official DO
 Keep these claims distinct. Never infer one from another:
 
 - **DOH-aligned design/workflow** - visual and procedural alignment with government health forms and practice.
-- **Visual/form modeling** - print forms reproduce iClinicSys/DOH layouts (e.g. `_doh-header`, ITR, patient-enrollment).
+- **Visual/form modeling** - print forms reproduce iClinicSys/DOH layouts (e.g. the immunization record card's DOH header block).
 - **Report-format compatibility** - outputs shaped to match required report formats (e.g. FHSIS-style reports).
 - **Data export/manual transfer** - records moved out by export or manual process.
 - **Interoperability / actual system or API integration** - automated data exchange with external systems.
@@ -32,7 +32,7 @@ Aesthetic preferences never carry the same authority as security, privacy, acces
 - Validation/data integrity: validation lives in `app/Http/Requests/` Form Request classes, not inline in controllers.
 - Auditability: keep audit logging on important clinical writes (`AuditLog`).
 - Accessibility-critical behavior: keyboard operability, visible focus, adequate contrast, labeled inputs, respect for `prefers-reduced-motion`.
-- Official print/form requirements: DOH/iClinicSys print forms keep their fixed layouts, borders, and wording (see SKILL.md).
+- Official print/form requirements: forms that reproduce official DOH/iClinicSys layouts (e.g. the immunization record card) keep their fixed layouts, borders, and wording (see SKILL.md). BHCIS-branded print forms (handout sheets, maternal print sheets) use the `_bhcis-header` pattern and must stay visually distinct from iClinicSys.
 - Preserve existing functionality unless the requested change requires otherwise.
 
 ## UX principles
@@ -40,7 +40,7 @@ Aesthetic preferences never carry the same authority as security, privacy, acces
 - Clinical users first: dense but scannable screens, no startup/SaaS decoration, never-ambiguous errors.
 - Direction over decoration: a color, badge, or motion earns its place only if it helps the user.
 - Task-oriented screens must make the primary task or next relevant action clear. Informational screens must make context and hierarchy clear.
-- App-shell UI and official print/PDF forms are two distinct modes and must not share styling tokens.
+- App-shell UI and print/PDF forms are two distinct modes and must not share styling tokens.
 
 ## Change discipline
 

@@ -1,6 +1,6 @@
 {{--
     Shared DOH brand block (logo + Republic of the Philippines / Department of Health).
-    Used by DOH print forms (iClinicSys headers, immunization record card).
+    Used only by the immunization record card. Not for BHCIS-branded print forms.
     Styled by each page's own stylesheet via the .doh-* classes.
 --}}
 @php
