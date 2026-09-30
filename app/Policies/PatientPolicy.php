@@ -20,7 +20,8 @@ class PatientPolicy
      */
     public function view(User $user, Patient $patient): bool
     {
-        return $user->hasPermission('patients');
+        return ($user->hasPermission('patients') || $user->hasPermission('consultations'))
+            && $user->canAccessPatient($patient);
     }
 
     /**
@@ -28,7 +29,7 @@ class PatientPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasPermission('patients');
+        return $user->hasPermission('patients') || $user->hasPermission('consultations');
     }
 
     /**
@@ -44,7 +45,9 @@ class PatientPolicy
      */
     public function delete(User $user, Patient $patient): bool
     {
-        return $user->hasPermission('patients') && $user->canAccessPatient($patient);
+        return $user->hasPermission('patients')
+            && $user->hasPermission('patients_destroy')
+            && $user->canAccessPatient($patient);
     }
 
     /**
@@ -52,7 +55,7 @@ class PatientPolicy
      */
     public function restore(User $user, Patient $patient): bool
     {
-        return $user->hasPermission('patients');
+        return $user->hasPermission('patients') && $user->hasPermission('patients_destroy');
     }
 
     /**
@@ -60,6 +63,6 @@ class PatientPolicy
      */
     public function forceDelete(User $user, Patient $patient): bool
     {
-        return $user->hasPermission('patients');
+        return $user->hasPermission('patients') && $user->hasPermission('patients_destroy');
     }
 }

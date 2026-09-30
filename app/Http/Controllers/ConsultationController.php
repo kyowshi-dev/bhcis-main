@@ -78,6 +78,12 @@ class ConsultationController extends Controller
     // 1. Show the Admission Form (Triage) - modal partial via AJAX; redirect for direct navigation
     public function create(Request $request, Patient $patient): View|RedirectResponse
     {
+        $this->authorizePermission('consultations');
+
+        if (auth()->user()->isZoneScoped() && ! auth()->user()->canAccessPatient($patient)) {
+            abort(403);
+        }
+
         $previousVitals = ConsultationQueryService::previousVitalsFor($patient);
 
         if ($request->ajax() || $request->wantsJson()) {
@@ -92,6 +98,11 @@ class ConsultationController extends Controller
     // 2. Save the Data (Triage Save)
     public function store(StoreConsultationRequest $request, Patient $patient): RedirectResponse
     {
+        $this->authorizePermission('consultations');
+
+        if (auth()->user()->isZoneScoped() && ! auth()->user()->canAccessPatient($patient)) {
+            abort(403);
+        }
 
         $worker = $this->currentWorker();
         $result = ConsultationService::start($patient, $request->validated(), $worker);

@@ -428,10 +428,19 @@ class SecurityTest extends TestCase
         $response->assertJsonPath('0.text', 'Doe, John');
     }
 
-    public function test_user_without_households_permission_cannot_search_households(): void
+    public function test_user_with_patients_permission_can_search_households(): void
     {
         $nurse = $this->createUserWithPermissions(['patients']);
         $this->actingAs($nurse);
+
+        $response = $this->get('/search/households?query=Test');
+        $response->assertStatus(200);
+    }
+
+    public function test_user_without_household_patients_consultations_cannot_search_households(): void
+    {
+        $user = $this->createUserWithPermissions(['reports']);
+        $this->actingAs($user);
 
         $response = $this->get('/search/households?query=Test');
         $response->assertStatus(403);

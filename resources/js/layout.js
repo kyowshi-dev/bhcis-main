@@ -39,11 +39,19 @@ function safeFetch(url, options) {
             }
 
             if (status === 403) {
-                _safeFetchShowError(
-                    "Access Denied",
-                    "You do not have permission to perform this action.",
-                );
-                return Promise.reject(new Error("Forbidden"));
+                return response
+                    .json()
+                    .catch(function () {
+                        return {};
+                    })
+                    .then(function (data) {
+                        _safeFetchShowError(
+                            "Access Denied",
+                            (data && data.message) ||
+                                "You do not have permission to perform this action.",
+                        );
+                        return Promise.reject(new Error("Forbidden"));
+                    });
             }
 
             if (status === 404) {
@@ -1313,12 +1321,14 @@ window.globalSearch = globalSearch;
  * Global header search — queries patients and households endpoints,
  * merges results, and navigates on click/Enter.
  */
-function globalSearch() {
+function globalSearch(config) {
+    config = config || { allowHouseholds: true };
     return {
         query: "",
         results: [],
         activeIndex: -1,
         searchTimer: null,
+        allowHouseholds: config.allowHouseholds,
 
         search: function () {
             var self = this;
@@ -1331,7 +1341,7 @@ function globalSearch() {
             clearTimeout(this.searchTimer);
             this.searchTimer = setTimeout(function () {
                 var q = encodeURIComponent(self.query.trim());
-                Promise.all([
+                var promises = [
                     safeFetch("/search/patients?query=" + q, { headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" } })
                         .then(function (r) { return r.json(); })
                         .then(function (data) {
@@ -1340,16 +1350,23 @@ function globalSearch() {
                             });
                         })
                         .catch(function () { return []; }),
-                    safeFetch("/search/households?query=" + q, { headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" } })
-                        .then(function (r) { return r.json(); })
-                        .then(function (data) {
-                            return (data || []).map(function (item) {
-                                return { label: item.text || "", url: "/households/" + item.id, type: "household", subtext: item.subtext || "" };
-                            });
-                        })
-                        .catch(function () { return []; }),
-                ]).then(function (merged) {
-                    self.results = merged[0].concat(merged[1]).slice(0, 10);
+                ];
+
+                if (self.allowHouseholds) {
+                    promises.push(
+                        safeFetch("/search/households?query=" + q, { headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" } })
+                            .then(function (r) { return r.json(); })
+                            .then(function (data) {
+                                return (data || []).map(function (item) {
+                                    return { label: item.text || "", url: "/households/" + item.id, type: "household", subtext: item.subtext || "" };
+                                });
+                            })
+                            .catch(function () { return []; })
+                    );
+                }
+
+                Promise.all(promises).then(function (merged) {
+                    self.results = merged[0].concat(merged[1] || []).slice(0, 10);
                     self.activeIndex = -1;
                 });
             }, 250);

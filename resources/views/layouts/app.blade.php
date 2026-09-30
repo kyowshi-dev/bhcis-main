@@ -184,7 +184,7 @@
                     @endphp
 
                     {{-- Global Search --}}
-                    <div x-data="globalSearch()" class="relative hidden sm:block">
+                    <div x-data="globalSearch({ allowHouseholds: {{ $can('household') ? 'true' : 'false' }} })" class="relative hidden sm:block">
                         <div class="relative">
                             <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-xs text-white/50" aria-hidden="true"></i>
                             <input type="search" x-model="query" @input.debounce.300ms="search()" @click.away="close()"

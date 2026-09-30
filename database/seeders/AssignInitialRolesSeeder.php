@@ -20,16 +20,16 @@ class AssignInitialRolesSeeder extends Seeder
             'Admin' => Permission::query()->pluck('name')->toArray(),
 
             // DOCTOR
-            'Doctor' => ['patients', 'consultations', 'medicines', 'maternal', 'print_handouts', 'dashboard_handouts'],
+            'Doctor' => ['patients', 'patients_destroy', 'consultations', 'medicines', 'maternal', 'print_handouts', 'dashboard_handouts'],
 
             // NURSE
-            'Nurse' => ['patients', 'consultations', 'medicines', 'immunizations', 'maternal', 'print_handouts', 'dashboard_handouts'],
+            'Nurse' => ['patients', 'patients_destroy', 'consultations', 'medicines', 'immunizations', 'maternal', 'print_handouts', 'dashboard_handouts'],
 
             // MIDWIFE
-            'Midwife' => ['patients', 'consultations', 'immunizations', 'maternal', 'reports', 'print_handouts', 'dashboard_handouts'],
+            'Midwife' => ['patients', 'patients_destroy', 'consultations', 'immunizations', 'maternal', 'reports', 'print_handouts', 'dashboard_handouts'],
 
             // BHW
-            'BHW' => ['household', 'patients', 'consultations', 'immunizations', 'maternal', 'reports', 'print_handouts', 'dashboard_handouts'],
+            'BHW' => ['consultations', 'immunizations', 'maternal', 'reports', 'print_handouts', 'dashboard_handouts'],
         ];
 
         foreach ($rolePermissionMap as $roleName => $permissionNames) {

@@ -109,7 +109,7 @@ class PrivacyComplianceTest extends TestCase
 
     public function test_admin_can_soft_delete_patient(): void
     {
-        $user = $this->createUserWithPermissions(['patients']);
+        $user = $this->createUserWithPermissions(['patients', 'patients_destroy']);
         $patient = $this->createPatient();
 
         $response = $this->actingAs($user)->delete(route('patients.destroy', $patient));
@@ -121,7 +121,7 @@ class PrivacyComplianceTest extends TestCase
 
     public function test_admin_can_restore_soft_deleted_patient(): void
     {
-        $user = $this->createUserWithPermissions(['patients']);
+        $user = $this->createUserWithPermissions(['patients', 'patients_destroy']);
         $patient = $this->createPatient();
         $patient->delete();
 
@@ -134,7 +134,7 @@ class PrivacyComplianceTest extends TestCase
 
     public function test_admin_can_force_delete_patient(): void
     {
-        $user = $this->createUserWithPermissions(['patients']);
+        $user = $this->createUserWithPermissions(['patients', 'patients_destroy']);
         $patient = $this->createPatient();
         $patientId = $patient->id;
 

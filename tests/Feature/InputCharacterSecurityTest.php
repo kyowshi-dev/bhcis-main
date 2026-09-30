@@ -182,15 +182,17 @@ class InputCharacterSecurityTest extends TestCase
         $this->actingAs($this->createUserWithPermissions(['patients']));
         $this->zone();
 
-        $this->post(route('patients.store'), $this->patientPayload([
+        $response = $this->post(route('patients.store'), $this->patientPayload([
             'first_name' => 'Peña',
             'last_name' => "O'Brien-Reyes",
             'middle_name' => 'Dela Cruz',
             'suffix' => 'Jr.',
             'mother_name' => 'María Josefa',
             'spouse_name' => 'Juan Peña Jr.',
-        ]))->assertSessionHasNoErrors()
-            ->assertRedirect(route('patients.index'));
+        ]));
+
+        $response->assertSessionHasNoErrors();
+        $this->assertStringContainsString('/patients/', $response->headers->get('Location'));
 
         $this->assertDatabaseHas('patients', [
             'first_name' => 'Peña',

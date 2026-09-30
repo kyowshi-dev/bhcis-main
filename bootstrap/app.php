@@ -87,8 +87,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (HttpException $e) {
             if ($e->getStatusCode() === 403) {
                 if (request()->expectsJson() || request()->ajax()) {
+                    $message = trim($e->getMessage());
+
                     return response()->json([
-                        'message' => 'You do not have permission to perform this action.',
+                        'message' => $message !== '' ? $message : 'You do not have permission to perform this action.',
                     ], 403);
                 }
 

@@ -125,33 +125,37 @@
                 @endif
             </div>
 
-            <div class="mt-4 lg:mt-6 pt-3 lg:pt-4 border-t">
-                <h4 class="text-xs font-bold text-ink-subtle uppercase mb-2">Immunization</h4>
-                <p class="text-xs lg:text-sm text-ink-muted mb-2">{{ $patient->immunization_records_count }} dose(s) recorded.</p>
-                <a href="{{ route('immunizations.patient', $patient->id) }}" class="inline-flex items-center justify-center w-full px-3 py-2 rounded-lg text-xs lg:text-sm font-medium bg-teal-50 text-teal-700 hover:bg-teal-100 transition">
-                    View / Add Immunization
-                </a>
-            </div>
-
-            <div class="mt-4 lg:mt-6 pt-3 lg:pt-4 border-t">
-                <h4 class="text-xs font-bold text-ink-subtle uppercase mb-2">Data Management</h4>
-                <div class="space-y-2">
-                    <form action="{{ route('patients.destroy', $patient->id) }}" method="POST" class="w-full confirm-delete-form" data-message="Archive this patient? They will be moved to trash and hidden from the main list.">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="inline-flex items-center justify-center w-full px-3 py-2 rounded-lg text-xs lg:text-sm font-medium transition" style="background: var(--amber-soft); color: var(--amber);">
-                            <i class="fa-solid fa-box-archive mr-1.5" aria-hidden="true"></i> Archive Patient
-                        </button>
-                    </form>
-                    <form action="{{ route('patients.forceDestroy', $patient->id) }}" method="POST" class="w-full confirm-delete-form" data-message="PERMANENTLY delete this patient? This cannot be undone. All their records will be lost forever." data-confirm-text="Permanently Delete">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="inline-flex items-center justify-center w-full px-3 py-2 rounded-lg text-xs lg:text-sm font-medium transition" style="background: var(--danger-soft, #fef2f2); color: var(--danger);">
-                            <i class="fa-solid fa-trash-can mr-1.5" aria-hidden="true"></i> Delete Permanently
-                        </button>
-                    </form>
+            @if (auth()->user()?->hasPermission('immunizations'))
+                <div class="mt-4 lg:mt-6 pt-3 lg:pt-4 border-t">
+                    <h4 class="text-xs font-bold text-ink-subtle uppercase mb-2">Immunization</h4>
+                    <p class="text-xs lg:text-sm text-ink-muted mb-2">{{ $patient->immunization_records_count }} dose(s) recorded.</p>
+                    <a href="{{ route('immunizations.patient', $patient->id) }}" class="inline-flex items-center justify-center w-full px-3 py-2 rounded-lg text-xs lg:text-sm font-medium bg-teal-50 text-teal-700 hover:bg-teal-100 transition">
+                        View / Add Immunization
+                    </a>
                 </div>
-            </div>
+            @endif
+
+            @if (auth()->user()?->hasPermission('patients_destroy'))
+                <div class="mt-4 lg:mt-6 pt-3 lg:pt-4 border-t">
+                    <h4 class="text-xs font-bold text-ink-subtle uppercase mb-2">Data Management</h4>
+                    <div class="space-y-2">
+                        <form action="{{ route('patients.destroy', $patient->id) }}" method="POST" class="w-full confirm-delete-form" data-message="Archive this patient? They will be moved to trash and hidden from the main list.">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="inline-flex items-center justify-center w-full px-3 py-2 rounded-lg text-xs lg:text-sm font-medium transition" style="background: var(--amber-soft); color: var(--amber);">
+                                <i class="fa-solid fa-box-archive mr-1.5" aria-hidden="true"></i> Archive Patient
+                            </button>
+                        </form>
+                        <form action="{{ route('patients.forceDestroy', $patient->id) }}" method="POST" class="w-full confirm-delete-form" data-message="PERMANENTLY delete this patient? This cannot be undone. All their records will be lost forever." data-confirm-text="Permanently Delete">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="inline-flex items-center justify-center w-full px-3 py-2 rounded-lg text-xs lg:text-sm font-medium transition" style="background: var(--danger-soft, #fef2f2); color: var(--danger);">
+                                <i class="fa-solid fa-trash-can mr-1.5" aria-hidden="true"></i> Delete Permanently
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 
