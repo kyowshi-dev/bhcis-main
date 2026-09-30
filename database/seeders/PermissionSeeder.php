@@ -25,6 +25,7 @@ class PermissionSeeder extends Seeder
             ['name' => 'maternal', 'description' => 'Access to Maternal Health module (prenatal, postnatal, family planning)'],
             ['name' => 'print_handouts', 'description' => 'Print consultation Rx and diagnosis handouts'],
             ['name' => 'dashboard_handouts', 'description' => 'View completed handouts panel on dashboards'],
+            ['name' => 'nurse_batch_entry', 'description' => 'Access batch data entry for digitizing paper forms (nurse/midwife/admin)'],
         ];
 
         foreach ($permissions as $permission) {
