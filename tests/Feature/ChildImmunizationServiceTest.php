@@ -59,11 +59,17 @@ class ChildImmunizationServiceTest extends TestCase
 
     public function test_age_parts_converts_years_months_days(): void
     {
-        $dob = now()->startOfDay()->subYears(1)->subMonths(2)->subDays(5);
+        Carbon::setTestNow(Carbon::parse('2026-06-15 12:00:00'));
 
-        $parts = ChildImmunizationService::ageParts($this->makePatient($dob));
+        try {
+            $dob = now()->startOfDay()->subYears(1)->subMonths(2)->subDays(5);
 
-        $this->assertSame(['years' => 1, 'months' => 2, 'days' => 5], $parts);
+            $parts = ChildImmunizationService::ageParts($this->makePatient($dob));
+
+            $this->assertSame(['years' => 1, 'months' => 2, 'days' => 5], $parts);
+        } finally {
+            Carbon::setTestNow();
+        }
     }
 
     public function test_status_is_waiting_when_not_yet_eligible(): void
