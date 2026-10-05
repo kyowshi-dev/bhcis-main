@@ -33,6 +33,8 @@
         </div>
     </div>
 
+    <x-flash />
+
     <div class="animate-in opacity-0 delay-2 rounded-xl border p-4" x-data="patientSearch()"
          style="background: var(--bg-surface); border-color: var(--border); box-shadow: var(--shadow-sm);">
         <div class="flex flex-col lg:flex-row lg:items-center gap-3">

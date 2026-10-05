@@ -172,7 +172,7 @@ app/
 │                            # Referral, Immunization, Prenatal, Postnatal,
 │                            # FamilyPlanning, Report, Prescription, User & Role mgmt...
 ├── Http/Requests/           # Form Request validation classes
-├── Models/                  # Eloquent models (Patient, Pregnancy, Vaccination...)
+├── Models/                  # Eloquent models (Patient, Pregnancy, Immunization...)
 ├── Services/PdfService.php  # Shared PDF rendering (Spatie PDF + Browsershot)
 └── Helpers/                 # Global helpers (user(), breadcrumbs)
 routes/web.php               # All web routes (auth + protected)
