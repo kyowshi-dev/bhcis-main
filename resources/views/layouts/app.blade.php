@@ -98,7 +98,7 @@
                     @endif
 
                     @if ($can('immunizations'))
-                        <x-layouts.nav-link url="{{ route('immunizations.index') }}" label="Vaccinations" icon="fa-solid fa-syringe"
+                        <x-layouts.nav-link url="{{ route('immunizations.index') }}" label="Immunizations" icon="fa-solid fa-syringe"
                                             :active="request()->routeIs('immunizations*')" />
                     @endif
 

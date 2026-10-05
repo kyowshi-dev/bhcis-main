@@ -4,20 +4,7 @@
 
 @section('content')
 <div class="space-y-5 lg:space-y-6 animate-in opacity-0 pb-24" x-data="{ showRetakeVitals: {{ session('vitals_form') === 'retake' ? 'true' : 'false' }} }">
-    @if (session('success'))
-        <div class="rounded-xl border px-4 py-3 text-sm" style="background: var(--teal-soft); border-color: var(--border); color: var(--primary);">
-            {{ session('success') }}
-        </div>
-    @endif
-    @if ($errors->any())
-        <div class="rounded-xl border px-4 py-3 text-sm" style="background: var(--danger-soft); border-color: var(--danger-soft); color: var(--danger);">
-            <ul class="list-disc list-inside space-y-1">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
+    <x-flash />
 
     <div class="rounded-xl border bg-[var(--bg-surface)] p-4 lg:p-5" style="border-color: var(--border); box-shadow: var(--shadow-sm);">
         <div class="flex flex-wrap items-center justify-between gap-3">

@@ -34,11 +34,7 @@
         </div>
     </div>
 
-    @if (session('success'))
-        <div class="rounded-xl border px-4 py-3" style="background: var(--teal-soft); border-color: var(--primary); color: var(--primary);">
-            <i class="fa-solid fa-circle-check mr-1.5" aria-hidden="true"></i>{{ session('success') }}
-        </div>
-    @endif
+    <x-flash />
 
     <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <form method="GET" action="{{ route('immunizations.index') }}" class="flex flex-wrap items-center gap-2" x-data="{ showCustom: {{ $hasDateRange ? 'true' : 'false' }} }">

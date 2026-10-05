@@ -3,6 +3,8 @@
 @section('title', 'Patient Profile')
 
 @section('content')
+<x-flash />
+
 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
     <div class="md:col-span-1 space-y-4 lg:space-y-6">
         <div class="bg-surface p-4 lg:p-6 rounded-xl lg:rounded-lg shadow-sm border border-border">

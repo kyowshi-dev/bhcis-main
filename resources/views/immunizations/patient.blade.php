@@ -34,18 +34,14 @@
         </div>
     </div>
 
-    @if (session('success'))
-        <div class="rounded-xl border px-4 py-3" style="background: var(--teal-soft); border-color: var(--primary); color: var(--primary);">
-            <i class="fa-solid fa-circle-check mr-1.5" aria-hidden="true"></i>{{ session('success') }}
-        </div>
-    @endif
+    <x-flash />
 
     @if (! $isImmunizationEnrolled)
         <div class="rounded-xl border px-4 py-3 text-sm" style="background: var(--accent-blue-soft); border-color: var(--accent-blue); color: var(--accent-blue);">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <i class="fa-solid fa-info-circle mr-1.5" aria-hidden="true"></i>
-                    This patient is not enrolled in the immunization program. Enroll to track their vaccination schedule.
+                    This patient is not enrolled in the immunization program. Enroll to track their immunization schedule.
                 </div>
                 <form method="POST" action="{{ route('immunizations.enroll', $patient->id) }}">
                     @csrf
