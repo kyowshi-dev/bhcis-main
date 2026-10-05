@@ -134,7 +134,7 @@ class SearchFuzzyTest extends TestCase
             ->assertJsonFragment(['id' => $householdId, 'text' => 'Del Rosario']);
     }
 
-    public function test_household_fuzzy_search_respects_zone_scoping(): void
+    public function test_household_search_includes_households_outside_assigned_zones(): void
     {
         DB::table('zones')->insert([
             ['id' => 1, 'zone_number' => '1'],
@@ -167,11 +167,11 @@ class SearchFuzzyTest extends TestCase
         DB::table('zones')->where('id', 1)->update(['assigned_worker_id' => $workerId]);
 
         $response = $this->actingAs($user)
-            ->getJson('/search/households?query=delrssario');
+            ->getJson('/search/households?query=ros');
 
         $response->assertOk()
             ->assertJsonFragment(['id' => 1, 'text' => 'Del Rosario'])
-            ->assertJsonMissing(['id' => 2]);
+            ->assertJsonFragment(['id' => 2, 'text' => 'Dela Rosa']);
     }
 
     public function test_diagnosis_name_search_tolerates_typos_via_fuzzy_rerank(): void

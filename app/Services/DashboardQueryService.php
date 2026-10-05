@@ -21,7 +21,10 @@ final class DashboardQueryService
         $query = DB::table('patients');
 
         if ($user !== null && $user->isZoneScoped()) {
-            $query->whereIn('household_id', $user->accessibleHouseholdIds());
+            $query->where(function ($q) use ($user) {
+                $q->whereIn('household_id', $user->accessibleHouseholdIds())
+                    ->orWhere('enrolled_by', $user->id);
+            });
         }
 
         return $query->count();
@@ -129,7 +132,10 @@ final class DashboardQueryService
             ->orderByDesc('consultations.updated_at');
 
         if ($user !== null && $user->isZoneScoped()) {
-            $resultsQuery->whereIn('patients.household_id', $user->accessibleHouseholdIds());
+            $resultsQuery->where(function ($q) use ($user) {
+                $q->whereIn('patients.household_id', $user->accessibleHouseholdIds())
+                    ->orWhere('patients.enrolled_by', $user->id);
+            });
         }
 
         if (! empty($inputs['query'] ?? null)) {
@@ -197,7 +203,10 @@ final class DashboardQueryService
             ->whereIn('consultations.status', ConsultationStatus::activeValues());
 
         if ($user !== null && $user->isZoneScoped()) {
-            $query->whereIn('patients.household_id', $user->accessibleHouseholdIds());
+            $query->where(function ($q) use ($user) {
+                $q->whereIn('patients.household_id', $user->accessibleHouseholdIds())
+                    ->orWhere('patients.enrolled_by', $user->id);
+            });
         }
 
         return $query
@@ -224,7 +233,10 @@ final class DashboardQueryService
             ->limit($limit);
 
         if ($user !== null && $user->isZoneScoped()) {
-            $query->whereIn('household_id', $user->accessibleHouseholdIds());
+            $query->where(function ($q) use ($user) {
+                $q->whereIn('household_id', $user->accessibleHouseholdIds())
+                    ->orWhere('enrolled_by', $user->id);
+            });
         }
 
         return $query->get()

@@ -36,15 +36,10 @@ final class PatientService
     {
         $user = auth()->user();
 
-        // Zone-scoped workers may only attach patients to households within
-        // their assigned coverage, but they may create households in any zone.
-        if ($user !== null && $user->isZoneScoped()) {
-            $creatingNew = (int) ($validated['create_new_household'] ?? 0) === 1;
-
-            if (! $creatingNew && ! $user->canAccessHousehold((int) $validated['household_id'])) {
-                throw ValidationException::withMessages(['household_id' => 'This household is outside your assigned zones.']);
-            }
-        }
+        // Zone-scoped workers may attach patients to any household and may
+        // create households in any zone. The enrolling worker is recorded in
+        // patients.enrolled_by so they keep access to patients they enrolled
+        // outside their assigned zones.
 
         // --- 1. HANDLE HOUSEHOLD CREATION OR SELECTION ---
         $householdId = $validated['household_id'] ?? null;
@@ -84,10 +79,11 @@ final class PatientService
         // --- 3. INSERT PATIENT DATA (Sanitized) ---
         return Patient::create([
             'household_id' => $householdId,
+            'enrolled_by' => $user?->id,
             // Auto-Capitalize Names
             'first_name' => ucwords(strtolower($validated['first_name'])),
             'last_name' => ucwords(strtolower($validated['last_name'])),
-            'middle_name' => $validated['middle_name'] ? ucfirst(strtolower($validated['middle_name'])) : null,
+            'middle_name' => ($validated['middle_name'] ?? null) ? ucfirst(strtolower($validated['middle_name'])) : null,
 
             'suffix' => $validated['suffix'] ?? null,
             'sex' => $validated['sex'],

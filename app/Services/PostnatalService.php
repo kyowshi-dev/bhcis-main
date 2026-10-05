@@ -155,6 +155,7 @@ class PostnatalService
 
         $child = Patient::create([
             'household_id' => $record->patient->household_id,
+            'enrolled_by' => auth()->id(),
             'suffix' => null,
             'spouse_name' => '',
             'residential_address' => $record->patient->residential_address ?? '',

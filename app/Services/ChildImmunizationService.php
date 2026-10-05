@@ -461,6 +461,7 @@ class ChildImmunizationService
 
         $patient = Patient::create([
             'household_id' => $householdId,
+            'enrolled_by' => auth()->id(),
             'first_name' => $data['first_name'],
             'last_name' => $data['last_name'],
             'middle_name' => $data['middle_name'] ?? null,

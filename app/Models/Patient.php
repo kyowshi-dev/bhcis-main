@@ -19,6 +19,7 @@ use Illuminate\Support\Carbon;
 /**
  * @property int $id
  * @property int $household_id
+ * @property int|null $enrolled_by
  * @property string $last_name
  * @property string $first_name
  * @property string|null $middle_name
@@ -113,6 +114,7 @@ class Patient extends Model
 
     protected $fillable = [
         'household_id',
+        'enrolled_by',
         'last_name',
         'first_name',
         'middle_name',
