@@ -28,7 +28,10 @@ final class ReferralQueryService
             );
 
         if ($user !== null && $user->isZoneScoped()) {
-            $builder->whereIn('patients.household_id', $user->accessibleHouseholdIds());
+            $builder->where(function ($q) use ($user) {
+                $q->whereIn('patients.household_id', $user->accessibleHouseholdIds())
+                    ->orWhere('patients.enrolled_by', $user->id);
+            });
         }
 
         if ($query !== '') {
@@ -94,7 +97,10 @@ final class ReferralQueryService
             ->where('outward_referrals.id', $id);
 
         if ($user !== null && $user->isZoneScoped()) {
-            $query->whereIn('patients.household_id', $user->accessibleHouseholdIds());
+            $query->where(function ($q) use ($user) {
+                $q->whereIn('patients.household_id', $user->accessibleHouseholdIds())
+                    ->orWhere('patients.enrolled_by', $user->id);
+            });
         }
 
         $referral = $query->select(

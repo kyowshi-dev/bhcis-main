@@ -45,10 +45,8 @@ class PatientController extends Controller
 
         $transientHousehold = PatientService::ensureTransientHousehold();
 
-        $user = auth()->user();
-
         $selectedHousehold = null;
-        if (! empty($selectedHouseholdId) && $user->canAccessHousehold((int) $selectedHouseholdId)) {
+        if (! empty($selectedHouseholdId)) {
             $selectedHousehold = Household::find($selectedHouseholdId);
         }
 

@@ -198,6 +198,10 @@ class User extends Authenticatable
     // to their health worker profile. The BHW role always implies
     // zone-level duty regardless of specific permissions; `users`
     // implies administrator (unrestricted).
+    //
+    // Exception: workers may enroll patients into any household (in any
+    // zone) and keep access to patients they enrolled themselves - the
+    // enrolling user is recorded in patients.enrolled_by.
     // ------------------------------------------------------------------
 
     public function isZoneScoped(): bool
@@ -246,7 +250,10 @@ class User extends Authenticatable
     {
         if (! isset($this->memoizedScopeIds['patientIds'])) {
             $this->memoizedScopeIds['patientIds'] = Patient::query()
-                ->whereIn('household_id', $this->accessibleHouseholdIds())
+                ->where(function (Builder $query) {
+                    $query->whereIn('household_id', $this->accessibleHouseholdIds())
+                        ->orWhere('enrolled_by', $this->id);
+                })
                 ->pluck('id')
                 ->all();
         }
@@ -257,7 +264,8 @@ class User extends Authenticatable
     public function canAccessPatient(Patient $patient): bool
     {
         return ! $this->isZoneScoped()
-            || in_array($patient->household_id, $this->accessibleHouseholdIds(), true);
+            || in_array($patient->household_id, $this->accessibleHouseholdIds(), true)
+            || (int) $patient->enrolled_by === (int) $this->id;
     }
 
     public function canAccessConsultation(Consultation $consultation): bool
@@ -273,7 +281,8 @@ class User extends Authenticatable
     }
 
     /**
-     * Restrict an Eloquent Patient query to this user's assigned zones.
+     * Restrict an Eloquent Patient query to this user's assigned zones,
+     * plus any patient this user enrolled themselves.
      */
     public function scopeAccessiblePatients(Builder $query): Builder
     {
@@ -281,7 +290,10 @@ class User extends Authenticatable
             return $query;
         }
 
-        return $query->whereIn('patients.household_id', $this->accessibleHouseholdIds());
+        return $query->where(function (Builder $q) {
+            $q->whereIn('patients.household_id', $this->accessibleHouseholdIds())
+                ->orWhere('patients.enrolled_by', $this->id);
+        });
     }
 
     /**

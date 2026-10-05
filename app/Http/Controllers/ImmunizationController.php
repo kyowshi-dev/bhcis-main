@@ -330,17 +330,10 @@ class ImmunizationController extends Controller
 
     public function enrollInfant(StoreInfantWithHouseholdRequest $request): RedirectResponse
     {
-        $user = auth()->user();
         $validated = $request->validated();
 
-        if ($request->boolean('create_household')) {
-            if ($user->isZoneScoped() && ! in_array((int) $validated['zone_id'], $user->accessibleZoneIds(), true)) {
-                abort(403, 'You cannot enroll an infant outside your assigned zones.');
-            }
-        } elseif (! $user->canAccessHousehold((int) $validated['household_id'])) {
-            abort(403, 'This household is outside your assigned zones.');
-        }
-
+        // Enrollment may target any household/zone; the enrolling worker is
+        // recorded via patients.enrolled_by so they keep access to the infant.
         try {
             $patient = $this->service->enrollInfant($validated);
         } catch (ValidationException $e) {
@@ -397,10 +390,6 @@ class ImmunizationController extends Controller
 
         if (! empty($validated['zone_id'])) {
             $query->where('zone_id', $validated['zone_id']);
-        }
-
-        if (auth()->user()->isZoneScoped()) {
-            $query->whereIn('zone_id', auth()->user()->accessibleZoneIds());
         }
 
         $results = $query->orderBy('family_name_head')->limit(10)->get();

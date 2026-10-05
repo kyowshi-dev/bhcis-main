@@ -29,15 +29,6 @@ final class BatchEntryService
                 'contact_number' => ($validated['new_household_contact_number'] ?? null) !== null ? trim($validated['new_household_contact_number']) : null,
             ]);
             $householdId = $createdHousehold->id;
-        } elseif ($householdId !== null) {
-            // Zone-scoped workers may only attach patients to households within their coverage.
-            if ($user !== null && $user->isZoneScoped()) {
-                if (! $user->canAccessHousehold((int) $householdId)) {
-                    throw ValidationException::withMessages([
-                        'household_id' => 'This household is outside your assigned zones.',
-                    ]);
-                }
-            }
         }
 
         $household = Household::with('zone')->find($householdId);
@@ -72,6 +63,7 @@ final class BatchEntryService
         // --- 3. INSERT PATIENT DATA ---
         return Patient::create([
             'household_id' => $householdId,
+            'enrolled_by' => $user?->id,
             'first_name' => ucwords(strtolower($validated['first_name'])),
             'last_name' => ucwords(strtolower($validated['last_name'])),
             'middle_name' => $validated['middle_name'] ? ucfirst(strtolower($validated['middle_name'])) : null,

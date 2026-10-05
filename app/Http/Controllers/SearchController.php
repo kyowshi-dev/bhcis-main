@@ -16,15 +16,19 @@ class SearchController extends Controller
     /**
      * Zone scoping helper for patient queries.
      *
-     * Zone-scoped users (BHWs) may only search patients within
-     * their assigned zones.
+     * Zone-scoped users (BHWs) may search patients within their assigned
+     * zones, plus any patient they enrolled themselves (even when that
+     * patient's household lies outside their zones).
      */
     private function scopePatientQuery(Builder $query): Builder
     {
         $user = auth()->user();
 
         if ($user !== null && $user->isZoneScoped()) {
-            $query->whereIn('household_id', $user->accessibleHouseholdIds());
+            $query->where(function (Builder $q) use ($user) {
+                $q->whereIn('household_id', $user->accessibleHouseholdIds())
+                    ->orWhere('enrolled_by', $user->id);
+            });
         }
 
         return $query;
@@ -322,6 +326,9 @@ class SearchController extends Controller
      *
      * Strict substring pass first; fuzzy re-rank on the family name head
      * fills the list when the strict pass comes up short.
+     *
+     * Not zone-scoped: patient enrollment may attach a patient to any
+     * household in the barangay, so zone-scoped workers get the full list.
      */
     public function households(Request $request)
     {
@@ -335,10 +342,6 @@ class SearchController extends Controller
 
         $households = DB::table('households')
             ->join('zones', 'households.zone_id', '=', 'zones.id')
-            ->when(
-                auth()->user()?->isZoneScoped(),
-                fn ($query) => $query->whereIn('households.zone_id', auth()->user()->accessibleZoneIds())
-            )
             ->where(function ($qb) use ($query) {
                 $qb->where('households.family_name_head', 'LIKE', "%{$query}%")
                     ->orWhere('zones.zone_number', 'LIKE', "%{$query}%")
@@ -357,10 +360,6 @@ class SearchController extends Controller
             if ($firstChar !== '') {
                 $candidates = DB::table('households')
                     ->join('zones', 'households.zone_id', '=', 'zones.id')
-                    ->when(
-                        auth()->user()?->isZoneScoped(),
-                        fn ($q) => $q->whereIn('households.zone_id', auth()->user()->accessibleZoneIds())
-                    )
                     ->where('households.family_name_head', 'LIKE', "{$firstChar}%")
                     ->whereNotIn('households.id', $households->pluck('id'))
                     ->distinct()
