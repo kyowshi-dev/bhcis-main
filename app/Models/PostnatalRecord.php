@@ -31,8 +31,8 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $vitamin_a_date
  * @property Carbon|null $iron_date
  * @property int|null $iron_count
- * @property string $child_last_name
- * @property string $child_first_name
+ * @property string|null $child_last_name
+ * @property string|null $child_first_name
  * @property string|null $child_middle_name
  * @property string $child_sex
  * @property numeric|null $child_birth_length_cm
@@ -89,36 +89,36 @@ class PostnatalRecord extends Model
 {
     use LogsActivity, SoftDeletes;
 
-    public const string OUTCOME_LIVE_BIRTH = 'live_birth';
+    public const OUTCOME_LIVE_BIRTH = 'live_birth';
 
-    public const string OUTCOME_STILLBIRTH = 'stillbirth';
+    public const OUTCOME_STILLBIRTH = 'stillbirth';
 
-    public const string OUTCOME_ABORTION = 'abortion';
+    public const OUTCOME_ABORTION = 'abortion';
 
-    public const string OUTCOME_OTHERS = 'others';
+    public const OUTCOME_OTHERS = 'others';
 
-    public const array OUTCOMES = [
+    public const OUTCOMES = [
         self::OUTCOME_LIVE_BIRTH => 'Live Birth',
         self::OUTCOME_STILLBIRTH => 'Stillbirth',
         self::OUTCOME_ABORTION => 'Abortion',
         self::OUTCOME_OTHERS => 'Others',
     ];
 
-    public const array PLACES = [
+    public const PLACES = [
         'home' => 'Home',
         'health_center' => 'Health Center',
         'hospital' => 'Hospital',
         'other_facility' => 'Other Facility',
     ];
 
-    public const array MODES = [
+    public const MODES = [
         'normal_vaginal' => 'Normal Vaginal',
         'cesarean' => 'Cesarean Section',
         'vacuum_forceps' => 'Vacuum / Forceps Assisted',
         'others' => 'Others',
     ];
 
-    public const array ATTENDANTS = [
+    public const ATTENDANTS = [
         'midwife' => 'Midwife',
         'physician' => 'Physician',
         'nurse' => 'Nurse',
@@ -126,7 +126,7 @@ class PostnatalRecord extends Model
         'others' => 'Others',
     ];
 
-    public const array DANGER_SIGNS_MOTHER = [
+    public const DANGER_SIGNS_MOTHER = [
         'Vaginal bleeding',
         'Fever',
         'Severe headache',
@@ -139,7 +139,7 @@ class PostnatalRecord extends Model
         'Others',
     ];
 
-    public const array DANGER_SIGNS_BABY = [
+    public const DANGER_SIGNS_BABY = [
         'Poor feeding',
         'Fever',
         'Hypothermia',
@@ -152,7 +152,7 @@ class PostnatalRecord extends Model
         'Others',
     ];
 
-    public const array POSTPARTUM_SLOTS = [
+    public const POSTPARTUM_SLOTS = [
         'postpartum_24h_date' => 1,
         'postpartum_7d_date' => 7,
         'postpartum_14d_date' => 14,
@@ -162,7 +162,7 @@ class PostnatalRecord extends Model
     /**
      * Fields that only make sense when the outcome is a live birth.
      */
-    public const array NEWBORN_FIELDS = [
+    public const NEWBORN_FIELDS = [
         'child_last_name',
         'child_first_name',
         'child_middle_name',

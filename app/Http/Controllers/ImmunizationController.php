@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ResolvesWorkerId;
+use App\Http\Requests\AdministerBatchVaccineRequest;
 use App\Http\Requests\AdministerVaccineRequest;
 use App\Http\Requests\MarkNoShowRequest;
 use App\Http\Requests\StoreInfantWithHouseholdRequest;
@@ -16,6 +17,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -295,6 +297,66 @@ class ImmunizationController extends Controller
         }
 
         return back()->with('success', $vaccine->vaccine_name.' recorded (dose '.$record->dose_number.').'.$next);
+    }
+
+    /**
+     * Record several due doses for one patient in a single submission.
+     *
+     * All doses share one date, temperature, weight/height and notes. The
+     * whole batch is atomic: any per-dose validation failure rolls back
+     * every record written in the loop.
+     */
+    public function administerBatch(AdministerBatchVaccineRequest $request, $id): RedirectResponse
+    {
+        $patient = Patient::findOrFail($id);
+
+        $vaccineIds = array_map('intval', $request->input('doses', []));
+        $vaccines = Vaccine::whereIn('id', $vaccineIds)->get()->keyBy('id');
+
+        foreach ($vaccineIds as $vaccineId) {
+            $vaccine = $vaccines->get($vaccineId);
+            if ($vaccine === null || ! $this->service->vaccineMatchesAge($patient, $vaccine)) {
+                return back()->withErrors(['doses' => 'One or more selected vaccines are not appropriate for this patient.'])->withInput();
+            }
+        }
+
+        $groupCounts = $vaccines->pluck('group_key')->filter()->countBy();
+        if ($groupCounts->contains(fn (int $count) => $count > 1)) {
+            return back()->withErrors(['doses' => 'Select only one option per vaccine group (e.g. Hepa B birth dose variants).'])->withInput();
+        }
+
+        $shared = [
+            'date_given' => $request->input('date_given'),
+            'temp_recorded' => $request->input('temp_recorded'),
+            'child_weight_kg' => $request->input('child_weight_kg'),
+            'child_height_cm' => $request->input('child_height_cm'),
+            'notes' => $request->input('notes'),
+            'override_reason' => $request->input('override_reason'),
+            'administered_by' => $this->currentWorkerId(),
+        ];
+
+        $recorded = [];
+
+        try {
+            DB::transaction(function () use ($patient, $vaccineIds, $shared, &$recorded): void {
+                foreach ($vaccineIds as $vaccineId) {
+                    $vaccine = Vaccine::findOrFail($vaccineId);
+                    $record = $this->service->administer($patient, $vaccine, $shared);
+                    $recorded[] = [$vaccine, $record];
+                }
+            });
+        } catch (ValidationException $e) {
+            return redirect()
+                ->route('immunizations.patient', $patient->id)
+                ->withErrors($e->errors())
+                ->withInput();
+        }
+
+        $names = collect($recorded)
+            ->map(fn (array $pair) => $pair[0]->vaccine_name.' (dose '.$pair[1]->dose_number.')')
+            ->implode(', ');
+
+        return back()->with('success', count($recorded).' dose(s) recorded: '.$names.'.');
     }
 
     /**

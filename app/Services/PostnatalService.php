@@ -181,9 +181,9 @@ class PostnatalService
         $isMale = $record->child_sex === 'M';
 
         return [
-            'first_name' => $record->child_first_name,
-            'last_name' => $record->child_last_name,
-            'middle_name' => $record->child_middle_name,
+            'first_name' => $record->child_first_name !== null ? ucwords(strtolower($record->child_first_name)) : null,
+            'last_name' => $record->child_last_name !== null ? ucwords(strtolower($record->child_last_name)) : null,
+            'middle_name' => $record->child_middle_name !== null ? ucfirst(strtolower($record->child_middle_name)) : null,
             'sex' => $isMale ? 'Male' : 'Female',
             'date_of_birth' => $record->delivery_date,
             'birth_weight' => $record->child_birth_weight_kg,

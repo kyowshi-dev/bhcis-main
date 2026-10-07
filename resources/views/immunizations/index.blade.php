@@ -9,10 +9,11 @@
     $dueDateLabel = $hasDateRange
         ? 'Due from '.$dueWindowStart->format('M j').' to '.$dueWindowEnd->format('M j')
         : ($isCurrentMonth ? 'Due this month' : 'Due in '.$dueWindowStart->format('F Y'));
-    $statusBadges = [
-        'due' => ['bg' => 'var(--accent-blue-soft)', 'fg' => 'var(--accent-blue)'],
-        'overdue' => ['bg' => 'var(--danger-soft)', 'fg' => 'var(--danger)'],
-        'no_show' => ['bg' => 'var(--danger-soft)', 'fg' => 'var(--danger)'],
+    $statusStyles = [
+        'due' => ['bg' => 'var(--accent-blue-soft)', 'fg' => 'var(--accent-blue)', 'icon' => 'fa-regular fa-calendar', 'label' => 'Due'],
+        'overdue' => ['bg' => 'var(--danger-soft)', 'fg' => 'var(--danger)', 'icon' => 'fa-solid fa-circle-exclamation', 'label' => 'Overdue'],
+        'out_of_window' => ['bg' => 'var(--amber-soft)', 'fg' => 'var(--amber)', 'icon' => 'fa-solid fa-clock', 'label' => 'Out of window'],
+        'no_show' => ['bg' => 'var(--danger-soft)', 'fg' => 'var(--danger)', 'icon' => 'fa-solid fa-user-clock', 'label' => 'No-show'],
     ];
 @endphp
 
@@ -188,7 +189,6 @@
 
         @foreach (['due', 'overdue', 'no_show'] as $queueKey)
             @php
-                $badge = $statusBadges[$queueKey];
                 $queueGroups = ($queues[$queueKey] ?? collect())->groupBy(fn (array $entry) => $entry['patient']->id);
             @endphp
             <div x-show="activeQueue === '{{ $queueKey }}'" x-cloak class="rounded-xl border overflow-hidden"
@@ -204,7 +204,14 @@
                         </thead>
                         <tbody class="divide-y divide-[var(--border)]">
                             @forelse ($queueGroups as $patientId => $entries)
-                                @php($queuePatient = $entries->first()['patient'])
+                                @php
+                                    $queuePatient = $entries->first()['patient'];
+                                    $pillRows = $entries
+                                        ->groupBy(fn (array $entry) => $entry['vaccine']->group_key ?? 'vaccine_'.$entry['vaccine']->id)
+                                        ->map(fn ($groupEntries) => $groupEntries->firstWhere('status', 'no_show')
+                                            ?? $groupEntries->sortBy('due_date')->first())
+                                        ->values();
+                                @endphp
                                 <tr class="transition-colors hover:bg-black/[0.02]">
                                     <td class="px-3 lg:px-4 py-3" style="color: var(--ink);">
                                         <a href="{{ route('immunizations.patient', $queuePatient->id) }}" class="hover:underline font-medium" style="color: var(--primary);">
@@ -220,21 +227,29 @@
                                     </td>
                                     <td class="px-3 lg:px-4 py-3">
                                         <div class="flex flex-wrap items-center gap-1.5">
-                                            @foreach ($entries as $entry)
-                                                @php($queueVaccine = $entry['vaccine'])
-                                                <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap" style="background: {{ $badge['bg'] }}; color: {{ $badge['fg'] }};">
-                                                    {{ $queueVaccine->vaccine_name }} {{ $entry['dose_number'] }}
+                                            @foreach ($pillRows as $entry)
+                                                @php
+                                                    $queueVaccine = $entry['vaccine'];
+                                                    $pillStyle = $statusStyles[$entry['status']] ?? $statusStyles['due'];
+                                                    $pillLabel = $queueVaccine->group_key !== null
+                                                        ? ($queueVaccine->group_label ?? $queueVaccine->vaccine_name)
+                                                        : $queueVaccine->vaccine_name;
+                                                @endphp
+                                                <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap" style="background: {{ $pillStyle['bg'] }}; color: {{ $pillStyle['fg'] }};">
+                                                    <i class="{{ $pillStyle['icon'] }}" aria-hidden="true"></i>
+                                                    {{ $pillLabel }} {{ $entry['dose_number'] }}
                                                     @if ($entry['due_date'] !== null)
                                                         · {{ $entry['due_date']->format('M j') }}
                                                     @endif
+                                                    <span class="sr-only"> - {{ $pillStyle['label'] }}</span>
                                                 </span>
-                                                @if ($queueKey === 'no_show')
+                                                @if ($entry['status'] === 'no_show')
                                                     <form method="POST" action="{{ route('immunizations.no-show') }}" @submit.prevent="confirmClearNoShow($event.target, @js(fullName($queuePatient->last_name, $queuePatient->first_name, $queuePatient->middle_name, $queuePatient->suffix)))">
                                                         @csrf
                                                         <input type="hidden" name="no_show" value="0">
                                                         <input type="hidden" name="patient_id" value="{{ $queuePatient->id }}">
                                                         <input type="hidden" name="vaccine_id" value="{{ $queueVaccine->id }}">
-                                                        <button type="submit" title="Clear no-show" aria-label="Clear no-show for {{ $queueVaccine->vaccine_name }}" class="inline-flex h-7 w-7 items-center justify-center rounded-full border text-xs transition hover:bg-black/[0.03]" style="border-color: var(--border); color: var(--ink-muted);">
+                                                        <button type="submit" title="Clear no-show" aria-label="Clear no-show for {{ $pillLabel }}" class="inline-flex h-7 w-7 items-center justify-center rounded-full border text-xs transition hover:bg-black/[0.03]" style="border-color: var(--border); color: var(--ink-muted);">
                                                             <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
                                                         </button>
                                                     </form>

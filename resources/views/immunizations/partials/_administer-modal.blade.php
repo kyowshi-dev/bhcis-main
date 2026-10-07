@@ -1,19 +1,26 @@
 @php
-    $adminErrors = $errors->hasAny(['vaccine_id', 'dose_number', 'date_given', 'temp_recorded', 'child_weight_kg', 'child_height_cm', 'override_reason', 'notes']);
-    $reopenVaccine = $adminErrors ? $vaccines->firstWhere('id', (int) old('vaccine_id')) : null;
-    $reopenRequiresTemp = $adminErrors && ($errors->has('temp_recorded') || old('temp_recorded') !== null);
+    $adminErrors = $errors->hasAny(['vaccine_id', 'dose_number', 'date_given', 'temp_recorded', 'child_weight_kg', 'child_height_cm', 'override_reason', 'notes', 'doses']);
     $reopenOutOfWindow = $adminErrors && ($errors->has('override_reason') || old('override_reason') !== null);
-    $lastRecord = $records->sortByDesc('date_given')->first();
-    $lastWeight = $lastRecord?->child_weight_kg;
-    $lastHeight = $lastRecord?->child_height_cm;
+    $reopenBatchDoses = [];
+    if ($adminErrors && is_array(old('doses'))) {
+        $reopenBatchDoses = collect(old('doses'))->map(function ($id) use ($vaccines, $records, $reopenOutOfWindow) {
+            $vaccine = $vaccines->firstWhere('id', (int) $id);
+
+            return [
+                'id' => (int) $id,
+                'name' => $vaccine?->vaccine_name ?? 'Vaccine #'.$id,
+                'doseNumber' => $records->where('vaccine_id', (int) $id)->count() + 1,
+                'outOfWindow' => $reopenOutOfWindow,
+            ];
+        })->values()->all();
+    }
 @endphp
 
 <div
     x-data='administerVaccine()'
-    x-init="initReopen({{ $adminErrors ? 'true' : 'false' }})"
+    x-init="initReopen({{ $adminErrors ? 'true' : 'false' }}, @js($reopenBatchDoses)); $data.isChild = {{ ($patient->age ?? 0) < 18 ? 'true' : 'false' }}"
     @keydown.escape.window="adminOpen = false"
     x-on:open-administer.window="openAdminister($event.detail)"
-    x-init="$data.isChild = {{ ($patient->age ?? 0) < 18 ? 'true' : 'false' }}"
 >
     <template x-teleport="body">
         <div x-show="adminOpen"
@@ -34,15 +41,32 @@
                  x-transition:leave-end="opacity-0 scale-95"
                  class="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border shadow-lg"
                  style="background: var(--bg-surface-elevated); border-color: var(--border);">
-                <form action="{{ route('immunizations.administer', $patient->id) }}" method="POST">
+                <form method="POST"
+                      :action="mode === 'batch' ? @js(route('immunizations.administer-batch', $patient->id)) : @js(route('immunizations.administer', $patient->id))">
                     @csrf
-                    <input type="hidden" name="vaccine_id" :value="vaccineId">
+                    <template x-if="mode === 'single'">
+                        <input type="hidden" name="vaccine_id" :value="vaccineId">
+                    </template>
+                    <template x-if="mode === 'batch'">
+                        <template x-for="dose in batchDoses" :key="dose.id">
+                            <input type="hidden" name="doses[]" :value="dose.id">
+                        </template>
+                    </template>
 
                     <div class="flex items-center justify-between border-b px-6 py-4" style="border-color: var(--border);">
                         <div>
-                            <h3 id="administerModalTitle" class="font-display font-semibold text-lg" style="color: var(--ink);">Record dose</h3>
+                            <h3 id="administerModalTitle" class="font-display font-semibold text-lg" style="color: var(--ink);">
+                                <span x-show="mode === 'single'">Record dose</span>
+                                <span x-show="mode === 'batch'">Record doses</span>
+                            </h3>
                             <p class="text-sm mt-0.5" style="color: var(--ink-muted);">
-                                <span x-show="vaccineName" x-text="vaccineName + (doseNumber ? ` ${doseNumber}` : '')" class="font-medium" style="color: var(--ink);"></span>
+                                <span x-show="mode === 'single' && vaccineName" x-text="vaccineName + (doseNumber ? ` ${doseNumber}` : '')" class="font-medium" style="color: var(--ink);"></span>
+                                <span x-show="mode === 'batch'" class="flex flex-wrap gap-1.5">
+                                    <template x-for="dose in batchDoses" :key="dose.id">
+                                        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold" style="background: rgba(0,0,0,0.05); color: var(--ink);"
+                                              x-text="(dose.name || '') + (dose.doseNumber ? ' ' + dose.doseNumber : '')"></span>
+                                    </template>
+                                </span>
                             </p>
                         </div>
                         <button type="button" @click="adminOpen = false" aria-label="Close" class="rounded-lg p-1.5 transition-colors hover:bg-black/5" style="color: var(--ink-muted);">
@@ -53,7 +77,8 @@
                     <div class="p-5 space-y-4">
                         <div x-show="outOfWindow" class="rounded-xl border px-4 py-3 text-sm" style="background: var(--accent-soft); border-color: var(--amber); color: var(--amber);">
                             <i class="fa-solid fa-clock mr-1.5" aria-hidden="true"></i>
-                            This vaccine is outside its recommended age window. An override reason is required.
+                            <span x-show="mode === 'single'">This vaccine is outside its recommended age window. An override reason is required.</span>
+                            <span x-show="mode === 'batch'">One or more selected doses are outside their recommended age window. An override reason is required.</span>
                         </div>
 
                         <div>
@@ -70,14 +95,14 @@
                         </div>
 
                         <div>
-                            <label for="administer_temp" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">
+                            <label for="administer_temp" class="mb-1 inline-flex items-center gap-1.5 text-xs font-medium" style="color: var(--ink-muted);">
                                 Body temperature (°C)
+                                <i class="fa-regular fa-circle-question text-[0.85rem]" role="img" aria-label="Optional. Record before administering injectable vaccines." title="Optional. Record before administering injectable vaccines." style="color: var(--ink-subtle);"></i>
                             </label>
                             <input id="administer_temp" name="temp_recorded" type="number" step="0.1" min="30" max="45"
                                    value="{{ old('temp_recorded') }}" placeholder="e.g. 36.5"
                                    class="w-full rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
                                    style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
-                            <p class="mt-1 text-xs" style="color: var(--ink-subtle);">Optional. Record before administering injectable vaccines.</p>
                             @error('temp_recorded')
                                 <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p>
                             @enderror
@@ -135,6 +160,11 @@
                                 <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p>
                             @enderror
                         </div>
+
+                        <div x-show="mode === 'batch'" class="rounded-xl border px-4 py-3 text-sm" style="background: var(--accent-blue-soft); border-color: var(--accent-blue); color: var(--ink);">
+                            <i class="fa-solid fa-circle-info mr-1.5" style="color: var(--accent-blue);" aria-hidden="true"></i>
+                            One date, temperature, weight, height, and notes apply to all selected doses. Each dose is still checked against its own schedule.
+                        </div>
                     </div>
 
                     <div class="flex flex-wrap items-center justify-end gap-2 border-t px-6 py-4" style="border-color: var(--border);">
@@ -142,7 +172,9 @@
                             Cancel
                         </button>
                         <button type="submit" class="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90" style="background: var(--primary);">
-                            <i class="fa-solid fa-syringe" aria-hidden="true"></i> Record dose
+                            <i class="fa-solid fa-syringe" aria-hidden="true"></i>
+                            <span x-show="mode === 'single'">Record dose</span>
+                            <span x-show="mode === 'batch'">Record <span x-text="batchDoses.length"></span> dose(s)</span>
                         </button>
                     </div>
                 </form>
@@ -150,46 +182,3 @@
         </div>
     </template>
 </div>
-
-<script>
-    function administerVaccine() {
-        return {
-            adminOpen: false,
-            vaccineId: null,
-            vaccineName: '',
-            doseNumber: null,
-            outOfWindow: false,
-            isChild: true,
-            init() {
-                this.$watch('adminOpen', (open) => {
-                    document.body.classList.toggle('overflow-hidden', open);
-                });
-            },
-            initReopen(hasErrors) {
-                if (! hasErrors) return;
-                this.vaccineId = {{ (int) old('vaccine_id', 0) }} || null;
-                this.vaccineName = @js($reopenVaccine?->vaccine_name ?? '');
-                this.outOfWindow = {{ $reopenOutOfWindow ? 'true' : 'false' }};
-                this.adminOpen = true;
-            },
-            openAdminister(detail) {
-                this.vaccineId = detail.vaccineId ?? null;
-                this.vaccineName = detail.vaccineName ?? '';
-                this.doseNumber = detail.doseNumber ?? null;
-                this.outOfWindow = Boolean(detail.outOfWindow);
-                this.adminOpen = true;
-                this.$nextTick(() => {
-                    const weightInput = document.getElementById('administer_weight');
-                    const heightInput = document.getElementById('administer_height');
-                    if (weightInput && !weightInput.value) {
-                        weightInput.value = @js($lastWeight !== null ? number_format((float) $lastWeight, 2, '.', '') : '');
-                    }
-                    if (heightInput && !heightInput.value) {
-                        heightInput.value = @js($lastHeight !== null ? number_format((float) $lastHeight, 1, '.', '') : '');
-                    }
-                    document.getElementById('administer_date')?.focus();
-                });
-            },
-        };
-    }
-</script>

@@ -103,6 +103,27 @@ class InfantEnrollmentTest extends TestCase
         ]);
     }
 
+    public function test_enroll_title_cases_infant_names(): void
+    {
+        $this->actingAs($this->authorizedUser());
+        $this->zone(1);
+        $household = Household::create(['zone_id' => 1, 'family_name_head' => 'Dela Cruz']);
+
+        $this->post(route('immunizations.enroll-infant'), $this->infantPayload([
+            'household_id' => $household->id,
+            'first_name' => 'marie clara',
+            'last_name' => 'dela cruz',
+            'middle_name' => 'santos',
+        ]))->assertRedirect();
+
+        $this->assertDatabaseHas('patients', [
+            'household_id' => $household->id,
+            'first_name' => 'Marie Clara',
+            'last_name' => 'Dela Cruz',
+            'middle_name' => 'Santos',
+        ]);
+    }
+
     public function test_enroll_creates_new_household_branch(): void
     {
         $this->actingAs($this->authorizedUser());

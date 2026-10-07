@@ -6,11 +6,68 @@ window.Swal = Swal;
 
 window.modalMerge = (extra) => ({ open: false, ...(extra ?? {}) });
 
+// Immunization schedule table: variant selection, dose checkboxes, batch admin.
+// Defined here (not inline) because the table also arrives via AJAX fragments
+// whose <script> tags never execute.
+window.scheduleTable = (config) => ({
+    selectedKeys: [],
+    activeVariants: { ...(config.groupDefaults || {}) },
+    config,
+    get eligibleKeys() {
+        return (this.config.rowKeys || []).filter((key) => this.isEligible(key));
+    },
+    get allSelected() {
+        const eligible = this.eligibleKeys;
+        return eligible.length > 0 && eligible.every((key) => this.selectedKeys.includes(key));
+    },
+    get someSelected() {
+        return this.selectedKeys.length > 0;
+    },
+    activeId(key) {
+        return this.activeVariants[key] !== undefined ? this.activeVariants[key] : key;
+    },
+    isEligible(key) {
+        const state = this.config.elig[this.activeId(key)];
+        return state === 'overdue_allowed' || state === 'out_of_window';
+    },
+    isActive(key, id) {
+        return String(this.activeId(key)) === String(id);
+    },
+    onVariantChange(key, event) {
+        this.activeVariants[key] = event.target.value;
+        if (!this.isEligible(key)) {
+            this.selectedKeys = this.selectedKeys.filter((k) => k !== key);
+        }
+    },
+    toggleAll() {
+        this.selectedKeys = this.allSelected ? [] : this.eligibleKeys.slice();
+    },
+    openBatch() {
+        const doses = this.selectedKeys
+            .map((key) => {
+                const id = this.activeId(key);
+                return {
+                    id: Number(id),
+                    name: this.config.names[id] || '',
+                    doseNumber: this.config.doseNumbers[id] ?? null,
+                    outOfWindow: this.config.elig[id] === 'out_of_window',
+                };
+            })
+            .filter((dose) => Number.isFinite(dose.id));
+
+        if (doses.length === 0) return;
+
+        this.$dispatch('open-administer', { batch: true, doses });
+    },
+});
+
 window.administerVaccine = () => ({
     adminOpen: false,
+    mode: 'single',
     vaccineId: null,
     vaccineName: '',
     doseNumber: null,
+    batchDoses: [],
     requiresTemp: false,
     outOfWindow: false,
     init() {
@@ -18,8 +75,14 @@ window.administerVaccine = () => ({
             document.body.classList.toggle('overflow-hidden', open);
         });
     },
-    initReopen(hasErrors) {
+    initReopen(hasErrors, batchDoses) {
         if (!hasErrors) return;
+        if (Array.isArray(batchDoses) && batchDoses.length) {
+            this.setBatch(batchDoses, batchDoses.some((dose) => dose.outOfWindow));
+            return;
+        }
+        this.mode = 'single';
+        this.batchDoses = [];
         this.vaccineId = Number(document.querySelector('input[name="vaccine_id"]')?.value) || null;
         this.vaccineName = '';
         this.requiresTemp = false;
@@ -27,11 +90,28 @@ window.administerVaccine = () => ({
         this.adminOpen = true;
     },
     openAdminister(detail) {
+        if (detail.batch && Array.isArray(detail.doses)) {
+            this.setBatch(detail.doses, detail.doses.some((dose) => dose.outOfWindow));
+            return;
+        }
+        this.mode = 'single';
+        this.batchDoses = [];
         this.vaccineId = detail.vaccineId ?? null;
         this.vaccineName = detail.vaccineName ?? '';
         this.doseNumber = detail.doseNumber ?? null;
         this.requiresTemp = Boolean(detail.requiresTemp);
         this.outOfWindow = Boolean(detail.outOfWindow);
+        this.adminOpen = true;
+        this.$nextTick(() => document.getElementById('administer_date')?.focus());
+    },
+    setBatch(doses, outOfWindow) {
+        this.mode = 'batch';
+        this.batchDoses = doses;
+        this.vaccineId = null;
+        this.vaccineName = '';
+        this.doseNumber = null;
+        this.requiresTemp = false;
+        this.outOfWindow = Boolean(outOfWindow);
         this.adminOpen = true;
         this.$nextTick(() => document.getElementById('administer_date')?.focus());
     },

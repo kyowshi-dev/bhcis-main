@@ -14,6 +14,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $description
  * @property string $category
  * @property string|null $group_key
+ * @property string|null $group_label
  * @property int|null $start_after_days
  * @property int|null $complete_before_days
  * @property int|null $repeat_months
@@ -33,6 +34,7 @@ use Illuminate\Support\Carbon;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vaccine whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vaccine whereDescription($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vaccine whereGroupKey($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Vaccine whereGroupLabel($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vaccine whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vaccine whereRepeatMonths($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vaccine whereSortOrder($value)
@@ -54,6 +56,7 @@ class Vaccine extends Model
         'category',
         'sort_order',
         'group_key',
+        'group_label',
         'start_after_days',
         'complete_before_days',
         'repeat_months',

@@ -85,6 +85,15 @@ class ImmunizationAdministerTest extends TestCase
         ], $overrides);
     }
 
+    private function validBatchPayload(array $vaccineCodes, array $overrides = []): array
+    {
+        return array_merge([
+            'doses' => array_map(fn (string $code) => $this->vaccine($code)->id, $vaccineCodes),
+            'child_weight_kg' => '6.5',
+            'child_height_cm' => '65',
+        ], $overrides);
+    }
+
     public function test_user_without_permission_is_forbidden(): void
     {
         $this->actingAs($this->createUserWithPermissions([]));
@@ -257,6 +266,125 @@ class ImmunizationAdministerTest extends TestCase
             'vaccine_id' => $pentA->id,
             'dose_number' => 1,
             'no_show' => 0,
+        ]);
+    }
+
+    public function test_administer_batch_records_multiple_due_doses(): void
+    {
+        $this->actingAs($this->authorizedUser());
+        $infant = $this->makeInfant(now()->subDays(100));
+
+        $this->from(route('immunizations.patient', $infant->id))
+            ->post(route('immunizations.administer-batch', $infant->id), $this->validBatchPayload(['BCG', 'PENTA', 'OPV']))
+            ->assertRedirect(route('immunizations.patient', $infant->id))
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('success');
+
+        foreach (['BCG', 'PENTA', 'OPV'] as $code) {
+            $this->assertDatabaseHas('immunization_records', [
+                'patient_id' => $infant->id,
+                'vaccine_id' => $this->vaccine($code)->id,
+                'dose_number' => 1,
+                'no_show' => 0,
+            ]);
+        }
+    }
+
+    public function test_administer_batch_is_permission_gated(): void
+    {
+        $this->actingAs($this->createUserWithPermissions([]));
+        $infant = $this->makeInfant(now()->subDays(100));
+
+        $this->post(route('immunizations.administer-batch', $infant->id), $this->validBatchPayload(['BCG']))
+            ->assertForbidden();
+    }
+
+    public function test_administer_batch_requires_doses(): void
+    {
+        $this->actingAs($this->authorizedUser());
+        $infant = $this->makeInfant(now()->subDays(100));
+
+        $this->post(route('immunizations.administer-batch', $infant->id), [
+            'child_weight_kg' => '6.5',
+            'child_height_cm' => '65',
+        ])->assertSessionHasErrors('doses');
+    }
+
+    public function test_administer_batch_rejects_repeated_dose_ids(): void
+    {
+        $this->actingAs($this->authorizedUser());
+        $infant = $this->makeInfant(now()->subDays(100));
+        $bcg = $this->vaccine('BCG');
+
+        $this->post(route('immunizations.administer-batch', $infant->id), [
+            'doses' => [$bcg->id, $bcg->id],
+            'child_weight_kg' => '6.5',
+            'child_height_cm' => '65',
+        ])->assertSessionHasErrors(['doses.0', 'doses.1']);
+    }
+
+    public function test_administer_batch_rejects_weight_and_height_missing_for_child(): void
+    {
+        $this->actingAs($this->authorizedUser());
+        $infant = $this->makeInfant(now()->subDays(100));
+
+        $this->post(route('immunizations.administer-batch', $infant->id), [
+            'doses' => [$this->vaccine('BCG')->id],
+        ])->assertSessionHasErrors(['child_weight_kg', 'child_height_cm']);
+
+        $this->assertDatabaseMissing('immunization_records', [
+            'patient_id' => $infant->id,
+            'vaccine_id' => $this->vaccine('BCG')->id,
+        ]);
+    }
+
+    public function test_administer_batch_blocks_two_variants_of_same_group(): void
+    {
+        $this->actingAs($this->authorizedUser());
+        $infant = $this->makeInfant(now()->subDays(10));
+
+        $this->post(route('immunizations.administer-batch', $infant->id), $this->validBatchPayload(['HEPA_B_24H', 'HEPA_B_GT24']))
+            ->assertSessionHasErrors('doses');
+
+        $this->assertDatabaseMissing('immunization_records', [
+            'patient_id' => $infant->id,
+            'vaccine_id' => $this->vaccine('HEPA_B_24H')->id,
+        ]);
+        $this->assertDatabaseMissing('immunization_records', [
+            'patient_id' => $infant->id,
+            'vaccine_id' => $this->vaccine('HEPA_B_GT24')->id,
+        ]);
+    }
+
+    public function test_administer_batch_rolls_back_when_one_dose_fails(): void
+    {
+        $this->actingAs($this->authorizedUser());
+        $infant = $this->makeInfant(now()->subDays(100));
+
+        $this->post(route('immunizations.administer-batch', $infant->id), $this->validBatchPayload(['BCG', 'MCV_MMR']))
+            ->assertSessionHasErrors();
+
+        $this->assertDatabaseMissing('immunization_records', [
+            'patient_id' => $infant->id,
+            'vaccine_id' => $this->vaccine('BCG')->id,
+        ]);
+        $this->assertDatabaseMissing('immunization_records', [
+            'patient_id' => $infant->id,
+            'vaccine_id' => $this->vaccine('MCV_MMR')->id,
+        ]);
+    }
+
+    public function test_administer_batch_blocks_age_inappropriate_vaccine(): void
+    {
+        $this->actingAs($this->authorizedUser());
+        $infant = $this->makeInfant(now()->subDays(100));
+
+        $this->post(route('immunizations.administer-batch', $infant->id), $this->validBatchPayload(['BCG', 'FLU']))
+            ->assertSessionHasErrors('doses');
+
+        $this->assertDatabaseMissing('immunization_records', [
+            'patient_id' => $infant->id,
+            'vaccine_id' => $this->vaccine('BCG')->id,
         ]);
     }
 }
