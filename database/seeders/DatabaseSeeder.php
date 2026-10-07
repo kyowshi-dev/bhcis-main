@@ -90,6 +90,9 @@ class DatabaseSeeder extends Seeder
         // 7. VACCINES - EPI / immunization lookup
         $this->call(VaccineSeeder::class);
 
+        // 7a. PH LOCATIONS - provinces + cities/municipalities for birth place autocomplete
+        $this->call(LocationSeeder::class);
+
         // 8. ICD-10 diagnosis codes (requires icd102019syst_codes.sql in storage/app/ or BHCIS_ICD_SQL_PATH)
         $this->call(IcdDiagnosisSeeder::class);
 

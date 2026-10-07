@@ -390,4 +390,46 @@ class SearchController extends Controller
 
         return response()->json($results);
     }
+
+    /**
+     * Search for birth place locations (city/municipality + province)
+     *
+     * Matching city/municipality names rank ahead of province-only matches
+     * (province capitals first), so a selected row always resolves to a
+     * "City/Municipality, Province" string. The birth place field keeps a
+     * free-text fallback for places this lookup does not cover.
+     */
+    public function locations(Request $request)
+    {
+        $query = $request->input('query');
+
+        if (empty($query)) {
+            return response()->json([]);
+        }
+
+        $like = '%'.$query.'%';
+        $prefix = $query.'%';
+        $limit = 15;
+
+        $results = DB::table('municipalities')
+            ->join('provinces', 'provinces.id', '=', 'municipalities.province_id')
+            ->where(function ($qb) use ($like) {
+                $qb->where('municipalities.name', 'LIKE', $like)
+                    ->orWhere('provinces.name', 'LIKE', $like);
+            })
+            ->select('municipalities.id', 'municipalities.name', 'municipalities.is_capital', 'provinces.name as province_name')
+            ->selectRaw('CASE WHEN municipalities.name LIKE ? THEN 0 WHEN municipalities.name LIKE ? THEN 1 ELSE 2 END as match_rank', [$prefix, $like])
+            ->orderBy('match_rank')
+            ->orderByDesc('is_capital')
+            ->orderBy('municipalities.name')
+            ->limit($limit)
+            ->get()
+            ->map(fn ($m) => [
+                'id' => (int) $m->id,
+                'text' => (string) $m->name,
+                'subtext' => (string) $m->province_name,
+            ]);
+
+        return response()->json($results);
+    }
 }

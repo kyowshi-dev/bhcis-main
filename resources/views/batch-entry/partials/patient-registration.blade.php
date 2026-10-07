@@ -265,10 +265,41 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">Birth Place</label>
-                    <input type="text" name="birth_place" x-model="form.birth_place"
-                           class="w-full px-3 lg:px-4 py-2 rounded-xl border border-border focus:ring-accent-blue focus:border-accent-blue text-sm"
-                           placeholder="City/Municipality">
+                    <label for="batch_birth_place" class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">Birth Place</label>
+                    <div class="relative" @click.outside="birthPlaceDropdownOpen = false">
+                        <input type="text" id="batch_birth_place" name="birth_place" x-model="form.birth_place"
+                               @input.debounce.250ms="searchBirthPlace()"
+                               @focus="birthPlaceDropdownOpen = true"
+                               @keydown.escape="birthPlaceDropdownOpen = false"
+                               @click="birthPlaceDropdownOpen = true"
+                               :aria-expanded="birthPlaceDropdownOpen && birthPlaceResults.length > 0"
+                               aria-controls="batch_birth_place_results"
+                               class="w-full px-3 lg:px-4 py-2 rounded-xl border border-border focus:ring-accent-blue focus:border-accent-blue text-sm"
+                               placeholder="City/Municipality, Province"
+                               autocomplete="off">
+
+                        <div id="batch_birth_place_results" role="listbox"
+                             x-show="birthPlaceDropdownOpen && birthPlaceResults.length > 0"
+                             x-transition:enter="transition ease-out duration-150"
+                             x-transition:enter-start="opacity-0 translate-y-1"
+                             x-transition:enter-end="opacity-100 translate-y-0"
+                             class="absolute z-20 w-full bg-surface mt-1 border border-border rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                            <ul>
+                                <template x-for="item in birthPlaceResults" :key="item.id">
+                                    <li role="option" aria-selected="false"
+                                        class="px-3 lg:px-4 py-2 lg:py-2.5 hover:bg-black/5 cursor-pointer border-b last:border-0 text-xs lg:text-sm"
+                                        @click.prevent="selectBirthPlace(item)">
+                                        <div class="font-medium text-ink" x-text="item.text"></div>
+                                        <div class="text-xs text-ink-muted" x-text="item.subtext"></div>
+                                    </li>
+                                </template>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <p x-show="birthPlaceDropdownOpen && form.birth_place.trim().length > 1 && birthPlaceResults.length === 0 && !birthPlaceSearching" x-cloak class="text-xs mt-2 text-ink-muted">
+                        No location found. Type the place as-is to save it.
+                    </p>
                 </div>
             </div>
         </div>
@@ -399,6 +430,9 @@ function patientBatchForm() {
         householdResults: [],
         householdDropdownOpen: false,
         householdSearching: false,
+        birthPlaceResults: [],
+        birthPlaceDropdownOpen: false,
+        birthPlaceSearching: false,
         selectedHousehold: null,
         creatingHousehold: false,
         newHousehold: { zone_id: '', family_name_head: '', contact_number: '' },
@@ -412,6 +446,7 @@ function patientBatchForm() {
             document.addEventListener('click', (e) => {
                 if (!this.$el.contains(e.target)) {
                     this.householdDropdownOpen = false;
+                    this.birthPlaceDropdownOpen = false;
                 }
             });
         },
@@ -450,6 +485,30 @@ function patientBatchForm() {
             this.$nextTick(() => {
                 this.$refs.householdSearch?.focus();
             });
+        },
+
+        async searchBirthPlace() {
+            const q = (this.form.birth_place || '').trim();
+            if (q.length < 2) {
+                this.birthPlaceResults = [];
+                return;
+            }
+
+            this.birthPlaceSearching = true;
+            try {
+                const response = await safeFetch(`{{ route('search.locations') }}?query=${encodeURIComponent(q)}`);
+                this.birthPlaceResults = response.ok ? await response.json() : [];
+            } catch (e) {
+                this.birthPlaceResults = [];
+            } finally {
+                this.birthPlaceSearching = false;
+            }
+        },
+
+        selectBirthPlace(item) {
+            this.form.birth_place = item.text + ', ' + item.subtext;
+            this.birthPlaceResults = [];
+            this.birthPlaceDropdownOpen = false;
         },
 
         async createHousehold() {
@@ -525,6 +584,8 @@ function patientBatchForm() {
             this.newHousehold = { zone_id: '', family_name_head: '', contact_number: '' };
             this.newHouseholdErrors = {};
             this.clearHousehold();
+            this.birthPlaceResults = [];
+            this.birthPlaceDropdownOpen = false;
         },
 
         async submitForm() {
