@@ -1,6 +1,6 @@
 {{--
     Individual Treatment Record (ITR 2) - Family Planning / Prenatal / Immunization / Postpartum
-    BHCIS print sheet
+    BHCIS print sheet (fixed-page absolute layout)
 --}}
 @php
     $pregnancy = $pregnancy ?? null;
@@ -85,257 +85,268 @@
 @endphp
 
 <section class="iclinic-form" aria-label="Individual Treatment Record 2">
-    @include('consultations.handout.partials._bhcis-header', [
-        'formTitle' => 'Individual Treatment Record (ITR 2)',
-        'meta' => $meta,
-    ])
+    <div class="form-body">
+        <div class="form-head">
+            @include('consultations.handout.partials._bhcis-header', [
+                'formTitle' => 'Individual Treatment Record (ITR 2)',
+                'meta' => $meta,
+            ])
+        </div>
 
-    <table class="form-table" style="border-top:0;">
-        <tr>
-            {{-- Left column: Family Planning + Prenatal --}}
-            <td colspan="7" style="padding:0;">
-                <table class="form-table nested-table" style="border:0;">
-                    <tr>
-                        <td colspan="8" class="section-header">Family Planning</td>
-                    </tr>
-                    <tr>
-                        <td colspan="3" class="label-cell">Type of Client</td>
-                        <td colspan="5">{{ $fpType }}</td>
-                    </tr>
-                    <tr>
-                        <td colspan="3" class="label-cell">Method</td>
-                        <td colspan="5">{{ $fpClient->method ?? '' }}</td>
-                    </tr>
-                    <tr>
-                        <td colspan="3" class="label-cell">If Drop-Out, state reason</td>
-                        <td colspan="5">{{ $fpClient->drop_out_reason ?? '' }}</td>
-                    </tr>
-                    <tr>
-                        <td colspan="3" class="label-cell">Schedule of Next Visit</td>
-                        <td colspan="5">{{ $fmtDate($fpClient->schedule_next_visit ?? null) }}</td>
-                    </tr>
+        {{-- Family Planning + Prenatal + Immunization columns --}}
+        <div class="form-section" style="height:616px;">
+            <table class="form-table" style="border-top:0;">
+                <tr>
+                    {{-- Left column: Family Planning + Prenatal --}}
+                    <td colspan="7" style="padding:0;">
+                        <table class="form-table nested-table" style="border:0;">
+                            <tr style="height:18px;">
+                                <td colspan="8" class="section-header">Family Planning</td>
+                            </tr>
+                            <tr style="height:30px;">
+                                <td colspan="3" class="label-cell">Type of Client</td>
+                                <td colspan="5"><div class="clip clip-2">{{ $fpType }}</div></td>
+                            </tr>
+                            <tr style="height:30px;">
+                                <td colspan="3" class="label-cell">Method</td>
+                                <td colspan="5"><div class="clip clip-2">{{ $fpClient->method ?? '' }}</div></td>
+                            </tr>
+                            <tr style="height:30px;">
+                                <td colspan="3" class="label-cell">If Drop-Out, state reason</td>
+                                <td colspan="5"><div class="clip clip-2">{{ $fpClient->drop_out_reason ?? '' }}</div></td>
+                            </tr>
+                            <tr style="height:26px;">
+                                <td colspan="3" class="label-cell">Schedule of Next Visit</td>
+                                <td colspan="5">{{ $fmtDate($fpClient->schedule_next_visit ?? null) }}</td>
+                            </tr>
 
-                    <tr>
-                        <td colspan="8" class="section-header">Prenatal</td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" class="label-cell">Gravidity</td>
-                        <td colspan="2">{{ $pregnancy->gravidity ?? '' }}</td>
-                        <td colspan="2" class="label-cell">LMP</td>
-                        <td colspan="2">{{ $fmtDate($pregnancy->lmp ?? null) }}</td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" class="label-cell">Parity</td>
-                        <td colspan="2">{{ $pregnancy->parity ?? '' }}</td>
-                        <td colspan="2" class="label-cell">EDC</td>
-                        <td colspan="2">{{ $fmtDate($pregnancy->edc ?? null) }}</td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" class="label-cell">Term</td>
-                        <td colspan="2">{{ $pregnancy->term ?? '' }}</td>
-                        <td colspan="2" class="label-cell">AOG</td>
-                        <td colspan="2">{{ $pregnancy->aog_weeks ?? '' }}</td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" class="label-cell">Preterm</td>
-                        <td colspan="2">{{ $pregnancy->preterm ?? '' }}</td>
-                        <td colspan="2" class="label-cell">TT</td>
-                        <td colspan="2">{{ $fmtDate($pregnancy->tt_date ?? null) }}</td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" class="label-cell">Livebirth</td>
-                        <td colspan="2">{{ $pregnancy->livebirth ?? '' }}</td>
-                        <td colspan="2" class="label-cell">Iron</td>
-                        <td colspan="2">{{ $pregnancy ? (($pregnancy->iron_taken ?? false) ? 'Yes' : 'No') : '' }}</td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" class="label-cell">Abortion</td>
-                        <td colspan="2">{{ $pregnancy->abortion ?? '' }}</td>
-                        <td colspan="2" class="label-cell">Others</td>
-                        <td colspan="2">{{ $pregnancy->others ?? '' }}</td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" class="label-cell">Syphilis Result</td>
-                        <td colspan="3">
-                            @include('consultations.handout.partials._mark', ['checked' => $syphilisNegative, 'label' => 'Negative'])
-                        </td>
-                        <td colspan="3">
-                            @include('consultations.handout.partials._mark', ['checked' => $syphilisPositive, 'label' => 'Positive'])
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" class="label-cell">Penicillin</td>
-                        <td colspan="3">
-                            @include('consultations.handout.partials._mark', ['checked' => $penicillin === 'no', 'label' => 'No'])
-                        </td>
-                        <td colspan="3">
-                            @include('consultations.handout.partials._mark', ['checked' => $penicillin === 'yes', 'label' => 'Yes'])
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="3" class="label-cell">Schedule of Next Visit</td>
-                        <td colspan="5">{{ $fmtDate($lastVisit->next_visit_date ?? null) }}</td>
-                    </tr>
-                    <tr>
-                        <td colspan="3" class="label-cell">Fundic Height (cm)</td>
-                        <td colspan="5">{{ $lastVisit->fundic_height_cm ?? '' }}</td>
-                    </tr>
-                    <tr>
-                        <td colspan="3" class="label-cell">Fetal Heart Tone</td>
-                        <td colspan="5">{{ $lastVisit->fetal_heart_tone_bpm ?? '' }}</td>
-                    </tr>
+                            <tr style="height:18px;">
+                                <td colspan="8" class="section-header">Prenatal</td>
+                            </tr>
+                            <tr style="height:28px;">
+                                <td colspan="2" class="label-cell">Gravidity</td>
+                                <td colspan="2">{{ $pregnancy->gravidity ?? '' }}</td>
+                                <td colspan="2" class="label-cell">LMP</td>
+                                <td colspan="2">{{ $fmtDate($pregnancy->lmp ?? null) }}</td>
+                            </tr>
+                            <tr style="height:28px;">
+                                <td colspan="2" class="label-cell">Parity</td>
+                                <td colspan="2">{{ $pregnancy->parity ?? '' }}</td>
+                                <td colspan="2" class="label-cell">EDC</td>
+                                <td colspan="2">{{ $fmtDate($pregnancy->edc ?? null) }}</td>
+                            </tr>
+                            <tr style="height:28px;">
+                                <td colspan="2" class="label-cell">Term</td>
+                                <td colspan="2">{{ $pregnancy->term ?? '' }}</td>
+                                <td colspan="2" class="label-cell">AOG</td>
+                                <td colspan="2">{{ $pregnancy->aog_weeks ?? '' }}</td>
+                            </tr>
+                            <tr style="height:28px;">
+                                <td colspan="2" class="label-cell">Preterm</td>
+                                <td colspan="2">{{ $pregnancy->preterm ?? '' }}</td>
+                                <td colspan="2" class="label-cell">TT</td>
+                                <td colspan="2">{{ $fmtDate($pregnancy->tt_date ?? null) }}</td>
+                            </tr>
+                            <tr style="height:28px;">
+                                <td colspan="2" class="label-cell">Livebirth</td>
+                                <td colspan="2">{{ $pregnancy->livebirth ?? '' }}</td>
+                                <td colspan="2" class="label-cell">Iron</td>
+                                <td colspan="2">{{ $pregnancy ? (($pregnancy->iron_taken ?? false) ? 'Yes' : 'No') : '' }}</td>
+                            </tr>
+                            <tr style="height:28px;">
+                                <td colspan="2" class="label-cell">Abortion</td>
+                                <td colspan="2">{{ $pregnancy->abortion ?? '' }}</td>
+                                <td colspan="2" class="label-cell">Others</td>
+                                <td colspan="2"><div class="clip clip-2">{{ $pregnancy->others ?? '' }}</div></td>
+                            </tr>
+                            <tr style="height:30px;">
+                                <td colspan="2" class="label-cell">Syphilis Result</td>
+                                <td colspan="3">
+                                    @include('consultations.handout.partials._mark', ['checked' => $syphilisNegative, 'label' => 'Negative'])
+                                </td>
+                                <td colspan="3">
+                                    @include('consultations.handout.partials._mark', ['checked' => $syphilisPositive, 'label' => 'Positive'])
+                                </td>
+                            </tr>
+                            <tr style="height:30px;">
+                                <td colspan="2" class="label-cell">Penicillin</td>
+                                <td colspan="3">
+                                    @include('consultations.handout.partials._mark', ['checked' => $penicillin === 'no', 'label' => 'No'])
+                                </td>
+                                <td colspan="3">
+                                    @include('consultations.handout.partials._mark', ['checked' => $penicillin === 'yes', 'label' => 'Yes'])
+                                </td>
+                            </tr>
+                            <tr style="height:26px;">
+                                <td colspan="3" class="label-cell">Schedule of Next Visit</td>
+                                <td colspan="5">{{ $fmtDate($lastVisit->next_visit_date ?? null) }}</td>
+                            </tr>
+                            <tr style="height:26px;">
+                                <td colspan="3" class="label-cell">Fundic Height (cm)</td>
+                                <td colspan="5">{{ $lastVisit->fundic_height_cm ?? '' }}</td>
+                            </tr>
+                            <tr style="height:26px;">
+                                <td colspan="3" class="label-cell">Fetal Heart Tone</td>
+                                <td colspan="5">{{ $lastVisit->fetal_heart_tone_bpm ?? '' }}</td>
+                            </tr>
 
-                    <tr>
-                        <td colspan="8" class="section-header">Prenatal Visits</td>
-                    </tr>
-                    <tr>
-                        @for ($i = 0; $i < 8; $i++)
-                            <td class="field-value-sm">{{ $fmtDate($prenatalVisits[$i]->visit_date ?? null) }}</td>
-                        @endfor
-                    </tr>
-                    <tr>
-                        @for ($i = 0; $i < 8; $i++)
-                            <td>&nbsp;</td>
-                        @endfor
-                    </tr>
+                            <tr style="height:18px;">
+                                <td colspan="8" class="section-header">Prenatal Visits</td>
+                            </tr>
+                            <tr style="height:20px;">
+                                @for ($i = 0; $i < 8; $i++)
+                                    <td>{{ $fmtDate($prenatalVisits[$i]->visit_date ?? null) }}</td>
+                                @endfor
+                            </tr>
+                            <tr style="height:20px;">
+                                @for ($i = 0; $i < 8; $i++)
+                                    <td>&nbsp;</td>
+                                @endfor
+                            </tr>
 
-                    <tr>
-                        <td colspan="8" class="section-header">Menstrual History</td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" class="label-cell">Menarche</td>
-                        <td colspan="2"></td>
-                        <td colspan="2" class="label-cell">Onset of sexual intercourse</td>
-                        <td colspan="2"></td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" class="label-cell">Period / Duration</td>
-                        <td colspan="2"></td>
-                        <td colspan="2" class="label-cell">Birth Control Method</td>
-                        <td colspan="2"></td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" class="label-cell">Interval / Cycle</td>
-                        <td colspan="2"></td>
-                        <td colspan="2" class="label-cell">Menopause? (Yes/No)</td>
-                        <td colspan="2"></td>
-                    </tr>
-                </table>
-            </td>
+                            <tr style="height:18px;">
+                                <td colspan="8" class="section-header">Menstrual History</td>
+                            </tr>
+                            <tr style="height:26px;">
+                                <td colspan="2" class="label-cell">Menarche</td>
+                                <td colspan="2"></td>
+                                <td colspan="2" class="label-cell">Onset of sexual intercourse</td>
+                                <td colspan="2"></td>
+                            </tr>
+                            <tr style="height:26px;">
+                                <td colspan="2" class="label-cell">Period / Duration</td>
+                                <td colspan="2"></td>
+                                <td colspan="2" class="label-cell">Birth Control Method</td>
+                                <td colspan="2"></td>
+                            </tr>
+                            <tr style="height:26px;">
+                                <td colspan="2" class="label-cell">Interval / Cycle</td>
+                                <td colspan="2"></td>
+                                <td colspan="2" class="label-cell">Menopause? (Yes/No)</td>
+                                <td colspan="2"></td>
+                            </tr>
+                        </table>
+                    </td>
 
-            {{-- Right column: Immunization --}}
-            <td colspan="5" style="padding:0;">
-                <table class="form-table nested-table" style="border:0;">
-                    <tr>
-                        <td colspan="2" class="section-header">Child Immunization</td>
-                    </tr>
-                    <tr>
-                        <td class="label-cell" style="width:55%;">Birth Weight</td>
-                        <td></td>
-                    </tr>
-                    <tr>
-                        <td class="label-cell text-center">Immunization</td>
-                        <td class="label-cell text-center">Date Given</td>
-                    </tr>
-                    @foreach ($childVaccineRows as [$rowLabel, $rowCodes, $rowNeedle])
-                        <tr>
-                            <td>{{ $rowLabel }}</td>
-                            <td>{{ $fmtDate($immDate($rowCodes, $rowNeedle)) }}</td>
-                        </tr>
-                    @endforeach
+                    {{-- Right column: Immunization --}}
+                    <td colspan="5" style="padding:0;">
+                        <table class="form-table nested-table" style="border:0;">
+                            <tr style="height:18px;">
+                                <td colspan="2" class="section-header">Child Immunization</td>
+                            </tr>
+                            <tr style="height:26px;">
+                                <td class="label-cell" style="width:55%;">Birth Weight</td>
+                                <td></td>
+                            </tr>
+                            <tr style="height:18px;">
+                                <td class="label-cell text-center">Immunization</td>
+                                <td class="label-cell text-center">Date Given</td>
+                            </tr>
+                            @foreach ($childVaccineRows as [$rowLabel, $rowCodes, $rowNeedle])
+                                <tr style="height:20px;">
+                                    <td>{{ $rowLabel }}</td>
+                                    <td>{{ $fmtDate($immDate($rowCodes, $rowNeedle)) }}</td>
+                                </tr>
+                            @endforeach
 
-                    <tr>
-                        <td colspan="2" class="section-header">Adult Immunization</td>
-                    </tr>
-                    <tr>
-                        <td class="label-cell text-center">Immunization</td>
-                        <td class="label-cell text-center">Date Given</td>
-                    </tr>
-                    @foreach ($adultVaccineRows as [$rowLabel, $rowCodes, $rowNeedle])
-                        <tr>
-                            <td>{{ $rowLabel }}</td>
-                            <td>{{ $fmtDate($immDate($rowCodes, $rowNeedle)) }}</td>
-                        </tr>
-                    @endforeach
-                </table>
-            </td>
-        </tr>
+                            <tr style="height:18px;">
+                                <td colspan="2" class="section-header">Adult Immunization</td>
+                            </tr>
+                            <tr style="height:18px;">
+                                <td class="label-cell text-center">Immunization</td>
+                                <td class="label-cell text-center">Date Given</td>
+                            </tr>
+                            @foreach ($adultVaccineRows as [$rowLabel, $rowCodes, $rowNeedle])
+                                <tr style="height:20px;">
+                                    <td>{{ $rowLabel }}</td>
+                                    <td>{{ $fmtDate($immDate($rowCodes, $rowNeedle)) }}</td>
+                                </tr>
+                            @endforeach
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </div>
 
-        {{-- Postpartum --}}
-        <tr>
-            <td colspan="12" class="section-header">Postpartum (Pagkatapos ng Panganak)</td>
-        </tr>
-        <tr>
-            <td colspan="6" class="label-cell text-center">Delivery</td>
-            <td colspan="6" class="label-cell text-center">Child Information</td>
-        </tr>
-        <tr>
-            <td colspan="3" class="label-cell">Prenatal Outcome</td>
-            <td colspan="3">{{ $outcome }}</td>
-            <td colspan="3" class="label-cell">Last Name</td>
-            <td colspan="3" class="field-value text-bold">{{ $postnatalRecord->child_last_name ?? '' }}</td>
-        </tr>
-        <tr>
-            <td colspan="3" class="label-cell">Prenatal Delivered</td>
-            <td colspan="3"></td>
-            <td colspan="3" class="label-cell">First Name</td>
-            <td colspan="3" class="field-value text-bold">{{ $postnatalRecord->child_first_name ?? '' }}</td>
-        </tr>
-        <tr>
-            <td colspan="3" class="label-cell">Place Delivered</td>
-            <td colspan="3">{{ $placeDelivered }}</td>
-            <td colspan="3" class="label-cell">Middle Name</td>
-            <td colspan="3">{{ $postnatalRecord->child_middle_name ?? '' }}</td>
-        </tr>
-        <tr>
-            <td colspan="3" class="label-cell">Mode of Delivery</td>
-            <td colspan="3">{{ $modeOfDelivery }}</td>
-            <td colspan="3" class="label-cell">Sex (M / F)</td>
-            <td colspan="3">{{ $postnatalRecord->child_sex ?? '' }}</td>
-        </tr>
-        <tr>
-            <td colspan="3" class="label-cell">Attendant at Birth</td>
-            <td colspan="3">{{ $attendantAtBirth }}</td>
-            <td colspan="3" class="label-cell">Birth Length (cm)</td>
-            <td colspan="3">{{ $postnatalRecord->child_birth_length_cm ?? '' }}</td>
-        </tr>
-        <tr>
-            <td colspan="3" class="label-cell">Delivery Date</td>
-            <td colspan="3">{{ $fmtDate($postnatalRecord->delivery_date ?? null) }}</td>
-            <td colspan="3" class="label-cell">Birth Weight (kg)</td>
-            <td colspan="3">{{ $postnatalRecord->child_birth_weight_kg ?? '' }}</td>
-        </tr>
-        <tr>
-            <td colspan="3" class="label-cell">Delivery Time</td>
-            <td colspan="3">{{ $postnatalRecord->delivery_time ?? '' }}</td>
-            <td colspan="3" class="label-cell">Breastfeeding Initiated</td>
-            <td colspan="3">
-                {{ $fmtDate($postnatalRecord->breastfeeding_date ?? null) }}
-                {{ $postnatalRecord->breastfeeding_time ?? '' }}
-            </td>
-        </tr>
-        <tr>
-            <td colspan="6" class="label-cell-sm">Postpartum visit within 24 hrs after delivery</td>
-            <td colspan="2">{{ $fmtDate($postnatalRecord->postpartum_24h_date ?? null) }}</td>
-            <td colspan="2" class="label-cell-sm">Danger Signs (Mother)</td>
-            <td colspan="2" class="field-value-sm">{{ $dangerSignsMother }}</td>
-        </tr>
-        <tr>
-            <td colspan="6" class="label-cell-sm">Postpartum visit within 1 week after delivery</td>
-            <td colspan="2">{{ $fmtDate($postnatalRecord->postpartum_7d_date ?? null) }}</td>
-            <td colspan="2" class="label-cell-sm">Danger Signs (Baby)</td>
-            <td colspan="2" class="field-value-sm">{{ $dangerSignsBaby }}</td>
-        </tr>
-        <tr>
-            <td colspan="3" class="label-cell">Date Vitamin A Given</td>
-            <td colspan="3">{{ $fmtDate($postnatalRecord->vitamin_a_date ?? null) }}</td>
-            <td colspan="3" class="label-cell">Iron Given (date / count)</td>
-            <td colspan="3">
-                {{ $fmtDate($postnatalRecord->iron_date ?? null) }}
-                {{ ($postnatalRecord->iron_count ?? null) !== null ? '· x'.$postnatalRecord->iron_count : '' }}
-            </td>
-        </tr>
-    </table>
+        {{-- Postpartum - stretches to the footer --}}
+        <div class="form-section">
+            <table class="form-table">
+                <tr style="height:20px;">
+                    <td colspan="12" class="section-header">Postpartum (Pagkatapos ng Panganak)</td>
+                </tr>
+                <tr style="height:30px;">
+                    <td colspan="6" class="label-cell text-center">Delivery</td>
+                    <td colspan="6" class="label-cell text-center">Child Information</td>
+                </tr>
+                <tr style="height:36px;">
+                    <td colspan="3" class="label-cell">Prenatal Outcome</td>
+                    <td colspan="3"><div class="clip clip-2">{{ $outcome }}</div></td>
+                    <td colspan="3" class="label-cell">Last Name</td>
+                    <td colspan="3"><div class="field-value text-bold clip-2">{{ $postnatalRecord->child_last_name ?? '' }}</div></td>
+                </tr>
+                <tr style="height:36px;">
+                    <td colspan="3" class="label-cell">Prenatal Delivered</td>
+                    <td colspan="3"></td>
+                    <td colspan="3" class="label-cell">First Name</td>
+                    <td colspan="3"><div class="field-value text-bold clip-2">{{ $postnatalRecord->child_first_name ?? '' }}</div></td>
+                </tr>
+                <tr style="height:36px;">
+                    <td colspan="3" class="label-cell">Place Delivered</td>
+                    <td colspan="3"><div class="clip clip-2">{{ $placeDelivered }}</div></td>
+                    <td colspan="3" class="label-cell">Middle Name</td>
+                    <td colspan="3"><div class="clip clip-2">{{ $postnatalRecord->child_middle_name ?? '' }}</div></td>
+                </tr>
+                <tr style="height:36px;">
+                    <td colspan="3" class="label-cell">Mode of Delivery</td>
+                    <td colspan="3"><div class="clip clip-2">{{ $modeOfDelivery }}</div></td>
+                    <td colspan="3" class="label-cell">Sex (M / F)</td>
+                    <td colspan="3">{{ $postnatalRecord->child_sex ?? '' }}</td>
+                </tr>
+                <tr style="height:36px;">
+                    <td colspan="3" class="label-cell">Attendant at Birth</td>
+                    <td colspan="3"><div class="clip clip-2">{{ $attendantAtBirth }}</div></td>
+                    <td colspan="3" class="label-cell">Birth Length (cm)</td>
+                    <td colspan="3">{{ $postnatalRecord->child_birth_length_cm ?? '' }}</td>
+                </tr>
+                <tr style="height:36px;">
+                    <td colspan="3" class="label-cell">Delivery Date</td>
+                    <td colspan="3">{{ $fmtDate($postnatalRecord->delivery_date ?? null) }}</td>
+                    <td colspan="3" class="label-cell">Birth Weight (kg)</td>
+                    <td colspan="3">{{ $postnatalRecord->child_birth_weight_kg ?? '' }}</td>
+                </tr>
+                <tr style="height:36px;">
+                    <td colspan="3" class="label-cell">Delivery Time</td>
+                    <td colspan="3">{{ $postnatalRecord->delivery_time ?? '' }}</td>
+                    <td colspan="3" class="label-cell">Breastfeeding Initiated</td>
+                    <td colspan="3">
+                        {{ $fmtDate($postnatalRecord->breastfeeding_date ?? null) }}
+                        {{ $postnatalRecord->breastfeeding_time ?? '' }}
+                    </td>
+                </tr>
+                <tr style="height:48px;">
+                    <td colspan="6" class="label-cell-sm">Postpartum visit within 24 hrs after delivery</td>
+                    <td colspan="2">{{ $fmtDate($postnatalRecord->postpartum_24h_date ?? null) }}</td>
+                    <td colspan="2" class="label-cell-sm">Danger Signs (Mother)</td>
+                    <td colspan="2"><div class="field-value-sm clip clip-2">{{ $dangerSignsMother }}</div></td>
+                </tr>
+                <tr style="height:48px;">
+                    <td colspan="6" class="label-cell-sm">Postpartum visit within 1 week after delivery</td>
+                    <td colspan="2">{{ $fmtDate($postnatalRecord->postpartum_7d_date ?? null) }}</td>
+                    <td colspan="2" class="label-cell-sm">Danger Signs (Baby)</td>
+                    <td colspan="2"><div class="field-value-sm clip clip-2">{{ $dangerSignsBaby }}</div></td>
+                </tr>
+                <tr style="height:36px;">
+                    <td colspan="3" class="label-cell">Date Vitamin A Given</td>
+                    <td colspan="3">{{ $fmtDate($postnatalRecord->vitamin_a_date ?? null) }}</td>
+                    <td colspan="3" class="label-cell">Iron Given (date / count)</td>
+                    <td colspan="3">
+                        {{ $fmtDate($postnatalRecord->iron_date ?? null) }}
+                        {{ ($postnatalRecord->iron_count ?? null) !== null ? '· x'.$postnatalRecord->iron_count : '' }}
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
 
     <div class="form-footer form-footer-flex">
         <span>BHCIS System Sta. Ana - Barangay Health Center Information System</span>
