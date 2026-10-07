@@ -15,21 +15,21 @@ use Illuminate\Validation\ValidationException;
 
 class ChildImmunizationService
 {
-    public const string STATUS_COMPLETED = 'completed';
+    public const STATUS_COMPLETED = 'completed';
 
-    public const string STATUS_WAITING = 'waiting';
+    public const STATUS_WAITING = 'waiting';
 
-    public const string STATUS_OVERDUE = 'overdue';
+    public const STATUS_OVERDUE = 'overdue';
 
-    public const string STATUS_OUT_OF_WINDOW = 'out_of_window';
+    public const STATUS_OUT_OF_WINDOW = 'out_of_window';
 
-    public const string STATUS_NO_SHOW = 'no_show';
+    public const STATUS_NO_SHOW = 'no_show';
 
-    public const string QUEUE_DUE = 'due';
+    public const QUEUE_DUE = 'due';
 
-    public const int DUE_WINDOW_DAYS = 7;
+    public const DUE_WINDOW_DAYS = 7;
 
-    public const int OVERDUE_LOOKBACK_DAYS = 730;
+    public const OVERDUE_LOOKBACK_DAYS = 730;
 
     /**
      * How long computed queue results stay fresh. Computing the queues is
@@ -37,9 +37,9 @@ class ChildImmunizationService
      * registries; a short TTL with write-time invalidation keeps the index
      * page fast without ever showing stale clinical data.
      */
-    public const int QUEUE_CACHE_TTL = 600;
+    public const QUEUE_CACHE_TTL = 600;
 
-    public const string QUEUE_GENERATION_KEY = 'immunization_queue_generation';
+    public const QUEUE_GENERATION_KEY = 'immunization_queue_generation';
 
     /**
      * Per-request cache of each patient's immunization records, keyed by
@@ -462,9 +462,9 @@ class ChildImmunizationService
         $patient = Patient::create([
             'household_id' => $householdId,
             'enrolled_by' => auth()->id(),
-            'first_name' => $data['first_name'],
-            'last_name' => $data['last_name'],
-            'middle_name' => $data['middle_name'] ?? null,
+            'first_name' => ucwords(strtolower($data['first_name'])),
+            'last_name' => ucwords(strtolower($data['last_name'])),
+            'middle_name' => ($data['middle_name'] ?? null) ? ucfirst(strtolower($data['middle_name'])) : null,
             'suffix' => $data['suffix'] ?? null,
             'sex' => $data['sex'],
             'date_of_birth' => $data['date_of_birth'],
