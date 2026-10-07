@@ -36,14 +36,49 @@
         page-break-after: auto;
     }
 
+    {{-- Fixed-page canvas: exactly the 7.5in x 12in printable area (@page minus 0.5in margins).
+         Every block inside is pinned to this canvas so fields keep exact coordinates on print. --}}
     .iclinic-form {
-        width: 100%;
-        min-height: 12in;
+        position: relative;
+        width: 720px;
+        height: 1152px;
+        margin: 0 auto;
+        overflow: hidden;
         border: 2px solid #000;
         font-family: Arial, Helvetica, sans-serif;
         font-size: 8pt;
         line-height: 1.12;
         color: #000;
+        background: #fff;
+    }
+
+    .form-body {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 22px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .form-head,
+    .form-section {
+        flex: 0 0 auto;
+        min-height: 0;
+    }
+
+    .form-section:last-child {
+        flex: 1 1 auto;
+    }
+
+    .form-section {
+        overflow: hidden;
+    }
+
+    .form-section > table.form-table {
+        height: 100%;
     }
 
     table.form-table {
@@ -59,6 +94,7 @@
         vertical-align: top;
         word-wrap: break-word;
         overflow-wrap: break-word;
+        overflow: hidden;
     }
 
     .section-header {
@@ -121,6 +157,20 @@
     .text-bold { font-weight: bold; }
     .text-upper { text-transform: uppercase; }
     .whitespace-pre { white-space: pre-wrap; }
+
+    {{-- Line clamps for variable-length values: keeps fixed row heights stable on print. --}}
+    .clip,
+    .clip-1,
+    .clip-2,
+    .clip-3,
+    .clip-4 {
+        overflow: hidden;
+    }
+
+    .clip-1 { max-height: calc(1 * 1.15em); }
+    .clip-2 { max-height: calc(2 * 1.15em); }
+    .clip-3 { max-height: calc(3 * 1.15em); }
+    .clip-4 { max-height: calc(4 * 1.15em); }
 
  
 
@@ -201,19 +251,24 @@
     }
 
     .form-footer {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 22px;
         border: 1px solid #000;
         border-top: 0;
         background: #0d4a3c;
         color: #fff;
         font-size: 7pt;
         font-weight: bold;
-        padding: 2px 4px;
+        padding: 0 4px;
+        display: flex;
+        align-items: center;
     }
 
     .form-footer-flex {
-        display: flex;
         justify-content: space-between;
-        align-items: center;
     }
 
     .mark {
@@ -294,10 +349,10 @@
         padding: 3px;
         font-size: 7pt;
         text-align: justify;
-        line-height: 1.2;
+        line-height: 1.15;
     }
 
-    .consent-text p { margin-bottom: 2px; }
+    .consent-text p { margin-bottom: 1px; }
 
     .sig-line {
         margin-top: 16px;
@@ -339,6 +394,7 @@
             max-width: 198mm;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
             margin-bottom: 16px;
+            overflow-x: auto;
         }
     }
 </style>
