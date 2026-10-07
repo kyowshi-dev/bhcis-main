@@ -71,6 +71,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/search/medicines', [SearchController::class, 'medicines'])
         ->middleware('permission:consultations', 'throttle:60,1')
         ->name('search.medicines');
+    Route::get('/search/locations', [SearchController::class, 'locations'])
+        ->middleware('permission:patients,consultations,nurse_batch_entry', 'throttle:60,1')
+        ->name('search.locations');
 
     // 3. PATIENT MANAGEMENT
     Route::get('/households', [HouseholdController::class, 'index'])

@@ -150,9 +150,43 @@
             </div>
 
             <div>
-                <label class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">Birth Place</label>
-                <input type="text" name="birth_place" value="{{ old('birth_place') }}" 
-                       placeholder="City/Municipality, Province" class="w-full px-3 lg:px-4 py-2 rounded-xl border border-border focus:ring-accent-blue focus:border-accent-blue text-sm">
+                <label for="birth_place" class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">Birth Place</label>
+                <div class="relative" @click.outside="birthPlaceOpen = false">
+                    <input type="text" id="birth_place" name="birth_place" value="{{ old('birth_place') }}"
+                           x-model="birthPlace"
+                           @input.debounce.250ms="searchBirthPlace()"
+                           @focus="birthPlaceOpen = true"
+                           @keydown.escape="birthPlaceOpen = false"
+                           @click="birthPlaceOpen = true"
+                           :aria-expanded="birthPlaceOpen && birthPlaceResults.length > 0"
+                           aria-controls="birth_place_results"
+                           placeholder="City/Municipality, Province"
+                           autocomplete="off"
+                           class="w-full px-3 lg:px-4 py-2 rounded-xl border @error('birth_place') border-danger bg-danger-soft @else border-border @enderror focus:ring-accent-blue focus:border-accent-blue text-sm">
+
+                    <div id="birth_place_results" role="listbox"
+                         x-show="birthPlaceOpen && birthPlaceResults.length > 0" x-cloak
+                         class="absolute z-20 w-full bg-surface mt-1 border border-border rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                        <ul>
+                            <template x-for="item in birthPlaceResults" :key="item.id">
+                                <li role="option" aria-selected="false"
+                                    class="px-3 lg:px-4 py-2 lg:py-2.5 hover:bg-black/5 cursor-pointer border-b last:border-0 text-xs lg:text-sm"
+                                    @click.prevent="selectBirthPlace(item)">
+                                    <div class="font-medium text-ink" x-text="item.text"></div>
+                                    <div class="text-xs text-ink-muted" x-text="item.subtext"></div>
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="text-xs text-ink-muted" x-show="birthPlaceOpen && birthPlace.trim().length > 1 && birthPlaceResults.length === 0 && !birthPlaceSearching" x-cloak>
+                    No location found. Type the place as-is to save it.
+                </div>
+
+                @error('birth_place')
+                    <p class="text-danger text-xs mt-1">{{ $message }}</p>
+                @enderror
             </div>
         </div>
 
@@ -472,6 +506,10 @@
                 dropdownOpen: false,
                 autocompleteResults: [],
                 autocompleteLoading: false,
+                birthPlace: @js(old('birth_place', '')),
+                birthPlaceResults: [],
+                birthPlaceSearching: false,
+                birthPlaceOpen: false,
                 newFamilyHead: @js(old('new_household_family_name_head', '')),
 
                 init() {
@@ -551,6 +589,30 @@
                     if (! this.newFamilyHead.trim() && this.surname.trim().length >= 2) {
                         this.newFamilyHead = this.surname.trim();
                     }
+                },
+
+                async searchBirthPlace() {
+                    const q = (this.birthPlace || '').trim();
+                    if (q.length < 2) {
+                        this.birthPlaceResults = [];
+                        return;
+                    }
+
+                    this.birthPlaceSearching = true;
+                    try {
+                        const response = await safeFetch(`{{ route('search.locations') }}?query=${encodeURIComponent(q)}`);
+                        this.birthPlaceResults = response.ok ? await response.json() : [];
+                    } catch (e) {
+                        this.birthPlaceResults = [];
+                    } finally {
+                        this.birthPlaceSearching = false;
+                    }
+                },
+
+                selectBirthPlace(item) {
+                    this.birthPlace = item.text + ', ' + item.subtext;
+                    this.birthPlaceResults = [];
+                    this.birthPlaceOpen = false;
                 },
 
                 onTransientToggle() {
