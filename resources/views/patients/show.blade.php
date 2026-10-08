@@ -225,7 +225,7 @@
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: 'var(--danger)',
-                cancelButtonColor: '#6b7280',
+                cancelButtonColor: 'var(--ink-muted)',
                 confirmButtonText: form.dataset.confirmText || 'Delete',
                 cancelButtonText: 'Cancel',
             }).then(result => { if (result.isConfirmed) form.submit(); });

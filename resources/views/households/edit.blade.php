@@ -22,6 +22,8 @@
         </a>
     </div>
 
+    <x-flash />
+
     @if ($errors->any())
         <div class="rounded-xl border px-4 py-3 text-sm"
              style="background: var(--danger-soft); border-color: var(--border); color: var(--danger);">
@@ -89,14 +91,12 @@
 
             <!-- Action Buttons -->
             <div class="flex gap-3 justify-end pt-4 border-t" style="border-color: var(--border);">
-                <a href="{{ route('households.index') }}"
-                   class="inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-semibold transition"
-                   style="background: var(--bg-surface); border: 1px solid var(--border); color: var(--ink);">
-                    Cancel
-                </a>
-                <button type="submit"
-                        class="inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-semibold text-white transition"
-                        style="background: var(--primary);">
+                <x-btn href="{{ route('households.index') }}" variant="outlined">
+                Cancel
+            </x-btn>
+            <button type="submit"
+                    class="inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-semibold text-white transition"
+                    x-btn variant="primary">
                     Save Changes
                 </button>
             </div>

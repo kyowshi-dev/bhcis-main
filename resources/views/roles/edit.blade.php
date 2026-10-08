@@ -16,6 +16,8 @@
         </a>
     </div>
 
+    <x-flash />
+
     <form action="{{ route('roles.update', $role) }}" method="POST" class="space-y-4 lg:space-y-6">
         @csrf
         @method('PUT')

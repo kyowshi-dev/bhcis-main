@@ -12,11 +12,7 @@
     ];
 @endphp
 <div class="space-y-5 lg:space-y-6 animate-in opacity-0">
-    @if (session('success'))
-        <div class="rounded-xl border px-4 py-3 text-sm" style="background: var(--teal-soft); border-color: var(--border); color: var(--primary);">
-            {{ session('success') }}
-        </div>
-    @endif
+    <x-flash />
     <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
             <h1 class="font-display font-semibold text-2xl lg:text-3xl" style="color: var(--ink);">Outward referrals</h1>

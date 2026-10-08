@@ -3,12 +3,7 @@
 @section('title', 'Dashboard')
 
 @section('content')
-@php
-    $todayLabel = now()->format('F d, Y');
-    $weekdayLabel = now()->format('l');
-@endphp
-
-<div class="space-y-4 lg:space-y-6">
+<div class="space-y-5 lg:space-y-6">
     <div class="animate-in opacity-0 delay-1 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
             <h1 class="font-display font-semibold text-2xl lg:text-3xl" style="color: var(--ink);">
@@ -19,98 +14,58 @@
             </p>
         </div>
 
-        <div class="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs sm:text-sm"
-             style="background: var(--bg-surface); border-color: var(--border); color: var(--ink-muted); box-shadow: var(--shadow-sm);">
-            <span class="inline-flex h-7 w-7 items-center justify-center rounded-lg"
-                  style="background: var(--teal-soft); color: var(--primary);">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <rect x="3" y="4" width="18" height="18" rx="2"></rect>
-                    <path d="M16 2v4"></path>
-                    <path d="M8 2v4"></path>
-                    <path d="M3 10h18"></path>
-                </svg>
-            </span>
-            <div class="leading-tight">
-                <div class="font-semibold" style="color: var(--ink);">{{ $todayLabel }}</div>
-                <div class="text-xs" style="color: var(--ink-muted);">{{ $weekdayLabel }}</div>
-            </div>
-        </div>
+        @include('dashboard.partials.date-chip')
     </div>
 
     <x-flash />
 
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-2 lg:gap-3">
-        <div class="kpi-card animate-in opacity-0 delay-2 flex items-center gap-3 p-3 rounded-xl border transition-[transform,box-shadow] duration-200 hover:scale-[1.01] hover:shadow-md"
-             style="background: var(--bg-surface); border-color: var(--border); box-shadow: var(--shadow-sm); border-left: 4px solid var(--primary);">
-            <span class="kpi-card__icon" style="background: var(--teal-soft); color: var(--primary);">
-                <i class="fa-solid fa-users" aria-hidden="true"></i>
-            </span>
-            <div class="min-w-0 flex-1">
-                <p class="kpi-card__label truncate">Total Patients</p>
-                @if ($totalPatients === 0)
-                    <p class="kpi-card__value">0</p>
-                    <a href="{{ route('patients.create') }}" class="text-[10px] font-bold truncate block mt-0.5" style="color: var(--primary);">Register first patient</a>
-                @else
-                    <p class="kpi-card__value">{{ $totalPatients }}</p>
-                    <a href="{{ route('patients.create') }}" class="text-[10px] font-bold truncate block mt-0.5" style="color: var(--primary);">Register patient</a>
-                @endif
-            </div>
-        </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+        <x-kpi-card
+            label="Total Patients"
+            :value="$totalPatients"
+            icon="fa-solid fa-users"
+            tone="primary"
+            :href="route('patients.create')"
+            :hrefLabel="$totalPatients === 0 ? 'Register first patient' : 'Register patient'"
+            :zeroState="$totalPatients === 0 ? 'Register first patient' : null"
+            :animateDelay="2"
+        />
 
-        <div class="kpi-card animate-in opacity-0 delay-3 flex items-center gap-3 p-3 rounded-xl border transition-[transform,box-shadow] duration-200 hover:scale-[1.01] hover:shadow-md"
-             style="background: var(--bg-surface); border-color: var(--border); box-shadow: var(--shadow-sm); border-left: 4px solid var(--primary);">
-            <span class="kpi-card__icon" style="background: var(--teal-soft); color: var(--primary);">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            </span>
-            <div class="min-w-0 flex-1">
-                <p class="kpi-card__label truncate">Pending check-ups</p>
-                @if ($pendingAppointments === 0)
-                    <p class="kpi-card__value">0</p>
-                    <p class="text-[10px] truncate mt-0.5" style="color: var(--ink-muted);">All caught up</p>
-                @else
-                    <p class="kpi-card__value">{{ $pendingAppointments }}</p>
-                    <a href="{{ route('consultations.index') }}" class="text-[10px] font-bold truncate block mt-0.5" style="color: var(--primary);">Manage queue</a>
-                @endif
-            </div>
-        </div>
+        <x-kpi-card
+            label="Pending check-ups"
+            :value="$pendingAppointments"
+            icon="fa-solid fa-circle-check"
+            tone="primary"
+            :href="route('consultations.index')"
+            :hrefLabel="$pendingAppointments === 0 ? null : 'Manage queue'"
+            :zeroState="$pendingAppointments === 0 ? 'All caught up' : null"
+            :animateDelay="3"
+        />
 
-        <div class="kpi-card animate-in opacity-0 delay-4 flex items-center gap-3 p-3 rounded-xl border transition-[transform,box-shadow] duration-200 hover:scale-[1.01] hover:shadow-md"
-             style="background: {{ $overdueImmunizations > 0 ? 'var(--danger-soft)' : 'var(--bg-surface)' }}; border-color: var(--border); box-shadow: var(--shadow-sm); border-left: 4px solid {{ $overdueImmunizations > 0 ? 'var(--danger)' : 'var(--primary)' }};">
-            <span class="kpi-card__icon" style="background: {{ $overdueImmunizations > 0 ? 'var(--danger)' : 'var(--teal-soft)' }}; color: {{ $overdueImmunizations > 0 ? 'var(--on-danger)' : 'var(--primary)' }};">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            </span>
-            <div class="min-w-0 flex-1">
-                <p class="kpi-card__label truncate" style="color: {{ $overdueImmunizations > 0 ? 'var(--danger)' : 'var(--ink-muted)' }};">Overdue Immunizations</p>
-                @if ($overdueImmunizations === 0)
-                    <p class="kpi-card__value">0</p>
-                    <p class="text-[10px] truncate mt-0.5" style="color: var(--ink-muted);">On track</p>
-                @else
-                    <p class="kpi-card__value" style="color: var(--danger);">{{ $overdueImmunizations }}</p>
-                    <a href="{{ route('immunizations.index') }}" class="text-[10px] font-bold truncate block mt-0.5" style="color: var(--danger);">View immunizations</a>
-                @endif
-            </div>
-        </div>
+        <x-kpi-card
+            label="Overdue Immunizations"
+            :value="$overdueImmunizations"
+            icon="fa-solid fa-circle-exclamation"
+            :tone="$overdueImmunizations > 0 ? 'danger' : 'primary'"
+            :href="route('immunizations.index')"
+            :hrefLabel="$overdueImmunizations === 0 ? null : 'View immunizations'"
+            :zeroState="$overdueImmunizations === 0 ? 'On track' : null"
+            :animateDelay="4"
+        />
 
-        <div class="kpi-card animate-in opacity-0 delay-5 flex items-center gap-3 p-3 rounded-xl border transition-[transform,box-shadow] duration-200 hover:scale-[1.01] hover:shadow-md"
-             style="background: var(--bg-surface); border-color: var(--border); box-shadow: var(--shadow-sm); border-left: 4px solid var(--amber);">
-            <span class="kpi-card__icon" style="background: var(--amber-soft); color: var(--amber);">
-                <i class="fa-solid fa-calendar-check" aria-hidden="true"></i>
-            </span>
-            <div class="min-w-0 flex-1">
-                <p class="kpi-card__label truncate">Follow-up today</p>
-                @if ($followUpConsultationsToday === 0)
-                    <p class="kpi-card__value">0</p>
-                    <p class="text-[10px] truncate mt-0.5" style="color: var(--ink-muted);">None scheduled</p>
-                @else
-                    <p class="kpi-card__value">{{ $followUpConsultationsToday }}</p>
-                    <a href="{{ route('consultations.index') }}" class="text-[10px] font-bold truncate block mt-0.5" style="color: var(--amber);">Review visits</a>
-                @endif
-            </div>
-        </div>
-
+        <x-kpi-card
+            label="Follow-up today"
+            :value="$followUpConsultationsToday"
+            icon="fa-solid fa-calendar-check"
+            tone="amber"
+            :href="route('consultations.index')"
+            :hrefLabel="$followUpConsultationsToday === 0 ? null : 'Review visits'"
+            :zeroState="$followUpConsultationsToday === 0 ? 'None scheduled' : null"
+            :animateDelay="5"
+        />
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-2 lg:gap-3">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 lg:gap-4">
         <div class="lg:col-span-2 dashboard-chart animate-in opacity-0 delay-6 rounded-xl border p-3 lg:p-4"
              style="background: var(--bg-surface); border-color: var(--border); box-shadow: var(--shadow-sm);">
             <div class="flex items-start justify-between gap-2">
@@ -173,8 +128,8 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-5">
-        <div class="lg:col-span-8 space-y-3 lg:space-y-5">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5">
+        <div class="lg:col-span-8 space-y-4 lg:space-y-5">
             @if ($showResultsReady ?? false)
                 @include('dashboard.partials.results-ready', [
                     'panelTitle' => 'Ready-to-Print Results',
@@ -187,31 +142,25 @@
             <div class="animate-in opacity-0 delay-6 rounded-xl border p-4 lg:p-5"
                  style="background: var(--bg-surface); border-color: var(--border); box-shadow: var(--shadow-sm);">
                 <h2 class="font-display font-semibold text-lg lg:text-xl mb-4" style="color: var(--ink);">Recent activity</h2>
-                    <ul class="divide-y divide-[var(--border)] space-y-0">
+                <ul class="divide-y divide-[var(--border)] space-y-0">
                     @forelse($recentActivity as $log)
                         @php
-                            // Clean up display labels dynamically
                             $time = \Carbon\Carbon::parse($log->created_at)->format('M d, Y H:i');
                             $user = $log->username ?: 'System';
                             $table = Str::singular(ucfirst(str_replace('_', ' ', $log->table_name)));
-                            
-                            // Map actions to semantic styling classes/variables
-                            $badgeStyle = match($log->action) {
-                                'created' => 'background: var(--teal-soft); color: var(--primary);', // New record
-                                'updated' => 'background: var(--amber-soft); color: var(--amber);',   // Edited record
-                                'deleted' => 'background: var(--danger-soft); color: var(--danger);', // Removed record
-                                default   => 'background: var(--primary-soft); color: var(--ink-muted);'
+
+                            $badgeClass = match($log->action) {
+                                'created' => 'bg-teal-soft text-primary',
+                                'updated' => 'bg-amber-soft text-amber',
+                                'deleted' => 'bg-danger-soft text-danger',
+                                default   => 'bg-primary-soft text-ink-muted',
                             };
                         @endphp
 
                         <li class="py-3.5 flex items-center justify-between text-sm transition-colors hover:bg-black/[0.01]">
                             <div class="flex items-center space-x-3">
-                                <!-- Action Status Badge -->
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider" style="{{ $badgeStyle }}">
-                                    {{ $log->action }}
-                                </span>
+                                <x-badge :class="$badgeClass" :icon="$log->action === 'created' ? 'fa-solid fa-plus' : ($log->action === 'deleted' ? 'fa-solid fa-trash' : 'fa-solid fa-pen')" :label="$log->action" />
                                 
-                                <!-- Activity Narrative -->
                                 <span style="color: var(--ink-muted);">
                                     <strong class="font-semibold text-[var(--ink)]">{{ $user }}</strong>
                                     {{ $log->action === 'created' ? 'added a new' : ($log->action === 'deleted' ? 'removed a' : 'updated a') }}
@@ -219,7 +168,6 @@
                                 </span>
                             </div>
                             
-                            <!-- Timestamp -->
                             <time class="text-xs font-medium shrink-0" style="color: var(--ink-subtle);">
                                 {{ $time }}
                             </time>
@@ -233,7 +181,7 @@
             </div>
         </div>
 
-        <div class="lg:col-span-4 space-y-3 lg:space-y-5">
+        <div class="lg:col-span-4 space-y-4 lg:space-y-5">
             <div class="animate-in opacity-0 delay-6 rounded-xl border p-4 lg:p-5"
                  style="background: var(--bg-surface); border-color: var(--border); box-shadow: var(--shadow-sm);">
                 <div class="flex items-center justify-between">
@@ -264,6 +212,31 @@
                             </div>
                         </div>
                     @endforelse
+                </div>
+            </div>
+
+            <div class="animate-in opacity-0 delay-6 rounded-xl border p-4 lg:p-5"
+                 style="background: var(--bg-surface); border-color: var(--border); box-shadow: var(--shadow-sm);">
+                <h3 class="text-xs font-semibold uppercase tracking-wider" style="color: var(--ink-muted);">Quick actions</h3>
+                <div class="mt-3 space-y-2">
+                    <a href="{{ route('patients.create') }}"
+                       class="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold text-white transition-[transform,box-shadow] duration-200 hover:shadow-sm hover:scale-[1.01]"
+                       style="background: var(--primary); box-shadow: var(--shadow-sm);">
+                        <i class="fa-solid fa-user-plus mr-2" aria-hidden="true"></i>
+                        Register patient
+                    </a>
+                    <a href="{{ route('consultations.index') }}"
+                       class="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold text-white transition-[transform,box-shadow] duration-200 hover:shadow-sm hover:scale-[1.01]"
+                       style="background: var(--primary); box-shadow: var(--shadow-sm);">
+                        <i class="fa-solid fa-stethoscope mr-2" aria-hidden="true"></i>
+                        Log consultation
+                    </a>
+                    <a href="{{ route('immunizations.index') }}"
+                       class="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold border transition hover:bg-black/[0.02]"
+                       style="border-color: var(--border); color: var(--primary);">
+                        <i class="fa-solid fa-syringe mr-2" aria-hidden="true"></i>
+                        View immunizations
+                    </a>
                 </div>
             </div>
         </div>

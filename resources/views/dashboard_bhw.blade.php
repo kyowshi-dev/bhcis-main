@@ -3,11 +3,6 @@
 @section('title', 'BHW Dashboard')
 
 @section('content')
-@php
-    $todayLabel = now()->format('F d, Y');
-    $weekdayLabel = now()->format('l');
-@endphp
-
 <div class="space-y-5 lg:space-y-6">
     <div class="animate-in opacity-0 delay-1 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
@@ -15,22 +10,7 @@
             <p class="text-sm mt-1" style="color: var(--ink-muted);">Enrol patients, start consultations, and keep the queue moving.</p>
         </div>
 
-        <div class="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs sm:text-sm"
-             style="background: var(--bg-surface); border-color: var(--border); color: var(--ink-muted); box-shadow: var(--shadow-sm);">
-            <span class="inline-flex h-7 w-7 items-center justify-center rounded-lg"
-                  style="background: var(--teal-soft); color: var(--primary);">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <rect x="3" y="4" width="18" height="18" rx="2"></rect>
-                    <path d="M16 2v4"></path>
-                    <path d="M8 2v4"></path>
-                    <path d="M3 10h18"></path>
-                </svg>
-            </span>
-            <div class="leading-tight">
-                <div class="font-semibold" style="color: var(--ink);">{{ $todayLabel }}</div>
-                <div class="text-xs" style="color: var(--ink-muted);">{{ $weekdayLabel }}</div>
-            </div>
-        </div>
+        @include('dashboard.partials.date-chip')
     </div>
 
     <x-flash />
@@ -77,65 +57,48 @@
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-        <div class="kpi-card animate-in opacity-0 delay-3 flex items-center gap-3 p-4 rounded-xl border transition-[transform,box-shadow] duration-200 hover:scale-[1.01] hover:shadow-md"
-             style="background: var(--bg-surface); border-color: var(--border); box-shadow: var(--shadow-sm); border-left: 4px solid var(--primary);">
-            <span class="kpi-card__icon" style="background: var(--teal-soft); color: var(--primary);">
-                <i class="fa-solid fa-users" aria-hidden="true"></i>
-            </span>
-            <div class="min-w-0 flex-1">
-                <p class="kpi-card__label truncate">Total patients</p>
-                <p class="kpi-card__value">{{ $totalPatients ?? 0 }}</p>
-                @if (auth()->user()?->hasPermission('patients'))
-                    <a href="{{ route('patients.index') }}" class="text-[10px] font-bold truncate block mt-0.5" style="color: var(--primary);">View registry</a>
-                @else
-                    <p class="text-[10px] truncate mt-0.5" style="color: var(--ink-muted);">Registered records</p>
-                @endif
-            </div>
-        </div>
+        <x-kpi-card
+            label="Total patients"
+            :value="$totalPatients ?? 0"
+            icon="fa-solid fa-users"
+            tone="primary"
+            :href="route('patients.index')"
+            :hrefLabel="auth()->user()?->hasPermission('patients') ? 'View registry' : null"
+            :zeroState="auth()->user()?->hasPermission('patients') ? null : 'Registered records'"
+            :animateDelay="3"
+        />
 
-        <div class="kpi-card animate-in opacity-0 delay-4 flex items-center gap-3 p-4 rounded-xl border transition-[transform,box-shadow] duration-200 hover:scale-[1.01] hover:shadow-md"
-             style="background: var(--bg-surface); border-color: var(--border); box-shadow: var(--shadow-sm); border-left: 4px solid var(--accent);">
-            <span class="kpi-card__icon" style="background: var(--teal-soft); color: var(--primary);">
-                <i class="fa-solid fa-stethoscope" aria-hidden="true"></i>
-            </span>
-            <div class="min-w-0 flex-1">
-                <p class="kpi-card__label truncate">Consultations today</p>
-                <p class="kpi-card__value">{{ $consultationsToday ?? 0 }}</p>
-                <a href="{{ route('consultations.index') }}" class="text-[10px] font-bold truncate block mt-0.5" style="color: var(--primary);">View visits</a>
-            </div>
-        </div>
+        <x-kpi-card
+            label="Consultations today"
+            :value="$consultationsToday ?? 0"
+            icon="fa-solid fa-stethoscope"
+            tone="primary"
+            :href="route('consultations.index')"
+            :hrefLabel="'View visits'"
+            :animateDelay="4"
+        />
 
-        <div class="kpi-card animate-in opacity-0 delay-5 flex items-center gap-3 p-4 rounded-xl border transition-[transform,box-shadow] duration-200 hover:scale-[1.01] hover:shadow-md"
-             style="background: {{ ($pendingConsultations ?? 0) > 0 ? 'var(--accent-blue-soft)' : 'var(--bg-surface)' }}; border-color: var(--border); box-shadow: var(--shadow-sm); border-left: 4px solid var(--accent-blue);">
-            <span class="kpi-card__icon" style="background: {{ ($pendingConsultations ?? 0) > 0 ? 'var(--accent-blue)' : 'var(--teal-soft)' }}; color: {{ ($pendingConsultations ?? 0) > 0 ? 'var(--on-accent-blue)' : 'var(--accent-blue)' }};">
-                <i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>
-            </span>
-            <div class="min-w-0 flex-1">
-                <p class="kpi-card__label truncate" style="color: {{ ($pendingConsultations ?? 0) > 0 ? 'var(--accent-blue)' : 'var(--ink-muted)' }};">Pending Queue</p>
-                <p class="kpi-card__value">{{ $pendingConsultations ?? 0 }}</p>
-                @if (($pendingConsultations ?? 0) > 0)
-                    <a href="{{ route('consultations.index') }}" class="text-[10px] font-bold truncate block mt-0.5" style="color: var(--accent-blue);">Open queue</a>
-                @else
-                    <p class="text-[10px] truncate mt-0.5" style="color: var(--ink-muted);">Queue is clear</p>
-                @endif
-            </div>
-        </div>
+        <x-kpi-card
+            label="Pending Queue"
+            :value="$pendingConsultations ?? 0"
+            icon="fa-solid fa-hourglass-half"
+            :tone="($pendingConsultations ?? 0) > 0 ? 'blue' : 'primary'"
+            :href="route('consultations.index')"
+            :hrefLabel="($pendingConsultations ?? 0) > 0 ? 'Open queue' : null"
+            :zeroState="($pendingConsultations ?? 0) === 0 ? 'Queue is clear' : null"
+            :animateDelay="5"
+        />
 
-        <div class="kpi-card animate-in opacity-0 delay-5 flex items-center gap-3 p-4 rounded-xl border transition-[transform,box-shadow] duration-200 hover:scale-[1.01] hover:shadow-md"
-             style="background: var(--bg-surface); border-color: var(--border); box-shadow: var(--shadow-sm); border-left: 4px solid var(--amber);">
-            <span class="kpi-card__icon" style="background: var(--amber-soft); color: var(--amber);">
-                <i class="fa-solid fa-arrow-right-arrow-left" aria-hidden="true"></i>
-            </span>
-            <div class="min-w-0 flex-1">
-                <p class="kpi-card__label truncate">Referrals today</p>
-                <p class="kpi-card__value">{{ $referralsToday ?? 0 }}</p>
-                @if (auth()->user()?->hasPermission('consultations'))
-                    <a href="{{ route('referrals.index') }}" class="text-[10px] font-bold truncate block mt-0.5" style="color: var(--amber);">View referrals</a>
-                @else
-                    <p class="text-[10px] truncate mt-0.5" style="color: var(--ink-muted);">All referred patients</p>
-                @endif
-            </div>
-        </div>
+        <x-kpi-card
+            label="Referrals today"
+            :value="$referralsToday ?? 0"
+            icon="fa-solid fa-arrow-right-arrow-left"
+            tone="amber"
+            :href="route('referrals.index')"
+            :hrefLabel="auth()->user()?->hasPermission('consultations') ? 'View referrals' : null"
+            :zeroState="auth()->user()?->hasPermission('consultations') ? null : 'All referred patients'"
+            :animateDelay="6"
+        />
     </div>
 
     <div>
@@ -214,23 +177,6 @@
                         @endforelse
                     </div>
                 </div>
-
-                <div class="animate-in opacity-0 delay-7 rounded-xl border p-4" style="background: var(--bg-surface); border-color: var(--border); box-shadow: var(--shadow-sm);">
-                    <div class="flex items-center justify-between mb-3">
-                        <p class="text-sm font-semibold" style="color: var(--ink);">Queue summary</p>
-                        <span class="text-xs font-semibold uppercase tracking-wider" style="color: var(--ink-muted);">Updated</span>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="rounded-xl p-4" style="background: var(--bg-surface-elevated); border: 1px solid var(--border);">
-                            <p class="text-xs uppercase tracking-wide" style="color: var(--ink-muted);">Total queued</p>
-                            <p class="mt-2 font-display font-semibold text-2xl" style="color: var(--ink);">{{ $pendingConsultations ?? 0 }}</p>
-                        </div>
-                        <div class="rounded-xl p-4" style="background: var(--bg-surface-elevated); border: 1px solid var(--border);">
-                            <p class="text-xs uppercase tracking-wide" style="color: var(--ink-muted);">Latest queue refresh</p>
-                            <p class="mt-2 text-sm" style="color: var(--ink);">{{ $queueUpdatedAt ?? 'Not available' }}</p>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -244,23 +190,25 @@
         ])
     @endif
 </div>
-
-<script>
-    function patientSearch() {
-        return {
-            query: '',
-            results: [],
-            loading: false,
-            async search() {
-                if (this.query.length < 2) { this.results = []; return; }
-                this.loading = true;
-                try {
-                    const response = await safeFetch(`{{ route('search.patients') }}?query=${this.query}`);
-                    this.results = response.ok ? await response.json() : [];
-                } catch (e) { console.error('Search failed:', e); }
-                this.loading = false;
-            },
-        };
-    }
-</script>
 @endsection
+
+@push('scripts')
+    <script>
+        function patientSearch() {
+            return {
+                query: '',
+                results: [],
+                loading: false,
+                async search() {
+                    if (this.query.length < 2) { this.results = []; return; }
+                    this.loading = true;
+                    try {
+                        const response = await safeFetch(`{{ route('search.patients') }}?query=${this.query}`);
+                        this.results = response.ok ? await response.json() : [];
+                    } catch (e) { console.error('Search failed:', e); }
+                    this.loading = false;
+                },
+            };
+        }
+    </script>
+@endpush

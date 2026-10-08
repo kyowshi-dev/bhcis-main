@@ -1,2 +1,6 @@
-medicine_name,category,description,expiration_date
-Ibuorofen 500mg Tablet,Analgesic,Pain relief medication,2026-12-31
+name,form
+Paracetamol 500mg,Tablet
+Amoxicillin 500mg,Capsule
+Loratadine 10mg,Tablet
+Metformin 500mg,Tablet
+Amlodipine 5mg,Tablet

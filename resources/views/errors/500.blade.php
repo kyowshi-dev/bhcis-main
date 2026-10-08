@@ -11,11 +11,11 @@
     <style>
         :root {
             --primary: #0d4a3c;
-            --ink: #1a1a1a;
-            --ink-muted: #6b7280;
-            --border: #e5e7eb;
+            --ink: #0f172a;
+            --ink-muted: #64748b;
+            --border: #e2e8f0;
             --danger: #dc2626;
-            --bg-page: #f9fafb;
+            --bg-page: #f4f7f5;
         }
         body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg-page); color: var(--ink); }
     </style>

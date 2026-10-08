@@ -2,7 +2,6 @@
     'title' => null,
     'subtitle' => null,
     'icon' => null,
-    'actions' => null,
 ])
 
 <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -19,7 +18,7 @@
             @endif
         </div>
     </div>
-    @if ($actions)
+    @if (isset($actions))
         <div class="flex flex-wrap items-center gap-2">{{ $actions }}</div>
     @endif
 </div>

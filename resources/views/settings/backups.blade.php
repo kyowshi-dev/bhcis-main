@@ -12,16 +12,7 @@
         <a href="{{ route('settings.index') }}" class="text-sm font-medium transition hover:underline" style="color: var(--primary);">Back to Settings</a>
     </div>
 
-    @if (session('success'))
-        <div class="rounded-xl border px-4 py-3" style="background: var(--teal-soft); border-color: var(--primary); color: var(--primary);">
-            {{ session('success') }}
-        </div>
-    @endif
-    @if (session('error'))
-        <div class="rounded-xl border px-4 py-3" style="background: var(--danger-soft); border-color: var(--danger-soft); color: var(--danger);">
-            {{ session('error') }}
-        </div>
-    @endif
+    <x-flash />
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="rounded-xl border p-5 lg:p-6" style="background: var(--bg-surface); border-color: var(--border);">
@@ -75,7 +66,7 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="submit-btn px-4 py-2.5 rounded-xl text-white text-sm font-semibold transition duration-200 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed" style="background: var(--danger);" onclick="event.preventDefault(); Swal.fire({title: 'Import database backup?', text: 'This will replace all current data. A backup of the current database will be saved automatically.', icon: 'warning', showCancelButton: true, confirmButtonColor: 'var(--danger)', cancelButtonColor: '#6b7280', confirmButtonText: 'Import', cancelButtonText: 'Cancel'}).then(result => { if (result.isConfirmed) { const btn = this; btn.disabled = true; btn.closest('form').submit(); } });">
+                    <button type="submit" class="submit-btn px-4 py-2.5 rounded-xl text-white text-sm font-semibold transition duration-200 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed" style="background: var(--danger);" onclick="event.preventDefault(); Swal.fire({title: 'Import database backup?', text: 'This will replace all current data. A backup of the current database will be saved automatically.', icon: 'warning', showCancelButton: true, confirmButtonColor: 'var(--danger)', cancelButtonColor: 'var(--ink-muted)', confirmButtonText: 'Import', cancelButtonText: 'Cancel'}).then(result => { if (result.isConfirmed) { const btn = this; btn.disabled = true; btn.closest('form').submit(); } });">
                         Import Database Backup
                     </button>
                 </div>

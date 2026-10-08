@@ -15,26 +15,12 @@
             </p>
         </div>
 
-        <a href="{{ route('households.create') }}"
-           class="inline-flex items-center justify-center px-4 lg:px-5 py-2 lg:py-2.5 rounded-xl text-xs lg:text-sm font-semibold text-white transition"
-           style="background: var(--primary); box-shadow: var(--shadow-sm);">
+        <x-btn href="{{ route('households.create') }}" icon="fa-solid fa-house-chimney">
             + Add household
-        </a>
+        </x-btn>
     </div>
 
-    @if (session('success'))
-        <div class="rounded-xl border px-3 lg:px-4 py-2 text-xs lg:text-sm"
-             style="background: var(--teal-soft); border-color: var(--border); color: var(--primary);">
-            {{ session('success') }}
-        </div>
-    @endif
-    
-    @if (session('error'))
-        <div class="rounded-xl border px-3 lg:px-4 py-2 text-xs lg:text-sm"
-             style="background: var(--danger-soft); border-color: var(--border); color: var(--danger);">
-            {{ session('error') }}
-        </div>
-    @endif
+    <x-flash />
 
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -155,11 +141,11 @@
                 style="background: var(--primary); color: white;">
                 Reassign Zone
         </button>
-        <button type="button" onclick="clearSelection()"
-                class="inline-flex items-center justify-center px-3 py-2 rounded-lg text-xs font-semibold transition"
+<button type="button" onclick="clearSelection()"
+                class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition"
                 style="background: var(--bg-surface); border: 1px solid var(--border); color: var(--ink);">
-                ✕ Clear
-        </button>
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i> Clear
+            </button>
     </div>
 
     <!-- Households Table -->
@@ -232,11 +218,11 @@
                                 {{ $household->created_at ? \Illuminate\Support\Carbon::parse($household->created_at)->format('M d, Y') : '-' }}
                             </td>
                             <td class="px-3 lg:px-4 py-2.5 lg:py-3 text-right whitespace-nowrap space-x-1 flex justify-end items-center">
-                                <a href="{{ route('households.edit', $household->id) }}"
-                                   class="inline-flex items-center justify-center px-2 py-1.5 rounded-lg text-[11px] font-semibold transition"
-                                   style="background: var(--primary-soft); color: var(--primary); border: 1px solid var(--border);"
-                                   title="Edit household">
-                                    ✎ Edit
+<a href="{{ route('households.edit', $household->id) }}"
+                                    class="inline-flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg text-[11px] font-semibold transition"
+                                    style="background: var(--primary-soft); color: var(--primary); border: 1px solid var(--border);"
+                                    title="Edit household">
+                                     <i class="fa-solid fa-pen" aria-hidden="true"></i> Edit
                                 </a>
                                 
                             </td>

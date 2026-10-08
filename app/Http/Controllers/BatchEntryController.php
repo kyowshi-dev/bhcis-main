@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreBatchHouseholdRequest;
 use App\Http\Requests\StoreBatchPatientRequest;
+use App\Http\Requests\UpdateBatchPatientRequest;
 use App\Models\Household;
 use App\Models\Patient;
 use App\Models\Zone;
 use App\Services\BatchEntryService;
-use App\Services\PatientService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -23,7 +24,6 @@ class BatchEntryController extends Controller
     {
         $this->authorize('viewAny', Patient::class);
 
-        $transientHousehold = PatientService::ensureTransientHousehold();
         $zones = Zone::orderBy('zone_number')->get();
 
         $recentPatients = Patient::with('household')
@@ -32,8 +32,6 @@ class BatchEntryController extends Controller
             ->get();
 
         return view('batch-entry.index', [
-            'transientHouseholdId' => $transientHousehold->id,
-            'transientHouseholdLabel' => $transientHousehold->family_name_head,
             'zones' => $zones,
             'recentPatients' => $recentPatients,
         ]);
@@ -109,18 +107,14 @@ class BatchEntryController extends Controller
     /**
      * Create a new household inline from the batch entry form (AJAX).
      */
-    public function createHousehold(Request $request): JsonResponse
+    public function createHousehold(StoreBatchHouseholdRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'zone_id' => ['required', 'integer', 'exists:zones,id'],
-            'family_name_head' => ['required', 'string', 'max:255'],
-            'contact_number' => ['nullable', 'string', 'max:32', 'regex:/^[0-9+\-\s()]*$/'],
-        ]);
+        $validated = $request->validated();
 
         $household = Household::create([
             'zone_id' => $validated['zone_id'],
-            'family_name_head' => trim($validated['family_name_head']),
-            'contact_number' => ($validated['contact_number'] ?? null) !== null ? trim($validated['contact_number']) : null,
+            'family_name_head' => $validated['family_name_head'],
+            'contact_number' => $validated['contact_number'] ?? null,
         ]);
 
         $household->load('zone:id,zone_number');
@@ -141,53 +135,24 @@ class BatchEntryController extends Controller
         $this->authorize('update', $patient);
 
         $zones = Zone::orderBy('zone_number')->get();
-        $transientHousehold = PatientService::ensureTransientHousehold();
 
         return view('batch-entry.edit-patient', [
             'patient' => $patient,
             'zones' => $zones,
-            'transientHouseholdId' => $transientHousehold->id,
-            'transientHouseholdLabel' => $transientHousehold->family_name_head,
         ]);
     }
 
     /**
      * Update a patient from batch entry edit form.
      */
-    public function updatePatient(Request $request, int $id): RedirectResponse
+    public function updatePatient(UpdateBatchPatientRequest $request, int $id): RedirectResponse
     {
         $patient = Patient::findOrFail($id);
         $this->authorize('update', $patient);
 
-        $validated = $request->validate([
-            'first_name' => ['required', 'string', 'min:2', 'max:50'],
-            'last_name' => ['required', 'string', 'min:2', 'max:50'],
-            'middle_name' => ['nullable', 'string', 'max:50'],
-            'sex' => 'required|in:Male,Female',
-            'date_of_birth' => 'required|date|before:today',
-            'civil_status' => 'nullable|string',
-            'mother_name' => ['nullable', 'string', 'max:255'],
-            'spouse_name' => ['nullable', 'string', 'max:255'],
-            'family_relationship' => ['nullable', 'string'],
-            'is_philhealth_member' => ['required', 'in:y,n'],
-            'philhealth_no' => ['nullable', 'string', 'max:20'],
-            'is_pcb_member' => ['required', 'in:y,n'],
-        ]);
+        $validated = $request->validated();
 
-        $patient->update([
-            'first_name' => ucwords(strtolower($validated['first_name'])),
-            'last_name' => ucwords(strtolower($validated['last_name'])),
-            'middle_name' => $validated['middle_name'] ? ucfirst(strtolower($validated['middle_name'])) : null,
-            'sex' => $validated['sex'],
-            'date_of_birth' => $validated['date_of_birth'],
-            'civil_status' => $validated['civil_status'] ?? $patient->civil_status,
-            'mother_name' => $validated['mother_name'] ?? $patient->mother_name,
-            'spouse_name' => $validated['spouse_name'] ?? $patient->spouse_name,
-            'family_relationship' => $validated['family_relationship'] ?? $patient->family_relationship,
-            'is_philhealth_member' => $validated['is_philhealth_member'],
-            'philhealth_no' => $validated['philhealth_no'] ?? $patient->philhealth_no,
-            'is_pcb_member' => $validated['is_pcb_member'],
-        ]);
+        $patient->update($validated);
 
         return redirect()
             ->route('batch-entry.index')

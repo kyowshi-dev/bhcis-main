@@ -20,7 +20,7 @@
                     </form>
                     <form action="{{ route('notifications.destroy-all') }}" method="POST" class="inline">
                         @csrf
-                        <button type="submit" class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 border border-border hover:bg-black/5" onclick="event.preventDefault(); Swal.fire({title: 'Clear all notifications?', text: 'This will permanently delete all notifications.', icon: 'warning', showCancelButton: true, confirmButtonColor: 'var(--danger)', cancelButtonColor: '#6b7280', confirmButtonText: 'Clear All', cancelButtonText: 'Cancel'}).then(result => { if (result.isConfirmed) this.closest('form').submit(); });">
+                        <button type="submit" class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 border border-border hover:bg-black/5" onclick="event.preventDefault(); Swal.fire({title: 'Clear all notifications?', text: 'This will permanently delete all notifications.', icon: 'warning', showCancelButton: true, confirmButtonColor: 'var(--danger)', cancelButtonColor: 'var(--ink-muted)', confirmButtonText: 'Clear All', cancelButtonText: 'Cancel'}).then(result => { if (result.isConfirmed) this.closest('form').submit(); });">
                             <i class="fa-solid fa-trash text-ink mr-2" aria-hidden="true"></i>
                             Clear All
                         </button>

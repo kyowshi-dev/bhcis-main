@@ -11,21 +11,21 @@
             <p class="text-sm mt-1" style="color: var(--ink-muted);">Medicine details</p>
         </div>
         <div class="flex gap-2">
-            <a href="{{ route('medicines.edit', $medicine->id) }}" class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-white text-sm font-semibold transition duration-200 hover:shadow-md" style="background: var(--primary);">
+            <x-btn href="{{ route('medicines.edit', $medicine->id) }}" variant="outlined" icon="fa-solid fa-pen">
                 Edit
-            </a>
+            </x-btn>
             <form action="{{ route('medicines.destroy', $medicine->id) }}" method="POST" class="inline confirm-delete-form" data-message="Archive this medicine? It will be hidden from the active list and can be restored anytime.">
                 @csrf
                 @method('DELETE')
-                <button type="submit" class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-white text-sm font-semibold transition duration-200 hover:shadow-md" style="background: var(--danger);">
+                <x-btn type="submit" variant="destructive">
                     Archive
-                </button>
+                </x-btn>
             </form>
         </div>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="rounded-xl border p-5 lg:p-6" style="background: var(--bg-surface); border-color: var(--border);">
+        <x-card>
             <h2 class="font-display font-semibold text-lg mb-4" style="color: var(--ink);">Details</h2>
             <dl class="space-y-3">
                 <div>
@@ -39,9 +39,9 @@
                     </div>
                 @endif
             </dl>
-        </div>
+        </x-card>
 
-        <div class="rounded-xl border p-5 lg:p-6" style="background: var(--bg-surface); border-color: var(--border);">
+        <x-card>
             <h2 class="font-display font-semibold text-lg mb-4" style="color: var(--ink);">Usage Statistics</h2>
             <div class="space-y-3">
                 <div class="flex justify-between">
@@ -53,11 +53,9 @@
                     <span class="text-sm font-medium" style="color: var(--ink);">{{ $medicine->last_prescribed ? \Carbon\Carbon::parse($medicine->last_prescribed)->format('M d, Y') : 'Never' }}</span>
                 </div>
             </div>
-        </div>
+        </x-card>
     </div>
 </div>
-@endsection
-
 <script>
 document.querySelectorAll('.confirm-delete-form').forEach(form => {
     form.addEventListener('submit', function(e) {
@@ -67,10 +65,11 @@ document.querySelectorAll('.confirm-delete-form').forEach(form => {
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: 'var(--danger)',
-            cancelButtonColor: '#6b7280',
+            cancelButtonColor: 'var(--ink-muted)',
             confirmButtonText: 'Delete',
             cancelButtonText: 'Cancel',
         }).then(result => { if (result.isConfirmed) form.submit(); });
     });
 });
 </script>
+@endsection

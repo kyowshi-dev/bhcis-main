@@ -16,7 +16,7 @@
             <div class="space-y-5">
                 <div>
                     <label for="outward_referred_to" class="block text-xs font-medium mb-1.5" style="color: var(--ink-muted);">
-                        Destination facility <span style="color: #b91c1c;">*</span>
+                        Destination facility <span style="color: var(--danger);">*</span>
                     </label>
                     <div class="relative">
                         <input
@@ -43,7 +43,7 @@
 
                 <fieldset>
                     <legend class="block text-xs font-medium mb-2" style="color: var(--ink-muted);">
-                        Reasons for referral <span style="color: #b91c1c;">*</span>
+                        Reasons for referral <span style="color: var(--danger);">*</span>
                     </legend>
                     <div class="space-y-2.5 rounded-md border p-3.5" style="border-color: var(--border); background: var(--bg-surface);">
                         @foreach ($referralReasonOptions as $value => $label)
@@ -78,7 +78,7 @@
             <div class="space-y-5 flex flex-col min-h-0">
                 <div class="flex flex-col h-full min-h-0">
                     <label for="outward_pertinent_history" class="block text-xs font-medium mb-1.5" style="color: var(--ink-muted);">
-                        Pertinent history of illness <span style="color: #b91c1c;">*</span>
+                        Pertinent history of illness <span style="color: var(--danger);">*</span>
                     </label>
                     <textarea
                         name="pertinent_history"

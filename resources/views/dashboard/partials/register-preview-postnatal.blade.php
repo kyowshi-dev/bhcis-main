@@ -8,7 +8,7 @@
         <p class="text-sm mt-0.5" style="color: var(--ink-muted);">24h / 7d / 14d / 28d postpartum follow-ups.</p>
     </div>
     <div class="flex flex-wrap items-center gap-2 shrink-0">
-        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold" style="background: var(--accent-soft); color: var(--accent);">{{ $total }} total</span>
+        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold" style="background: var(--teal-soft); color: var(--primary);">{{ $total }} total</span>
         <a href="{{ route('maternal.postnatal.index') }}" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition hover:bg-black/[0.03]"
            style="border: 1px solid var(--border); color: var(--primary);">
             Open full register <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>

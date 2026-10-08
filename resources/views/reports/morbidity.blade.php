@@ -3,15 +3,16 @@
 @section('title', 'Morbidity Report')
 
 @section('content')
-        <div class="space-y-4 lg:space-y-6">
-            <div>
-                <h1 class="flex items-center justify-between text-xl lg:text-2xl font-extrabold text-ink mt-1 lg:mt-2">
-                    <span>Month Morbidity Disease Report</span>
-                    <a href="{{ route('reports.index') }}" class="ml-4 text-xs lg:text-sm font-medium hover:opacity-90" style="color: var(--primary);">Back to Reports</a>
-                </h1>
-            </div>
-
-            <form id="morbidityFilterForm" method="GET" action="{{ route('reports.morbidity') }}" class="space-y-4">
+<div class="space-y-4 lg:space-y-6">
+    <x-page-header
+        title="Month Morbidity Disease Report"
+        subtitle="Generate and view monthly morbidity reports."
+        icon="fa-solid fa-chart-bar"
+    >
+        <x-slot name="actions">
+            <a href="{{ route('reports.index') }}" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border text-xs lg:text-sm font-medium text-ink transition hover:bg-black/5">Back to Reports</a>
+        </x-slot>
+    </x-page-header>
                 <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 items-end">
                     <div>
                         <label for="month" class="block text-xs font-medium" style="color: var(--ink-muted);">Month</label>

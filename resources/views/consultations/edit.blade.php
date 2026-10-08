@@ -677,7 +677,7 @@ function deleteDiagnosis(id) {
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: 'var(--danger)',
-        cancelButtonColor: '#6b7280',
+        cancelButtonColor: 'var(--ink-muted)',
         confirmButtonText: 'Delete',
         cancelButtonText: 'Cancel',
     }).then((result) => {
@@ -710,7 +710,7 @@ function deletePrescription(id) {
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: 'var(--danger)',
-        cancelButtonColor: '#6b7280',
+        cancelButtonColor: 'var(--ink-muted)',
         confirmButtonText: 'Delete',
         cancelButtonText: 'Cancel',
     }).then((result) => {

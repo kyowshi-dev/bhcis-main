@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Enums\ConsultationStatus;
 use App\Helpers\PatientCode;
+use App\Models\Consultation;
+use App\Models\OutwardReferral;
 use App\Models\Patient;
 use App\Models\User;
 use App\Models\Vaccine;
@@ -390,5 +392,45 @@ final class DashboardQueryService
             ->all();
 
         return compact('doctorsOnDuty', 'onDutyStaff');
+    }
+
+    // ── D o c t o r   d a s h b o a r d   r e f e r r a l s ──
+
+    /**
+     * @return array{count: int, referrals: list<array{id: int, consultation_id: int, patient_name: string, facility: string|null, referred_at: string}>}
+     */
+    public static function pendingReferrals(int $limit = 4): array
+    {
+        $referrals = OutwardReferral::query()
+            ->where('status', OutwardReferral::STATUS_PENDING)
+            ->with(['consultation.patient'])
+            ->orderByDesc('created_at')
+            ->limit($limit)
+            ->get()
+            ->map(function (OutwardReferral $referral) {
+                /** @var Consultation|null $consultation */
+                $consultation = $referral->consultation()->first();
+                /** @var Patient|null $patient */
+                $patient = $consultation?->patient;
+                $patientName = $patient
+                    ? trim("{$patient->first_name} {$patient->last_name}")
+                    : 'Unknown Patient';
+
+                return [
+                    'id' => $referral->id,
+                    'consultation_id' => $referral->consultation_id,
+                    'patient_name' => $patientName,
+                    'facility' => $referral->destination_facility,
+                    'referred_at' => $referral->created_at->format('M d, H:i'),
+                ];
+            })
+            ->all();
+
+        $count = OutwardReferral::where('status', OutwardReferral::STATUS_PENDING)->count();
+
+        return [
+            'count' => $count,
+            'referrals' => $referrals,
+        ];
     }
 }

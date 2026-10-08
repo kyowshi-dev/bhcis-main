@@ -75,8 +75,8 @@
             showCancelButton: true,
             confirmButtonText: 'Yes, mark no-show',
             cancelButtonText: 'Cancel',
-            confirmButtonColor: '#dc2626',
-            cancelButtonColor: '#6b7280',
+            confirmButtonColor: 'var(--danger)',
+            cancelButtonColor: 'var(--ink-muted)',
             reverseButtons: true,
         }).then((result) => {
             if (result.isConfirmed) form.submit();
@@ -92,7 +92,7 @@
             confirmButtonText: 'Yes, clear',
             cancelButtonText: 'Cancel',
             confirmButtonColor: 'var(--primary)',
-            cancelButtonColor: '#6b7280',
+            cancelButtonColor: 'var(--ink-muted)',
             reverseButtons: true,
         }).then((result) => {
             if (result.isConfirmed) form.submit();
@@ -108,7 +108,7 @@
             confirmButtonText: 'Yes, mark done',
             cancelButtonText: 'Cancel',
             confirmButtonColor: 'var(--primary)',
-            cancelButtonColor: '#6b7280',
+            cancelButtonColor: 'var(--ink-muted)',
             reverseButtons: true,
         }).then((result) => {
             if (result.isConfirmed) form.submit();

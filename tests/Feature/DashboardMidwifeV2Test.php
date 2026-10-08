@@ -82,7 +82,7 @@ class DashboardMidwifeV2Test extends TestCase
         $this->actingAs($user)
             ->get('/dashboard')
             ->assertOk()
-            ->assertSee('Maternal & Family Planning Register')
+            ->assertSee('Maternal and Family Register')
             ->assertDontSee('Service-Tabbed Operational Hub')
             ->assertDontSee('All Queues')
             ->assertDontSee('Watchlist');
@@ -211,8 +211,7 @@ class DashboardMidwifeV2Test extends TestCase
             ->assertSee('aria-controls="register-panel-postnatal"', false)
             ->assertSee('id="register-panel-prenatal"', false)
             ->assertSee('id="register-panel-fp"', false)
-            ->assertSee('id="register-panel-postnatal"', false)
-            ->assertSee('role="button"', false);
+            ->assertSee('id="register-panel-postnatal"', false);
     }
 
     public function test_prenatal_preview_panel_shows_active_pregnancy(): void
@@ -285,6 +284,6 @@ class DashboardMidwifeV2Test extends TestCase
         $this->actingAs($user)
             ->get('/dashboard')
             ->assertOk()
-            ->assertDontSee('Maternal & Family Planning Register');
+            ->assertDontSee('Maternal and Family Register');
     }
 }

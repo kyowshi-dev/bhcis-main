@@ -11,6 +11,12 @@ class PatientSeeder extends Seeder
 {
     public function run(): void
     {
+        if (DB::table('patients')->exists()) {
+            $this->command?->warn('Patients already exist; skipping PatientSeeder to avoid duplicates.');
+
+            return;
+        }
+
         $lastNames = [
             'Casiño', 'Emano', 'Cabunoc', 'Achas', 'Neri', 'Flores', 'Asiñero', 'Naelga',
             'Quilang', 'Salcedo', 'Nabong', 'Lucagbo', 'Sabio', 'Dagus', 'Tadeo', 'Ando',
@@ -44,27 +50,29 @@ class PatientSeeder extends Seeder
         $patients = [];
         $zoneNumbers = DB::table('zones')->pluck('zone_number', 'id')->toArray();
 
-        // 20 households - 40 patients (20 male, 20 female), some patients share a household.
+        // 45 households - 100 patients (50 male, 50 female), some patients share a household.
         $households = [];
-        for ($i = 0; $i < 20; $i++) {
+        $householdCount = 45;
+        for ($i = 0; $i < $householdCount; $i++) {
             $zoneId = array_rand($zoneNumbers);
             $lastName = $lastNames[array_rand($lastNames)];
+            $householdCreatedAt = now()->subDays(rand(0, 89));
             $householdId = DB::table('households')->insertGetId([
                 'zone_id' => $zoneId,
                 'family_name_head' => $lastName,
                 'contact_number' => '09'.rand(100000000, 999999999),
-                'created_at' => now(),
-                'updated_at' => now(),
+                'created_at' => $householdCreatedAt,
+                'updated_at' => $householdCreatedAt,
             ]);
             $households[] = ['id' => $householdId, 'zone_id' => $zoneId, 'last_name' => $lastName];
         }
 
-        $sexes = array_merge(array_fill(0, 20, 'Male'), array_fill(0, 20, 'Female'));
+        $sexes = array_merge(array_fill(0, 50, 'Male'), array_fill(0, 50, 'Female'));
         shuffle($sexes);
 
-        for ($i = 0; $i < 40; $i++) {
-            // First 20 patients get their own household, the rest join an existing one.
-            $household = $i < 20 ? $households[$i] : $households[array_rand($households)];
+        for ($i = 0; $i < 100; $i++) {
+            // First 45 patients get their own household, the rest join an existing one.
+            $household = $i < $householdCount ? $households[$i] : $households[array_rand($households)];
 
             $isMale = $sexes[$i] === 'Male';
             $firstName = $isMale ? $firstNamesMale[array_rand($firstNamesMale)] : $firstNamesFemale[array_rand($firstNamesFemale)];
@@ -79,6 +87,9 @@ class PatientSeeder extends Seeder
             $isPhilhealthMember = rand(0, 1) === 1;
             $isPcbMember = rand(0, 1) === 1;
             $zoneNumber = $zoneNumbers[$household['zone_id']] ?? $household['zone_id'];
+
+            // Patient created_at spread across the last 90 days to match consultation window
+            $patientCreatedAt = now()->subDays(rand(0, 89));
 
             $patients[] = [
                 'household_id' => $household['id'],
@@ -107,8 +118,8 @@ class PatientSeeder extends Seeder
                 'has_4ps' => rand(0, 1),
                 'has_nhts' => rand(0, 1),
                 'is_immunization_enrolled' => $isChild,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'created_at' => $patientCreatedAt,
+                'updated_at' => $patientCreatedAt,
             ];
         }
 

@@ -15,12 +15,12 @@
             </p>
         </div>
 
-        <a href="{{ route('households.index') }}"
-           class="inline-flex items-center justify-center px-4 lg:px-5 py-2 lg:py-2.5 rounded-xl text-xs lg:text-sm font-semibold transition"
-           style="background: var(--bg-surface); border: 1px solid var(--border); color: var(--ink);">
+        <x-btn href="{{ route('households.index') }}" variant="outlined">
             Back to Households
-        </a>
+        </x-btn>
     </div>
+
+    <x-flash />
 
     @if ($errors->any())
         <div class="rounded-xl border px-4 py-3 text-sm"
@@ -100,7 +100,7 @@
                 </a>
                 <button type="submit"
                         class="inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-semibold text-white transition"
-                        style="background: var(--primary);">
+                        x-btn variant="primary">
                     Register Household
                 </button>
             </div>

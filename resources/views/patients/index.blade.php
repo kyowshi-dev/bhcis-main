@@ -34,11 +34,9 @@
                 <i class="fa-solid fa-box-archive" aria-hidden="true"></i>
                 {{ $showTrashed ? 'Showing Archived' : 'Archived' }}
             </a>
-            <a href="{{ url('/patients/create') }}"
-               class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200 hover:opacity-95 active:scale-[0.98]"
-               style="background: var(--primary); box-shadow: 0 2px 8px rgba(196, 92, 65, 0.25);">
-                Enrol New Patient 
-            </a>
+            <x-btn href="{{ url('/patients/create') }}" icon="fa-solid fa-user-plus">
+                Enrol New Patient
+            </x-btn>
         </div>
     </div>
 
@@ -150,13 +148,13 @@
                                 @if ($patient->last_visit) {{ \Carbon\Carbon::parse($patient->last_visit)->format('Y-m-d') }} @else - @endif
                             </td>
                             <td class="px-4 py-2.5 text-right whitespace-nowrap">
-                                @if($patient->trashed())
-                                    @if (auth()->user()?->hasPermission('patients_destroy'))
-                                        <form action="{{ route('patients.restore', $patient->id) }}" method="POST" class="inline" onclick="return confirm('Restore this patient?')">
-                                            @csrf
-                                            <button type="submit" class="font-semibold text-sm transition-colors hover:underline" style="color: var(--primary);">Restore</button>
-                                        </form>
-                                    @endif
+@if($patient->trashed())
+                                @if (auth()->user()?->hasPermission('patients_destroy'))
+                                    <form action="{{ route('patients.restore', $patient->id) }}" method="POST" class="inline" id="restore-form-{{ $patient->id }}">
+                                        @csrf
+                                        <button type="button" class="font-semibold text-sm transition-colors hover:underline" style="color: var(--primary);" onclick="confirmRestore({{ $patient->id }})">Restore</button>
+                                    </form>
+                                @endif
                                 @else
                                     <a href="{{ route('patients.show', $patient->id) }}" class="font-semibold text-sm transition-colors hover:underline" style="color: var(--primary);">View</a>
                                 @endif
@@ -170,14 +168,16 @@
                                         <div class="mb-3 flex justify-center"><i class="fa-solid fa-filter-circle-xmark text-3xl" style="color: var(--ink-subtle);"></i></div>
                                         <p class="text-sm font-medium" style="color: var(--ink);">No records found</p>
                                         <p class="text-xs mt-1 mb-3" style="color: var(--ink-muted);">No patients match the current sort. Try clearing filters to see all records.</p>
-                                        <a href="{{ route('patients.index') }}" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-white transition hover:opacity-90" style="background: var(--primary);"><i class="fa-solid fa-arrow-rotate-left"></i> Clear all filters</a>
+                                        <a href="{{ route('patients.index') }}" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-white transition hover:opacity-90" x-btn variant="outlined" icon="fa-solid fa-arrow-rotate-left">Clear all filters</a>
                                     </div>
                                 @else
                                     <div class="text-center">
                                         <div class="mb-3 flex justify-center"><i class="fa-solid fa-clipboard-list text-3xl" style="color: var(--ink-subtle);"></i></div>
                                         <p class="text-sm font-medium" style="color: var(--ink);">No patient records yet</p>
                                         <p class="text-xs mt-1 mb-3" style="color: var(--ink-muted);">Start by registering a patient to track their health data</p>
-                                        <a href="{{ url('/patients/create') }}" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-white transition hover:opacity-90" style="background: var(--primary);"><i class="fa-solid fa-plus"></i> Register first patient</a>
+                                        <x-btn href="{{ url('/patients/create') }}" icon="fa-solid fa-plus">
+    Register first patient
+</x-btn>
                                     </div>
                                 @endif
                             </td>
@@ -215,6 +215,24 @@
             },
         };
     }
+
+    window.confirmRestore = function(patientId) {
+        Swal.fire({
+            title: 'Restore this patient?',
+            text: 'This will restore the patient record and make it visible again.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Restore',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: 'var(--primary)',
+            cancelButtonColor: 'var(--ink-muted)',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const form = document.getElementById('restore-form-' + patientId);
+                if (form) form.submit();
+            }
+        });
+    };
 </script>
 
 @if(session('success') && session('new_patient_id'))
@@ -229,7 +247,7 @@
             confirmButtonText: 'Proceed to Consultation',
             cancelButtonText: 'Back to Home',
             confirmButtonColor: 'var(--primary)',
-            cancelButtonColor: '#6b7280',
+            cancelButtonColor: 'var(--ink-muted)',
             reverseButtons: true
         }).then((result) => {
             if (result.isConfirmed) {

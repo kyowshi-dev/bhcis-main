@@ -75,7 +75,7 @@
                             Active
                         </span>
                     @else
-                        <span class="px-2 py-1 rounded-full text-xs font-medium" style="background: rgba(196, 92, 65, 0.1); color: #c45c41;">
+                        <span class="px-2 py-1 rounded-full text-xs font-medium" style="background: var(--bg-page); color: var(--ink-muted); border: 1px solid var(--border);">
                             Inactive
                         </span>
                     @endif
