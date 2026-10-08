@@ -45,7 +45,6 @@ class DashboardController extends Controller
             'pendingConsultations' => DashboardQueryService::activeConsultations($user),
             'pendingQueue' => DashboardQueryService::pendingQueue($user),
             'recentPatients' => DashboardQueryService::recentPatients($user),
-            'queueUpdatedAt' => now()->format('M j, Y g:i A'),
             'showResultsReady' => $user->canViewDashboardHandouts(),
             ...$handoutData,
         ]);
@@ -98,6 +97,7 @@ class DashboardController extends Controller
             'consultationsToday' => $consultationsToday,
         ] = DashboardQueryService::doctorCounts($today);
 
+        $pendingReferrals = DashboardQueryService::pendingReferrals();
         $handoutData = $this->handoutData($request, $user, limit: 8, defaultToToday: true);
 
         return view('dashboard_doctor', [
@@ -106,6 +106,8 @@ class DashboardController extends Controller
             'completedConsultationsToday' => $completedConsultationsToday,
             'followUpConsultationsToday' => DashboardQueryService::followUpsToday($today),
             'doctorQueue' => DashboardQueryService::doctorQueue(),
+            'pendingReferralsCount' => $pendingReferrals['count'],
+            'pendingReferrals' => $pendingReferrals['referrals'],
             'showResultsReady' => $user->canViewDashboardHandouts(),
             ...$handoutData,
         ]);

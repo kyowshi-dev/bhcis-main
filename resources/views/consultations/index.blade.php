@@ -20,6 +20,8 @@
         </div>
     </div>
 
+    <x-flash />
+
     <div class="grid grid-cols-1 md:grid-cols-3 gap-3 lg:gap-4">
         <div class="rounded-xl border p-4 lg:p-5 animate-in opacity-0 delay-1" style="background: var(--bg-surface); border-color: var(--border);">
             <p class="text-xs uppercase tracking-wide font-semibold" style="color: var(--ink-muted);">Total consultations</p>

@@ -7,12 +7,45 @@ use App\Models\HealthWorker;
 use App\Models\Patient;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Demonstration consultations for the last 3 months: triage vitals,
+ * linked ICD diagnoses, and prescriptions drawn from the DOH formulary,
+ * with status rows kept coherent with ConsultationService rules
+ * (a consultation auto-completes only when it has both a diagnosis
+ * and a prescription).
+ */
 class ConsultationSeeder extends Seeder
 {
+    /** Complaint numbers that present with fever (drives temperature). */
+    private const FEVER_COMPLAINTS = [1, 26, 31, 35];
+
+    /** Complaint numbers that suggest elevated blood pressure in older adults. */
+    private const HYPERTENSIVE_COMPLAINTS = [5, 7, 23, 26, 28, 40];
+
+    /** Patient indexes (by id order) whose first consultation is not completed. */
+    private const SPECIAL_STATUSES = [
+        0 => ConsultationStatus::NurseReview,
+        1 => ConsultationStatus::DoctorReview,
+        2 => ConsultationStatus::InProgress,
+        3 => ConsultationStatus::Referred,
+        4 => ConsultationStatus::Referred,
+        5 => ConsultationStatus::Referred,
+    ];
+
+    /** Chance (%) that a patient with a settled first visit also returns for a follow-up. */
+    private const FOLLOW_UP_PERCENT = 30;
+
     public function run(): void
     {
+        if (DB::table('consultations')->exists()) {
+            $this->command?->warn('Consultations already exist; skipping ConsultationSeeder to avoid duplicates.');
+
+            return;
+        }
+
         $patients = Patient::query()->orderBy('id')->get();
         $healthWorkers = HealthWorker::all();
 
@@ -26,8 +59,339 @@ class ConsultationSeeder extends Seeder
         $doctor = $healthWorkers->firstWhere('role', 'Doctor') ?? $healthWorkers->first();
         $encoder = $healthWorkers->firstWhere('role', 'BHW') ?? $nurse;
 
-        // Chief complaints are 1-indexed so the numbers match the age-bracket mapping below.
-        $chiefComplaints = [
+        $diagnosisIds = DB::table('diagnosis_lookup')->pluck('id', 'diagnosis_code');
+        $medicineIds = DB::table('medicines_lookup')->pluck('id', 'name');
+
+        $counts = [
+            'consultations' => 0,
+            'vitals' => 0,
+            'diagnoses' => 0,
+            'prescriptions' => 0,
+            'referrals' => 0,
+        ];
+
+        // Guarantee one diabetes follow-up so E11 and Metformin always show up
+        // in demo reports: complaint 17 only exists for ages 56-78, so a random
+        // draw can otherwise miss diabetes entirely on a given seed run.
+        $diabetesShowcaseId = $patients
+            ->filter(fn (Patient $p, int $i) => ! isset(self::SPECIAL_STATUSES[$i]) && (int) $p->age >= 56 && (int) $p->age <= 78)
+            ->first()
+            ?->id;
+
+        foreach ($patients as $index => $patient) {
+            $status = self::SPECIAL_STATUSES[$index] ?? ConsultationStatus::Completed;
+            $patientDaysAgo = $this->daysSince($patient->created_at);
+            $firstDaysAgo = rand(0, $patientDaysAgo);
+            $firstAt = $this->timestampFor($firstDaysAgo);
+
+            $complaintNumber = $patient->id === $diabetesShowcaseId
+                ? 17
+                : $this->complaintNumberFor($patient, $index);
+            $diagnosisCode = $patient->id === $diabetesShowcaseId
+                ? 'E11'
+                : $this->diagnosisCodeFor($complaintNumber, $patient);
+
+            $this->insertConsultation(
+                $patient,
+                $encoder,
+                $nurse,
+                $doctor,
+                $status,
+                $complaintNumber,
+                $diagnosisCode,
+                $firstAt,
+                $diagnosisIds,
+                $medicineIds,
+                $counts,
+            );
+
+            // Follow-up only when the first visit was a settled completed visit at
+            // least a week ago, so the pair reads as one coherent episode of care.
+            if (
+                $status === ConsultationStatus::Completed
+                && $firstDaysAgo >= 7
+                && rand(1, 100) <= self::FOLLOW_UP_PERCENT
+            ) {
+                $gap = rand(7, min(30, $firstDaysAgo));
+                $this->insertConsultation(
+                    $patient,
+                    $encoder,
+                    $nurse,
+                    $doctor,
+                    ConsultationStatus::Completed,
+                    $complaintNumber,
+                    $diagnosisCode,
+                    $this->timestampFor($firstDaysAgo - $gap),
+                    $diagnosisIds,
+                    $medicineIds,
+                    $counts,
+                    isFollowUp: true,
+                );
+            }
+        }
+
+        $this->command?->info(sprintf(
+            'Consultations seeded: %d consultations, %d vitals, %d diagnoses, %d prescriptions, %d referrals.',
+            $counts['consultations'],
+            $counts['vitals'],
+            $counts['diagnoses'],
+            $counts['prescriptions'],
+            $counts['referrals'],
+        ));
+    }
+
+    /**
+     * Insert one consultation plus every clinical row its status calls for.
+     *
+     * @param  Collection<int, int|string>  $diagnosisIds  code => diagnosis_lookup id
+     * @param  Collection<string, int|string>  $medicineIds  name => medicines_lookup id
+     * @param  array<string, int>  $counts
+     */
+    private function insertConsultation(
+        Patient $patient,
+        HealthWorker $encoder,
+        HealthWorker $nurse,
+        HealthWorker $doctor,
+        ConsultationStatus $status,
+        int $complaintNumber,
+        string $diagnosisCode,
+        Carbon $createdAt,
+        $diagnosisIds,
+        $medicineIds,
+        array &$counts,
+        bool $isFollowUp = false,
+    ): void {
+        $chiefComplaints = $this->chiefComplaints();
+        $isTerminal = in_array($status, [ConsultationStatus::Completed, ConsultationStatus::Referred], true);
+        $hasNurseValidation = $status !== ConsultationStatus::NurseReview;
+        $hasDiagnosis = in_array($status, [
+            ConsultationStatus::InProgress,
+            ConsultationStatus::Completed,
+            ConsultationStatus::Referred,
+        ], true);
+
+        $consultationId = DB::table('consultations')->insertGetId([
+            'patient_id' => $patient->id,
+            'status' => $status->value,
+            'nurse_validated_at' => $hasNurseValidation ? $this->after($createdAt, rand(20, 180)) : null,
+            'nurse_validated_by' => $hasNurseValidation ? $nurse->id : null,
+            'attending_doctor_id' => $hasDiagnosis ? $doctor->id : null,
+            'is_locked' => $isTerminal,
+            'complaint_text' => $chiefComplaints[$complaintNumber],
+            'nature_of_visit' => $isFollowUp ? 'Follow-up' : (rand(0, 9) < 6 ? 'Initial Consultation' : 'Follow-up'),
+            'notes' => $isTerminal
+                ? 'Patient evaluated and treated. Advised on medication adherence and return if symptoms persist.'
+                : 'Patient presented with symptoms. Advised on home care and follow-up.',
+            'mode_of_transaction' => $status === ConsultationStatus::Referred
+                ? 'Referral'
+                : ['Walk-in', 'Visited', 'Referral'][rand(0, 2)],
+            'referred_from' => $status === ConsultationStatus::Referred ? 'Barangay Health Center' : null,
+            'worker_id' => in_array($status, [ConsultationStatus::NurseReview, ConsultationStatus::DoctorReview], true)
+                ? $nurse->id
+                : $encoder->id,
+            'created_at' => $createdAt,
+            'updated_at' => $this->after($createdAt, rand(180, 360)),
+        ]);
+        $counts['consultations']++;
+
+        // Every real consultation starts with a triage vitals row.
+        DB::table('vitals')->insert($this->vitalsPayload($consultationId, $patient, $complaintNumber, $nurse, $createdAt));
+        $counts['vitals']++;
+
+        if (! $hasDiagnosis) {
+            // Nurse/doctor review stops before any clinical impression is recorded.
+            return;
+        }
+
+        $diagnosisId = $diagnosisIds[$diagnosisCode] ?? $diagnosisIds['J06.9'] ?? null;
+        $diagnosedAt = $this->after($createdAt, rand(40, 240));
+
+        if ($diagnosisId !== null) {
+            DB::table('diagnosis_records')->insert([
+                'consultation_id' => $consultationId,
+                'diagnosis_id' => $diagnosisId,
+                'custom_diagnosis_name' => null,
+                'remarks' => $status === ConsultationStatus::Referred
+                    ? 'Impression pending confirmation at the referral facility.'
+                    : null,
+                'diagnosed_by' => $doctor->id,
+                'created_at' => $diagnosedAt,
+                'updated_at' => $diagnosedAt,
+            ]);
+            $counts['diagnoses']++;
+        }
+
+        // In-progress visits have a diagnosis but no prescription written yet,
+        // mirroring maybeAutoComplete() which needs both to flip to completed.
+        if ($status === ConsultationStatus::InProgress) {
+            return;
+        }
+
+        foreach ($this->prescriptionItems($diagnosisCode, (int) $patient->age) as $item) {
+            $medicineId = $medicineIds[$item['name']] ?? null;
+            $writtenAt = $this->after($diagnosedAt, rand(2, 30));
+
+            DB::table('prescriptions')->insert([
+                'consultation_id' => $consultationId,
+                'medicine_id' => $medicineId,
+                'custom_medicine_name' => $medicineId === null ? $item['name'] : null,
+                'quantity' => $item['quantity'],
+                'dosage' => $item['dosage'],
+                'route' => $item['route'],
+                'frequency' => $item['frequency'],
+                'duration' => $item['duration'],
+                'instructions' => $item['instructions'],
+                'created_at' => $writtenAt,
+                'updated_at' => $writtenAt,
+            ]);
+            $counts['prescriptions']++;
+        }
+
+        if ($status === ConsultationStatus::Referred) {
+            $this->insertReferral($consultationId, $chiefComplaints[$complaintNumber], $diagnosedAt);
+            $counts['referrals']++;
+        }
+    }
+
+    /**
+     * @param  array<string, int|string>  $medicineIds
+     * @return array<string, int>
+     */
+    private function vitalsPayload(
+        int $consultationId,
+        Patient $patient,
+        int $complaintNumber,
+        HealthWorker $nurse,
+        Carbon $createdAt,
+    ): array {
+        $age = (int) $patient->age;
+        $feverish = in_array($complaintNumber, self::FEVER_COMPLAINTS, true);
+        $temperature = $feverish ? rand(380, 392) / 10 : rand(364, 375) / 10;
+
+        $systolic = null;
+        $diastolic = null;
+        $weight = null;
+        $height = null;
+
+        if ($age < 2) {
+            $weight = rand(35, 110) / 10;
+            $height = rand(45, 85);
+        } elseif ($age < 18) {
+            $weight = rand(14, 60);
+            $height = rand(95, 165);
+            $systolic = rand(90, 115);
+            $diastolic = rand(55, 75);
+        } else {
+            $weight = rand(45, 95);
+            $height = rand(145, 178);
+
+            $hypertensive = $age >= 40 && in_array($complaintNumber, self::HYPERTENSIVE_COMPLAINTS, true);
+            if ($hypertensive) {
+                $systolic = rand(140, 165);
+                $diastolic = rand(90, 100);
+            } elseif ($age >= 60) {
+                $systolic = rand(115, 145);
+                $diastolic = rand(70, 95);
+            } elseif ($age >= 40) {
+                $systolic = rand(110, 135);
+                $diastolic = rand(70, 88);
+            } else {
+                $systolic = rand(100, 125);
+                $diastolic = rand(65, 82);
+            }
+        }
+
+        $capturedAt = $this->after($createdAt, rand(5, 25));
+
+        return [
+            'consultation_id' => $consultationId,
+            'phase' => 'triage',
+            'captured_by' => $nurse->id,
+            'bp_systolic' => $systolic === null ? null : (string) $systolic,
+            'bp_diastolic' => $diastolic === null ? null : (string) $diastolic,
+            'weight_kg' => $weight,
+            'height_cm' => $height,
+            'temperature_c' => $temperature,
+            'bmi' => null,
+            'notes' => $feverish ? 'Patient reports fever with chills.' : null,
+            'created_at' => $capturedAt,
+            'updated_at' => $capturedAt,
+        ];
+    }
+
+    private function insertReferral(int $consultationId, string $complaintText, Carbon $createdAt): void
+    {
+        $referredAt = $this->after($createdAt, rand(5, 30));
+
+        DB::table('outward_referrals')->insert([
+            'consultation_id' => $consultationId,
+            'destination_facility' => 'Tagoloan District Hospital',
+            'pertinent_history' => $complaintText,
+            'actions_taken' => 'Initial assessment and supportive care given.',
+            'specific_details' => 'Referred for specialist consultation.',
+            'status' => 'pending',
+            'created_at' => $referredAt,
+            'updated_at' => $referredAt,
+        ]);
+    }
+
+    /**
+     * Complaint number for a patient: the universal pool plus the numbers
+     * mapped to the patient's age bracket, cycled by patient index so every
+     * complaint (and its diagnosis) appears regularly across the demo set
+     * instead of relying on a random draw.
+     */
+    private function complaintNumberFor(Patient $patient, int $index): int
+    {
+        // Infants only present with classic baby complaints: fever, feeding
+        // upset, cough, sore throat, ear pain - never adult complaints.
+        if ((int) $patient->age < 2) {
+            $infant = [1, 3, 4, 13, 16, 33];
+
+            return $infant[$index % count($infant)];
+        }
+
+        $universal = [1, 2, 3, 4, 5, 8, 10, 11, 12, 13, 14, 16, 19, 21, 25, 26, 29, 30, 31, 33, 35, 36, 37, 38];
+        $age = (int) $patient->age;
+        $numbers = $universal;
+
+        foreach ([[23, 35, [22, 27, 34]], [36, 55, [9, 20, 32, 39, 40]], [56, 78, [6, 7, 15, 17, 18, 23, 24, 28]]] as [$min, $max, $extra]) {
+            if ($age >= $min && $age <= $max) {
+                $numbers = array_merge($numbers, $extra);
+                break;
+            }
+        }
+
+        return $numbers[$index % count($numbers)];
+    }
+
+    /**
+     * Candidate ICD codes for a complaint, age-filtered so young patients are
+     * not handed chronic adult diagnoses. Always falls back to URTI.
+     */
+    private function diagnosisCodeFor(int $complaintNumber, Patient $patient): string
+    {
+        $candidates = $this->complaintDiagnosisMap()[$complaintNumber] ?? ['J06.9'];
+
+        if ((int) $patient->age < 35) {
+            $ageAppropriate = array_values(array_filter(
+                $candidates,
+                fn (string $code) => ! in_array($code, ['I10', 'E11'], true),
+            ));
+            $candidates = $ageAppropriate === [] ? ['J06.9'] : $ageAppropriate;
+        }
+
+        return $candidates[array_rand($candidates)];
+    }
+
+    /**
+     * Chief complaints (1-indexed) in Cebuano, matching the age-bracket pool.
+     *
+     * @return array<int, string>
+     */
+    private function chiefComplaints(): array
+    {
+        return [
             1 => 'Gihilantan ug nagpasingot – sugod kagahapon sa buntag',
             2 => 'Gisakit ang tiyan sa tuo nga bahin – sulod na sa tulo ka adlaw',
             3 => 'Nagsuka ug nagkalibanga – sukad pa kagabii',
@@ -69,168 +433,237 @@ class ConsultationSeeder extends Seeder
             39 => 'Nagsakit ang hawak ug ubos sa likod – sulod sa tulo ka semana',
             40 => 'Gisakit ang dughan human nagbuhat og bug-at – sulod sa usa ka oras',
         ];
-
-        // Age-bracket complaint mapping - every complaint number appears exactly once:
-        // Universal pool (all ages) plus the bracket matching the patient's age.
-        $universalComplaints = [1, 2, 3, 4, 5, 8, 10, 11, 12, 13, 14, 16, 19, 21, 25, 26, 29, 30, 31, 33, 35, 36, 37, 38];
-        $ageBracketComplaints = [
-            [23, 35, [22, 27, 34]],
-            [36, 55, [9, 20, 32, 39, 40]],
-            [56, 78, [6, 7, 15, 17, 18, 23, 24, 28]],
-        ];
-        $modeOfTransaction = ['Walk-in', 'Visited', 'Referral'];
-
-        $consultations = [];
-        $referredIndexes = [];
-
-        // Exact status distribution across the whole seed set:
-        // 1 nurse_review, 1 doctor_review, 1 referred, everything else completed.
-        $firstConsultationStatuses = array_fill(0, $patients->count(), ConsultationStatus::Completed->value);
-        $firstConsultationStatuses[0] = ConsultationStatus::NurseReview->value;
-        $firstConsultationStatuses[1] = ConsultationStatus::DoctorReview->value;
-        $firstConsultationStatuses[2] = ConsultationStatus::Referred->value;
-
-        foreach ($patients as $index => $patient) {
-            $complaintPool = $this->complaintPoolFor($patient, $chiefComplaints, $universalComplaints, $ageBracketComplaints);
-            $statuses = [
-                $firstConsultationStatuses[$index],
-                ConsultationStatus::Completed->value,
-            ];
-
-            foreach ($statuses as $status) {
-                if ($status === ConsultationStatus::Referred->value) {
-                    $referredIndexes[] = count($consultations);
-                }
-
-                $consultations[] = $this->consultationPayload(
-                    $patient,
-                    $encoder,
-                    $nurse,
-                    $doctor,
-                    $status,
-                    $complaintPool,
-                    $modeOfTransaction,
-                );
-            }
-        }
-
-        $this->insertConsultationsWithReferrals($consultations, $referredIndexes);
-
-        $this->command?->info('Consultations seeded successfully: '.count($consultations).' records created.');
     }
 
     /**
-     * Build the chief-complaint pool for a patient: the universal list plus the
-     * complaints mapped to the patient's age bracket (universal only when the
-     * age falls outside 23-78).
+     * Complaint number to ordered candidate ICD codes, drawn from the curated
+     * lookup codes verified against the ICD-10 import. Repeated codes are
+     * deliberate: they weight the pick, keeping classic barangay conditions
+     * (asthma, diabetes) represented in demo morbidity reports.
      *
-     * @param  array<int, string>  $chiefComplaints
-     * @param  list<int>  $universalComplaints
-     * @param  list<array{0: int, 1: int, 2: list<int>}>  $ageBracketComplaints  [minAge, maxAge, complaint numbers]
-     * @return list<string>
+     * @return array<int, list<string>>
      */
-    private function complaintPoolFor(
-        Patient $patient,
-        array $chiefComplaints,
-        array $universalComplaints,
-        array $ageBracketComplaints,
-    ): array {
-        $age = (int) $patient->age;
-        $numbers = $universalComplaints;
-
-        foreach ($ageBracketComplaints as [$minAge, $maxAge, $bracketNumbers]) {
-            if ($age >= $minAge && $age <= $maxAge) {
-                $numbers = array_merge($numbers, $bracketNumbers);
-                break;
-            }
-        }
-
-        return array_values(array_map(fn (int $number) => $chiefComplaints[$number], $numbers));
-    }
-
-    /**
-     * @param  array<string, mixed>  $data
-     * @return array<string, mixed>
-     */
-    private function consultationPayload(
-        Patient $patient,
-        HealthWorker $encoder,
-        HealthWorker $nurse,
-        HealthWorker $doctor,
-        string $status,
-        array $complaintPool,
-        array $modeOfTransaction,
-    ): array {
-        $createdAt = Carbon::now()->subDays(rand(1, 180));
-        $nurseValidated = in_array($status, [
-            ConsultationStatus::DoctorReview->value,
-            ConsultationStatus::Completed->value,
-            ConsultationStatus::Referred->value,
-        ], true);
-
-        $data = [
-            'patient_id' => $patient->id,
-            'status' => $status,
-            'nurse_validated_at' => $nurseValidated ? $createdAt->copy()->addMinutes(rand(30, 240)) : null,
-            'nurse_validated_by' => $nurseValidated ? $nurse->id : null,
-            'attending_doctor_id' => in_array($status, [
-                ConsultationStatus::Completed->value,
-                ConsultationStatus::Referred->value,
-            ], true) ? $doctor->id : null,
-            'is_locked' => in_array($status, [
-                ConsultationStatus::Completed->value,
-                ConsultationStatus::Referred->value,
-            ], true),
-            'complaint_text' => $complaintPool[array_rand($complaintPool)],
-            'nature_of_visit' => rand(0, 1) ? 'Follow-up' : 'Initial Consultation',
-            'notes' => 'Patient presented with symptoms. Advised on home care and follow-up.',
-            'mode_of_transaction' => $status === ConsultationStatus::Referred->value
-                ? 'Referral'
-                : $modeOfTransaction[array_rand($modeOfTransaction)],
-            'created_at' => $createdAt,
-            'updated_at' => $createdAt->copy()->addMinutes(rand(0, 60)),
-        ];
-
-        // The worker who handled the intake differs per stage of the workflow:
-        // nurse handles consultations awaiting review, the BHW encoder handles the rest.
-        $data['worker_id'] = in_array($status, [
-            ConsultationStatus::NurseReview->value,
-            ConsultationStatus::DoctorReview->value,
-        ], true) ? $nurse->id : $encoder->id;
-
-        if ($status === ConsultationStatus::Referred->value) {
-            $data['referred_from'] = 'Barangay Health Center';
-        }
-
-        return $data;
-    }
-
-    /**
-     * @param  list<array<string, mixed>>  $consultations
-     * @param  list<int>  $referredIndexes  Flat consultation indexes that need an outward referral
-     */
-    private function insertConsultationsWithReferrals(array $consultations, array $referredIndexes): void
+    private function complaintDiagnosisMap(): array
     {
-        $referred = array_flip($referredIndexes);
+        return [
+            1 => ['A90', 'J06.9'],
+            2 => ['K52.9', 'A09'],
+            3 => ['A09', 'K52.9'],
+            4 => ['J06.9', 'J00'],
+            5 => ['I10', 'J06.9', 'J00'],
+            6 => ['J45.9', 'J45.9', 'J06.9'],
+            7 => ['R07.4', 'I10'],
+            8 => ['B86'],
+            9 => ['M54.5'],
+            10 => ['N39.0'],
+            11 => ['I10', 'M54.5'],
+            12 => ['I10', 'J00'],
+            13 => ['J00', 'J06.9'],
+            14 => ['J45.9', 'J45.9', 'J06.9'],
+            15 => ['E11', 'E11', 'H10.9'],
+            16 => ['H66.9'],
+            17 => ['E11', 'E11', 'I10', 'J06.9'],
+            18 => ['M54.5'],
+            19 => ['A09', 'K52.9'],
+            20 => ['M54.5'],
+            21 => ['K02.9'],
+            22 => ['F41.9', 'F41.9', 'I10'],
+            23 => ['R07.4', 'I10'],
+            24 => ['M54.5'],
+            25 => ['R07.4', 'J06.9'],
+            26 => ['I10', 'J06.9'],
+            27 => ['B86'],
+            28 => ['I10'],
+            29 => ['A90'],
+            30 => ['J00', 'J06.9'],
+            31 => ['A90', 'J06.9'],
+            32 => ['M54.5', 'B86'],
+            33 => ['A09', 'K52.9'],
+            34 => ['N39.0'],
+            35 => ['A90', 'J06.9'],
+            36 => ['T14.1'],
+            37 => ['N39.0'],
+            38 => ['H10.9'],
+            39 => ['M54.5'],
+            40 => ['R07.4', 'I10'],
+        ];
+    }
 
-        foreach ($consultations as $index => $row) {
-            $consultationId = DB::table('consultations')->insertGetId($row);
+    /**
+     * One prescription set for a diagnosis, using DOH Essential Medicines
+     * available at the RHU. Infants get a weight-band-safe set instead of
+     * adult tablets.
+     *
+     * @return list<array{name: string, dosage: string, route: string, frequency: string, duration: string, quantity: int, instructions: string}>
+     */
+    private function prescriptionItems(string $diagnosisCode, int $age): array
+    {
+        if ($age < 2) {
+            $syrup = $this->rx('Paracetamol 120mg/5mL Syrup', '2.5 mL', 'PO', 'QID (4 times daily)', '3 days', 12,
+                'For fever; give every 6 hours as needed. Shake well before use.');
 
-            if (! isset($referred[$index])) {
-                continue;
-            }
-
-            $createdAt = $row['created_at'];
-            DB::table('outward_referrals')->insert([
-                'consultation_id' => $consultationId,
-                'destination_facility' => 'Tagoloan District Hospital',
-                'pertinent_history' => $row['notes'] ?? $row['complaint_text'],
-                'actions_taken' => 'Initial assessment and supportive care given.',
-                'specific_details' => 'Referred for specialist consultation.',
-                'status' => 'pending',
-                'created_at' => $createdAt,
-                'updated_at' => $createdAt,
-            ]);
+            return match ($diagnosisCode) {
+                // Rehydration matters in infant gastroenteritis and dengue.
+                'A09', 'K52.9', 'A90' => [
+                    $syrup,
+                    $this->rx('ORS (Oral Rehydration Salts) Sachet', '1 sachet', 'PO', 'TID (3 times daily)', '3 days', 9,
+                        'Give small sips after each loose stool or vomit.'),
+                ],
+                default => [$syrup],
+            };
         }
+
+        $alternatives = match ($diagnosisCode) {
+            'J00', 'J06.9' => [
+                [$this->rx('Paracetamol 500mg', '1 tab', 'PO', 'TID (3 times daily)', '3 days', 9,
+                    'For fever and body aches. Rest and drink plenty of fluids.')],
+            ],
+            'J45.9' => [
+                [
+                    $this->rx('Salbutamol 100mcg/dose', '2 puffs', 'Inhalation', 'PRN (as needed)', '7 days', 1,
+                        'Shake well; inhale deeply for wheezing or shortness of breath.'),
+                    $this->rx('Cetirizine 10mg', '1 tab', 'PO', 'OD (once daily)', '7 days', 7,
+                        'Take at bedtime to reduce allergy symptoms.'),
+                ],
+            ],
+            'I10' => [
+                [$this->rx('Amlodipine 5mg', '1 tab', 'PO', 'OD (once daily)', '30 days', 30,
+                    'Take every morning. Monitor blood pressure regularly.')],
+                [$this->rx('Losartan 50mg', '1 tab', 'PO', 'OD (once daily)', '30 days', 30,
+                    'Take every morning. Avoid salt substitutes high in potassium.')],
+            ],
+            'E11' => [
+                [$this->rx('Metformin 500mg', '1 tab', 'PO', 'BID (2 times daily)', '30 days', 60,
+                    'Take after breakfast and dinner.')],
+            ],
+            'A90' => [
+                [
+                    $this->rx('Paracetamol 500mg', '1 tab', 'PO', 'TID (3 times daily)', '5 days', 15,
+                        'For fever only. Avoid ibuprofen, aspirin, or other blood thinners.'),
+                    $this->rx('ORS (Oral Rehydration Salts) Sachet', '1 sachet', 'PO', 'TID (3 times daily)', '5 days', 15,
+                        'Dissolve one sachet in 1 liter of clean water; sip throughout the day.'),
+                ],
+            ],
+            'A09', 'K52.9' => [
+                [
+                    $this->rx('ORS (Oral Rehydration Salts) Sachet', '1 sachet', 'PO', 'QID (4 times daily)', '5 days', 20,
+                        'Dissolve one sachet in 1 liter of clean water; sip after each loose stool.'),
+                    $this->rx('Zinc Sulfate 20mg', '1 tab', 'PO', 'OD (once daily)', '10 days', 10,
+                        'Take once daily for 10 days to shorten the illness.'),
+                ],
+            ],
+            'T14.1' => [
+                [
+                    $this->rx('Povidone-Iodine 10%', 'Apply thinly', 'Topical', 'BID (2 times daily)', '7 days', 14,
+                        'Clean the wound with clean running water first, then apply a thin layer.'),
+                    $this->rx('Paracetamol 500mg', '1 tab', 'PO', 'TID (3 times daily)', '3 days', 9,
+                        'For pain. Return if the wound shows signs of infection.'),
+                ],
+                [
+                    $this->rx('Erythromycin Ointment 0.5%', 'Apply thinly', 'Topical', 'BID (2 times daily)', '7 days', 14,
+                        'Clean the wound first, then apply a thin layer of ointment.'),
+                    $this->rx('Paracetamol 500mg', '1 tab', 'PO', 'TID (3 times daily)', '3 days', 9,
+                        'For pain. Return if the wound shows signs of infection.'),
+                ],
+            ],
+            'N39.0' => [
+                [
+                    $this->rx('Amoxicillin 500mg', '1 cap', 'PO', 'TID (3 times daily)', '5 days', 15,
+                        'Complete the full course even if symptoms improve early.'),
+                    $this->rx('Paracetamol 500mg', '1 tab', 'PO', 'TID (3 times daily)', '3 days', 9,
+                        'For pain and discomfort.'),
+                ],
+                [$this->rx('Ciprofloxacin 500mg', '1 tab', 'PO', 'BID (2 times daily)', '3 days', 6,
+                    'Complete the full course; take with a full glass of water.')],
+            ],
+            'H10.9' => [
+                [$this->rx('Erythromycin Ointment 0.5%', 'Thin strip', 'Ophthalmic', 'QID (4 times daily)', '5 days', 1,
+                    'Apply a thin strip to the affected eye four times daily; do not share the tube.')],
+            ],
+            'H66.9' => [
+                [
+                    $this->rx('Amoxicillin 500mg', '1 cap', 'PO', 'TID (3 times daily)', '5 days', 15,
+                        'Complete the full course even if symptoms improve early.'),
+                    $this->rx('Paracetamol 500mg', '1 tab', 'PO', 'TID (3 times daily)', '3 days', 9,
+                        'For ear pain and fever.'),
+                ],
+            ],
+            'K02.9' => [
+                [
+                    $this->rx('Amoxicillin 500mg', '1 cap', 'PO', 'TID (3 times daily)', '5 days', 15,
+                        'Complete the full course; see a dentist if pain persists.'),
+                    $this->rx('Paracetamol 500mg', '1 tab', 'PO', 'TID (3 times daily)', '3 days', 9,
+                        'For dental pain.'),
+                ],
+            ],
+            'B86' => [
+                [$this->rx('Permethrin 5% Cream', 'Apply thinly', 'Topical', 'Single application', '7 days', 1,
+                    'Apply to clean, dry skin; leave 8 to 14 hours then wash off. Repeat once after 7 days.')],
+            ],
+            'M54.5' => [
+                [$this->rx('Ibuprofen 400mg', '1 tab', 'PO', 'TID (3 times daily)', '5 days', 15,
+                    'Take after meals. Rest and avoid heavy lifting.')],
+            ],
+            'R07.4' => [
+                [$this->rx('Paracetamol 500mg', '1 tab', 'PO', 'TID (3 times daily)', '3 days', 9,
+                    'For chest discomfort. Seek immediate care if pain worsens or spreads to the arm or jaw.')],
+                [$this->rx('Amlodipine 5mg', '1 tab', 'PO', 'OD (once daily)', '30 days', 30,
+                    'Take every morning. Monitor blood pressure regularly.')],
+            ],
+            'F41.9' => [
+                [$this->rx('Cetirizine 10mg', '1 tab', 'PO', 'OD (once daily)', '7 days', 7,
+                    'Take at bedtime; may cause drowsiness. Practice regular sleep habits.')],
+            ],
+            default => [
+                [$this->rx('Paracetamol 500mg', '1 tab', 'PO', 'TID (3 times daily)', '3 days', 9,
+                    'For fever and body aches. Return if symptoms persist.')],
+            ],
+        };
+
+        return $alternatives[array_rand($alternatives)];
+    }
+
+    /**
+     * @return array{name: string, dosage: string, route: string, frequency: string, duration: string, quantity: int, instructions: string}
+     */
+    private function rx(
+        string $name,
+        string $dosage,
+        string $route,
+        string $frequency,
+        string $duration,
+        int $quantity,
+        string $instructions,
+    ): array {
+        return compact('name', 'dosage', 'route', 'frequency', 'duration', 'quantity', 'instructions');
+    }
+
+    /**
+     * Clinic-hours timestamp for a day offset; falls back to "just now"
+     * when today's clinic hours have not happened yet.
+     */
+    private function timestampFor(int $daysAgo): Carbon
+    {
+        $at = Carbon::now()->subDays($daysAgo)->setTime(rand(8, 16), rand(0, 59));
+
+        return $at->isFuture() ? Carbon::now()->subMinutes(rand(10, 240)) : $at;
+    }
+
+    /** Minutes after a consultation start, clamped so nothing lands in the future. */
+    private function after(Carbon $base, int $minutes): Carbon
+    {
+        $at = $base->copy()->addMinutes($minutes);
+
+        return $at->isFuture() ? Carbon::now() : $at;
+    }
+
+    private function daysSince(mixed $date): int
+    {
+        if (! $date instanceof Carbon) {
+            return 0;
+        }
+
+        // Carbon 3 diffs are signed; measure from the stored date forward to today.
+        return max(0, (int) $date->copy()->startOfDay()->diffInDays(Carbon::now()->startOfDay()));
     }
 }

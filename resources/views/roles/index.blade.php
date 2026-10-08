@@ -4,36 +4,7 @@
 
 @section('content')
 <div class="space-y-4 lg:space-y-6">
-    @if (session('success'))
-        <div class="p-4 rounded-xl bg-teal-soft border border-primary/20 text-primary">
-            <div class="flex items-start gap-3">
-                <i class="fa-solid fa-check-circle mt-1"></i>
-                <span>{{ session('success') }}</span>
-            </div>
-        </div>
-    @endif
-
-    @if (session('error'))
-        <div class="p-4 rounded-xl bg-danger-soft border border-danger/30 text-danger">
-            <div class="flex items-start gap-3">
-                <i class="fa-solid fa-exclamation-circle mt-1"></i>
-                <span>{{ session('error') }}</span>
-            </div>
-        </div>
-    @endif
-
-    @if ($errors->any())
-        <div class="p-4 rounded-xl bg-danger-soft border border-danger/30 text-danger">
-            <div class="flex items-start gap-3">
-                <i class="fa-solid fa-exclamation-circle mt-1"></i>
-                <div>
-                    @foreach ($errors->all() as $error)
-                        <p>{{ $error }}</p>
-                    @endforeach
-                </div>
-            </div>
-        </div>
-    @endif
+    <x-flash />
 
     <div>
         <h1 class="font-display font-semibold text-2xl lg:text-3xl" style="color: var(--ink);">Role Manager</h1>

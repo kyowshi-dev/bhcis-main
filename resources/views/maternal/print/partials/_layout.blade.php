@@ -15,7 +15,7 @@
             </div>
             <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
                 <button type="button" onclick="window.print()"
-                        style="border-radius:8px;background:#065f46;color:#fff;border:0;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;">
+                        style="border-radius:8px;background:#0d4a3c;color:#fff;border:0;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;">
                     Print preview
                 </button>
                 <a href="{{ $backUrl ?? 'javascript:history.back()' }}"

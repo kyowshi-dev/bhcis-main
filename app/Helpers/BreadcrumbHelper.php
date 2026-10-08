@@ -10,6 +10,16 @@ class BreadcrumbHelper
     private const DASHBOARD = 'dashboard';
 
     /**
+     * Get the dashboard label, role-aware for midwife.
+     */
+    private static function getDashboardLabel(): string
+    {
+        $roleName = strtolower(trim((string) (auth()->user()?->role->role_name ?? auth()->user()?->healthWorker->role ?? '')));
+
+        return $roleName === 'midwife' ? 'Maternal and Family Register' : 'Dashboard';
+    }
+
+    /**
      * Routes that belong under a category label (non-clickable) in the breadcrumb.
      * Used to insert "Maternal Care" between Dashboard and the sub-module index.
      */
@@ -76,6 +86,8 @@ class BreadcrumbHelper
         'privacy.index' => 'Privacy Settings',
         'privacy.policy' => 'Privacy Policy',
         'privacy.purposes' => 'Data Processing Purposes',
+        'privacy.liability' => 'Liability Statement',
+        'batch-entry.index' => 'Batch Data Entry',
     ];
 
     /**
@@ -112,6 +124,8 @@ class BreadcrumbHelper
         'privacy.index' => 'settings.index',
         'privacy.policy' => 'settings.index',
         'privacy.purposes' => 'settings.index',
+        'privacy.liability' => 'settings.index',
+        'batch-entry.index' => 'dashboard',
         'profile.edit' => 'profile.show',
         'profile.settings' => 'profile.show',
     ];
@@ -165,6 +179,13 @@ class BreadcrumbHelper
             } catch (Throwable) {
                 $url = null;
             }
+        }
+
+        if ($routeName === self::DASHBOARD) {
+            return [
+                'name' => self::getDashboardLabel(),
+                'url' => $url,
+            ];
         }
 
         return [

@@ -5,23 +5,19 @@
 @section('content')
 <div class="max-w-4xl mx-auto space-y-3 lg:space-y-4">
 
-    {{-- Page Header --}}
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-            <h1 class="text-lg lg:text-xl font-bold" style="color: var(--ink);">Edit Patient Record</h1>
-            <p class="text-xs lg:text-sm" style="color: var(--ink-muted);">Update patient information from batch entry.</p>
-        </div>
-        <a href="{{ route('batch-entry.index') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-border transition-colors hover:bg-black/5" style="color: var(--ink-muted);">
-            <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back to Batch Entry
-        </a>
-    </div>
+    <x-flash />
 
-    {{-- Success Message --}}
-    @if (session('success'))
-        <div class="rounded-xl bg-primary/10 border border-primary/30 px-4 py-3 text-sm text-primary">
-            <i class="fa-solid fa-check-circle mr-1" aria-hidden="true"></i> {{ session('success') }}
-        </div>
-    @endif
+    <x-page-header
+        title="Edit Patient Record"
+        subtitle="Update patient information from batch entry."
+        icon="fa-solid fa-user-pen"
+    >
+        <x-slot name="actions">
+            <a href="{{ route('batch-entry.index') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-border transition-colors hover:bg-black/5" style="color: var(--ink-muted);">
+                <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back to Batch Entry
+            </a>
+        </x-slot>
+    </x-page-header>
 
     {{-- Edit Form --}}
     <div class="bg-surface rounded-xl lg:rounded-lg shadow-sm border border-border">

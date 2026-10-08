@@ -4,19 +4,17 @@
 
 @section('content')
 <div class="space-y-4 lg:space-y-6">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-            <h1 class="text-xl lg:text-2xl font-extrabold" style="color: var(--ink);">Edit User</h1>
-            <p class="text-xs lg:text-sm text-ink-muted mt-1">
-                Update user information and settings.
-            </p>
-        </div>
+    <x-flash />
 
-        <a href="{{ route('users.index') }}"
-           class="inline-flex items-center px-3 lg:px-4 py-2 rounded-xl border border-border bg-surface text-xs lg:text-sm font-medium text-ink hover:bg-teal-soft transition">
-            Back
-        </a>
-    </div>
+    <x-page-header
+        title="Edit User"
+        subtitle="Update user information and settings."
+        icon="fa-solid fa-user-pen"
+    >
+        <x-slot name="actions">
+            <a href="{{ route('users.index') }}" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border text-xs lg:text-sm font-medium text-ink transition hover:bg-black/5">Back</a>
+        </x-slot>
+    </x-page-header>
 
     <form action="{{ route('users.update', $user) }}" method="POST" class="space-y-4 lg:space-y-6">
         @csrf

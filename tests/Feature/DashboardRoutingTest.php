@@ -46,7 +46,7 @@ class DashboardRoutingTest extends TestCase
         $this->actingAs($midwife)
             ->get(route('dashboard'))
             ->assertOk()
-            ->assertSee('Maternal & Family Planning Register')
+            ->assertSee('Maternal and Family Register')
             ->assertSee('Active Pregnancies')
             ->assertDontSee('Results Ready');
     }
@@ -58,7 +58,7 @@ class DashboardRoutingTest extends TestCase
         $this->actingAs($midwife)
             ->get(route('dashboard'))
             ->assertOk()
-            ->assertSee('Maternal & Family Planning Register')
+            ->assertSee('Maternal and Family Register')
             ->assertDontSee('Active Pregnancies')
             ->assertDontSee('Open Prenatal Register');
     }

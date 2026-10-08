@@ -19,7 +19,7 @@
 
     <div id="consultationCreateIntakeView">
         @if ($errors->any())
-            <div class="mb-4 rounded-xl px-3 lg:px-4 py-2 lg:py-3 text-xs lg:text-sm" style="background: #fef2f2; border: 1px solid #fecaca; color: #991b1b;">
+            <div class="mb-4 rounded-xl px-3 lg:px-4 py-2 lg:py-3 text-xs lg:text-sm" style="background: var(--danger-soft); border: 1px solid var(--danger); color: var(--danger);">
                 <p class="font-semibold mb-1">Please fix the following:</p>
                 <ul class="list-disc list-inside">
                     @foreach ($errors->all() as $error)
@@ -44,7 +44,7 @@
                     <h3 class="font-semibold mb-3 lg:mb-4 pb-2 border-b text-sm lg:text-base" style="color: var(--ink); border-color: var(--border);">1. Visit details</h3>
 
                     <div class="mb-3 lg:mb-4">
-                        <label for="mode_of_transaction" class="block text-xs lg:text-sm font-medium mb-1" style="color: var(--ink-muted);">Mode of transaction <span style="color: #b91c1c;">*</span></label>
+                        <label for="mode_of_transaction" class="block text-xs lg:text-sm font-medium mb-1" style="color: var(--ink-muted);">Mode of transaction <span style="color: var(--danger);">*</span></label>
                         <select name="mode_of_transaction" id="mode_of_transaction" class="w-full px-3 lg:px-4 py-2 lg:py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2" style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);" required>
                             <option value="Walk-in" @selected(old('mode_of_transaction', 'Walk-in') === 'Walk-in')>Walk-in</option>
                             <option value="Visited" @selected(old('mode_of_transaction') === 'Visited')>Visited</option>
@@ -58,7 +58,7 @@
                     </div>
 
                     <div class="mb-3 lg:mb-4">
-                        <label for="nature_of_visit" class="block text-xs lg:text-sm font-medium mb-1" style="color: var(--ink-muted);">Nature of visit <span style="color: #b91c1c;">*</span></label>
+                        <label for="nature_of_visit" class="block text-xs lg:text-sm font-medium mb-1" style="color: var(--ink-muted);">Nature of visit <span style="color: var(--danger);">*</span></label>
                         <select name="nature_of_visit" id="nature_of_visit" class="w-full px-3 lg:px-4 py-2 lg:py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2" style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);" required>
                             <option value="">Select visit type...</option>
                             <option value="New Consultation/Case" @selected(old('nature_of_visit') === 'New Consultation/Case')>New Consultation/Case</option>
@@ -67,7 +67,7 @@
                     </div>
 
                     <div class="mb-3 lg:mb-4">
-                        <label for="purpose_of_visit" class="block text-xs lg:text-sm font-medium mb-1" style="color: var(--ink-muted);">Purpose of visit <span style="color: #b91c1c;">*</span></label>
+                        <label for="purpose_of_visit" class="block text-xs lg:text-sm font-medium mb-1" style="color: var(--ink-muted);">Purpose of visit <span style="color: var(--danger);">*</span></label>
                         <select name="purpose_of_visit" id="purpose_of_visit" class="w-full px-3 lg:px-4 py-2 lg:py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2" style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);" required>
                             <option value="">Select purpose...</option>
                             <option value="General" @selected(old('purpose_of_visit') === 'General')>General</option>
@@ -90,7 +90,7 @@
 
                     <div class="grid grid-cols-2 gap-3 lg:gap-4">
                         <div class="col-span-2">
-                            <label class="block text-xs lg:text-sm font-medium mb-1" style="color: var(--ink-muted);">BP <span style="color: #b91c1c;">*</span></label>
+                            <label class="block text-xs lg:text-sm font-medium mb-1" style="color: var(--ink-muted);">BP <span style="color: var(--danger);">*</span></label>
                             <div class="flex items-center gap-2">
                                 <div class="flex-1">
                                     <input type="number" name="bp_systolic" id="bp_systolic" value="{{ old('bp_systolic', $previousVitals->bp_systolic ?? '') }}" min="0" max="300" placeholder="120" class="w-full px-3 lg:px-4 py-2 rounded-lg border text-center text-sm focus:outline-none focus:ring-2" style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);" required>
@@ -105,17 +105,17 @@
                         </div>
 
                         <div>
-                            <label for="weight" class="block text-xs lg:text-sm font-medium mb-1" style="color: var(--ink-muted);">Weight (kg) <span style="color: #b91c1c;">*</span></label>
+                            <label for="weight" class="block text-xs lg:text-sm font-medium mb-1" style="color: var(--ink-muted);">Weight (kg) <span style="color: var(--danger);">*</span></label>
                             <input type="number" step="0.1" name="weight" id="weight" value="{{ old('weight', $previousVitals->weight_kg ?? '') }}" min="0" max="500" placeholder="-" class="w-full px-3 lg:px-4 py-2 rounded-lg border text-center text-sm focus:outline-none focus:ring-2" style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);" required>
                         </div>
 
                         <div>
-                            <label for="height" class="block text-xs lg:text-sm font-medium mb-1" style="color: var(--ink-muted);">Height (cm) <span style="color: #b91c1c;">*</span></label>
+                            <label for="height" class="block text-xs lg:text-sm font-medium mb-1" style="color: var(--ink-muted);">Height (cm) <span style="color: var(--danger);">*</span></label>
                             <input type="number" step="0.1" name="height" id="height" value="{{ old('height', $previousVitals->height_cm ?? '') }}" min="0" max="300" placeholder="-" class="w-full px-3 lg:px-4 py-2 rounded-lg border text-center text-sm focus:outline-none focus:ring-2" style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);" required>
                         </div>
 
                         <div>
-                            <label for="temperature" class="block text-xs lg:text-sm font-medium mb-1" style="color: var(--ink-muted);">Temperature (°C) <span style="color: #b91c1c;">*</span></label>
+                            <label for="temperature" class="block text-xs lg:text-sm font-medium mb-1" style="color: var(--ink-muted);">Temperature (°C) <span style="color: var(--danger);">*</span></label>
                             <input type="number" step="0.1" name="temperature" id="temperature" value="{{ old('temperature', $previousVitals->temperature_c ?? '') }}" min="30" max="45" placeholder="36.5" class="w-full px-3 lg:px-4 py-2 rounded-lg border text-center text-sm focus:outline-none focus:ring-2" style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);" required>
                         </div>
                     </div>

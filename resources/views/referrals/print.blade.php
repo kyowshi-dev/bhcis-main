@@ -88,11 +88,11 @@
             </div>
             <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
                 <button type="button" onclick="window.print()"
-                        style="border-radius:8px;background:#065f46;color:#fff;border:0;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;">
+                        style="border-radius:8px;background:#0d4a3c;color:#fff;border:0;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;">
                     Print referral
                 </button>
                 <a href="{{ route('referrals.index') }}"
-                   style="border-radius:8px;border:1px solid #064e3b;color:#064e3b;padding:6px 12px;font-size:12px;font-weight:600;text-decoration:none;">
+                   style="border-radius:8px;border:1px solid #0d4a3c;color:#0d4a3c;padding:6px 12px;font-size:12px;font-weight:600;text-decoration:none;">
                     Back to referrals
                 </a>
             </div>

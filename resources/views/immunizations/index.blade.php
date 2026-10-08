@@ -24,14 +24,12 @@
             <p class="text-sm mt-1" style="color: var(--ink-muted);">Manage the queue, record doses, and follow up defaulters.</p>
         </div>
         <div class="flex flex-wrap items-center gap-2">
-            <a href="{{ route('immunizations.enroll-infant.create') }}"
-               class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-white text-sm font-semibold transition duration-200 hover:shadow-md"
-               style="background: var(--primary);">
-                <i class="fa-solid fa-baby mr-1.5" aria-hidden="true"></i> Enroll infant
-            </a>
-            <a href="{{ route('patients.create') }}" class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl border text-sm font-semibold transition duration-200 hover:bg-black/[0.03]" style="border-color: var(--border); color: var(--ink-muted);">
+            <x-btn href="{{ route('immunizations.enroll-infant.create') }}" icon="fa-solid fa-baby">
+                Enroll infant
+            </x-btn>
+            <x-btn href="{{ route('patients.create') }}" variant="outlined" icon="fa-solid fa-user-plus">
                 Add new patient
-            </a>
+            </x-btn>
         </div>
     </div>
 
@@ -427,8 +425,8 @@
                     showCancelButton: true,
                     confirmButtonText: 'Yes, mark no-show',
                     cancelButtonText: 'Cancel',
-                    confirmButtonColor: '#dc2626',
-                    cancelButtonColor: '#6b7280',
+                    confirmButtonColor: 'var(--danger)',
+                    cancelButtonColor: 'var(--ink-muted)',
                     reverseButtons: true,
                 }).then((result) => {
                     if (result.isConfirmed) form.submit();
@@ -443,7 +441,7 @@
                     confirmButtonText: 'Yes, clear',
                     cancelButtonText: 'Cancel',
                     confirmButtonColor: 'var(--primary)',
-                    cancelButtonColor: '#6b7280',
+                    cancelButtonColor: 'var(--ink-muted)',
                     reverseButtons: true,
                 }).then((result) => {
                     if (result.isConfirmed) form.submit();
@@ -458,7 +456,7 @@
                     confirmButtonText: 'Yes, mark done',
                     cancelButtonText: 'Cancel',
                     confirmButtonColor: 'var(--primary)',
-                    cancelButtonColor: '#6b7280',
+                    cancelButtonColor: 'var(--ink-muted)',
                     reverseButtons: true,
                 }).then((result) => {
                     if (result.isConfirmed) form.submit();

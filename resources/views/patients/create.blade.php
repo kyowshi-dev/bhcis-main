@@ -4,16 +4,13 @@
 
 @section('content')
 <div class="max-w-4xl mx-auto space-y-2 lg:space-y-3">
-    @if ($errors->any())
-        <div class="rounded-xl bg-danger-soft border border-danger/30 px-3 lg:px-4 py-2 lg:py-3 text-xs lg:text-sm text-danger">
-            <p class="font-semibold mb-1">Please fix the following:</p>
-            <ul class="list-disc list-inside">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
+    <x-flash />
+
+    <x-page-header
+        title="Enroll Patient"
+        subtitle="Register a new patient and create their initial health record."
+        icon="fa-solid fa-user-plus"
+    />
 
     <form action="{{ route('patients.store') }}" method="POST" class="mt-0 bg-surface rounded-xl lg:rounded-lg shadow-sm border-border space-y-3 lg:space-y-4" x-data='patientEnroll()'>
         @csrf

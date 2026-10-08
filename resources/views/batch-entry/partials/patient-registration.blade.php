@@ -68,6 +68,7 @@
                            @input.debounce.250ms="searchHousehold()"
                            @focus="householdDropdownOpen = true"
                            @keydown.escape="householdDropdownOpen = false"
+                           @keydown.enter.prevent="selectFirstHousehold()"
                            @click="householdDropdownOpen = true"
                            placeholder="Search household (family name / zone / contact)..."
                            class="w-full px-3 lg:px-4 py-2 lg:py-2.5 rounded-xl border border-border focus:ring-accent-blue focus:border-accent-blue text-sm"
@@ -177,49 +178,58 @@
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3 lg:gap-4 mb-2 lg:mb-3">
                 <div>
-                    <label class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">First Name <span class="text-danger">*</span></label>
-                    <input type="text" name="first_name" x-model="form.first_name" required
+                    <label for="batch_first_name" class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">First Name <span class="text-danger">*</span></label>
+                    <input type="text" id="batch_first_name" name="first_name" x-model="form.first_name" required
+                           x-ref="firstNameInput"
+                           @input="checkDuplicate()"
                            class="w-full px-3 lg:px-4 py-2 rounded-xl border border-border focus:ring-accent-blue focus:border-accent-blue text-sm"
                            placeholder="e.g. Juan">
+                    <p x-show="fieldErrors.first_name" x-text="fieldErrors.first_name" class="text-danger text-xs mt-1"></p>
                 </div>
                 <div>
-                    <label class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">Middle Name</label>
-                    <input type="text" name="middle_name" x-model="form.middle_name"
+                    <label for="batch_middle_name" class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">Middle Name</label>
+                    <input type="text" id="batch_middle_name" name="middle_name" x-model="form.middle_name"
                            class="w-full px-3 lg:px-4 py-2 rounded-xl border border-border focus:ring-accent-blue focus:border-accent-blue text-sm"
                            placeholder="e.g. Cruz">
+                    <p x-show="fieldErrors.middle_name" x-text="fieldErrors.middle_name" class="text-danger text-xs mt-1"></p>
                 </div>
                 <div>
-                    <label class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">Last Name <span class="text-danger">*</span></label>
-                    <input type="text" name="last_name" x-model="form.last_name" required
+                    <label for="batch_last_name" class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">Last Name <span class="text-danger">*</span></label>
+                    <input type="text" id="batch_last_name" name="last_name" x-model="form.last_name" required
+                           @input="checkDuplicate()"
                            class="w-full px-3 lg:px-4 py-2 rounded-xl border border-border focus:ring-accent-blue focus:border-accent-blue text-sm"
                            placeholder="e.g. Santos">
+                    <p x-show="fieldErrors.last_name" x-text="fieldErrors.last_name" class="text-danger text-xs mt-1"></p>
                 </div>
             </div>
 
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 lg:gap-4 mb-2 lg:mb-3">
                 <div>
-                    <label class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">Suffix</label>
-                    <input type="text" name="suffix" x-model="form.suffix"
+                    <label for="batch_suffix" class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">Suffix</label>
+                    <input type="text" id="batch_suffix" name="suffix" x-model="form.suffix"
                            class="w-full px-3 lg:px-4 py-2 rounded-xl border border-border focus:ring-accent-blue focus:border-accent-blue text-sm"
                            placeholder="Jr, III">
                 </div>
                 <div>
-                    <label class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">Sex <span class="text-danger">*</span></label>
-                    <select name="sex" x-model="form.sex" required
+                    <label for="batch_sex" class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">Sex <span class="text-danger">*</span></label>
+                    <select id="batch_sex" name="sex" x-model="form.sex" required
                             class="w-full px-3 lg:px-4 py-2 rounded-xl border border-border focus:ring-accent-blue focus:border-accent-blue text-sm">
                         <option value="">Select</option>
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
                     </select>
+                    <p x-show="fieldErrors.sex" x-text="fieldErrors.sex" class="text-danger text-xs mt-1"></p>
                 </div>
                 <div>
-                    <label class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">Birthdate <span class="text-danger">*</span></label>
-                    <input type="date" name="date_of_birth" x-model="form.date_of_birth" required
+                    <label for="batch_date_of_birth" class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">Birthdate <span class="text-danger">*</span></label>
+                    <input type="date" id="batch_date_of_birth" name="date_of_birth" x-model="form.date_of_birth" required
+                           @input="checkDuplicate()"
                            class="w-full px-3 lg:px-4 py-2 rounded-xl border border-border focus:ring-accent-blue focus:border-accent-blue text-sm">
+                    <p x-show="fieldErrors.date_of_birth" x-text="fieldErrors.date_of_birth" class="text-danger text-xs mt-1"></p>
                 </div>
                 <div>
-                    <label class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">Blood Type</label>
-                    <select name="blood_type" x-model="form.blood_type"
+                    <label for="batch_blood_type" class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">Blood Type</label>
+                    <select id="batch_blood_type" name="blood_type" x-model="form.blood_type"
                             class="w-full px-3 lg:px-4 py-2 rounded-xl border border-border focus:ring-accent-blue focus:border-accent-blue text-sm">
                         <option value="">Select</option>
                         @foreach(['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'] as $type)
@@ -231,22 +241,22 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 lg:gap-4 mb-2 lg:mb-3">
                 <div>
-                    <label class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">Mother's Name</label>
-                    <input type="text" name="mother_name" x-model="form.mother_name"
+                    <label for="batch_mother_name" class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">Mother's Name</label>
+                    <input type="text" id="batch_mother_name" name="mother_name" x-model="form.mother_name"
                            class="w-full px-3 lg:px-4 py-2 rounded-xl border border-border focus:ring-accent-blue focus:border-accent-blue text-sm"
                            placeholder="e.g. Maria Santos">
                 </div>
                 <div>
-                    <label class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">Spouse/Partner Name</label>
-                    <input type="text" name="spouse_name" x-model="form.spouse_name"
+                    <label for="batch_spouse_name" class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">Spouse/Partner Name</label>
+                    <input type="text" id="batch_spouse_name" name="spouse_name" x-model="form.spouse_name"
                            class="w-full px-3 lg:px-4 py-2 rounded-xl border border-border focus:ring-accent-blue focus:border-accent-blue text-sm">
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3 lg:gap-4">
                 <div>
-                    <label class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">Civil Status</label>
-                    <select name="civil_status" x-model="form.civil_status"
+                    <label for="batch_civil_status" class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">Civil Status</label>
+                    <select id="batch_civil_status" name="civil_status" x-model="form.civil_status"
                             class="w-full px-3 lg:px-4 py-2 rounded-xl border border-border focus:ring-accent-blue focus:border-accent-blue text-sm">
                         <option value="">Select</option>
                         @foreach(['Single (Walang Asawa)', 'Married (May Asawa)', 'Annulled (Hiwalay)', 'Widow/er (Balo)', 'Separated (Hiwalay)', 'Co-Habitation (Paninirahang magkasama)'] as $status)
@@ -255,8 +265,8 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">Family Relationship</label>
-                    <select name="family_relationship" x-model="form.family_relationship"
+                    <label for="batch_family_relationship" class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">Family Relationship</label>
+                    <select id="batch_family_relationship" name="family_relationship" x-model="form.family_relationship"
                             class="w-full px-3 lg:px-4 py-2 rounded-xl border border-border focus:ring-accent-blue focus:border-accent-blue text-sm">
                         <option value="">Select</option>
                         @foreach(\App\Models\Patient::FAMILY_RELATIONSHIP_OPTIONS as $relationship)
@@ -316,18 +326,19 @@
                     <label class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">PhilHealth Member? <span class="text-danger">*</span></label>
                     <div class="flex items-center gap-4 mt-1">
                         <label class="inline-flex items-center gap-2 text-sm">
-                            <input type="radio" name="is_philhealth_member" value="y" x-model="form.is_philhealth_member" class="h-4 w-4 text-accent-blue border-border focus:ring-accent-blue">
+                            <input type="radio" id="batch_philhealth_y" name="is_philhealth_member" value="y" x-model="form.is_philhealth_member" class="h-4 w-4 text-accent-blue border-border focus:ring-accent-blue">
                             <span>Yes</span>
                         </label>
                         <label class="inline-flex items-center gap-2 text-sm">
-                            <input type="radio" name="is_philhealth_member" value="n" x-model="form.is_philhealth_member" class="h-4 w-4 text-accent-blue border-border focus:ring-accent-blue">
+                            <input type="radio" id="batch_philhealth_n" name="is_philhealth_member" value="n" x-model="form.is_philhealth_member" class="h-4 w-4 text-accent-blue border-border focus:ring-accent-blue">
                             <span>No</span>
                         </label>
                     </div>
+                    <p x-show="fieldErrors.is_philhealth_member" x-text="fieldErrors.is_philhealth_member" class="text-danger text-xs mt-1"></p>
                 </div>
                 <div>
-                    <label class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">PhilHealth Number <span class="text-ink-muted font-normal normal-case">(optional)</span></label>
-                    <input type="text" name="philhealth_no" x-model="form.philhealth_no"
+                    <label for="batch_philhealth_no" class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">PhilHealth Number <span class="text-ink-muted font-normal normal-case">(optional)</span></label>
+                    <input type="text" id="batch_philhealth_no" name="philhealth_no" x-model="form.philhealth_no"
                            :disabled="form.is_philhealth_member !== 'y'"
                            x-bind:class="form.is_philhealth_member !== 'y' ? 'opacity-50 bg-teal-soft cursor-not-allowed' : ''"
                            class="w-full px-3 lg:px-4 py-2 rounded-xl border border-border focus:ring-accent-blue focus:border-accent-blue text-sm"
@@ -340,14 +351,15 @@
                     <label class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">PCB Member? <span class="text-danger">*</span></label>
                     <div class="flex items-center gap-4 mt-1">
                         <label class="inline-flex items-center gap-2 text-sm">
-                            <input type="radio" name="is_pcb_member" value="y" x-model="form.is_pcb_member" class="h-4 w-4 text-accent-blue border-border focus:ring-accent-blue">
+                            <input type="radio" id="batch_pcb_y" name="is_pcb_member" value="y" x-model="form.is_pcb_member" class="h-4 w-4 text-accent-blue border-border focus:ring-accent-blue">
                             <span>Yes</span>
                         </label>
                         <label class="inline-flex items-center gap-2 text-sm">
-                            <input type="radio" name="is_pcb_member" value="n" x-model="form.is_pcb_member" class="h-4 w-4 text-accent-blue border-border focus:ring-accent-blue">
+                            <input type="radio" id="batch_pcb_n" name="is_pcb_member" value="n" x-model="form.is_pcb_member" class="h-4 w-4 text-accent-blue border-border focus:ring-accent-blue">
                             <span>No</span>
                         </label>
                     </div>
+                    <p x-show="fieldErrors.is_pcb_member" x-text="fieldErrors.is_pcb_member" class="text-danger text-xs mt-1"></p>
                 </div>
                 <div></div>
             </div>
@@ -364,6 +376,16 @@
                     <label for="batch_nhts" class="ml-2 block text-xs lg:text-sm font-medium">NHTS / Indigent</label>
                 </div>
             </div>
+        </div>
+
+        {{-- Validation Errors --}}
+        <div x-show="validationErrors.length > 0" x-cloak class="rounded-xl bg-danger-soft border border-danger/30 px-3 lg:px-4 py-2 lg:py-3 text-xs lg:text-sm text-danger mb-4">
+            <p class="font-semibold mb-1"><i class="fa-solid fa-exclamation-triangle mr-1" aria-hidden="true"></i> Please fix:</p>
+            <ul class="list-disc list-inside">
+                <template x-for="error in validationErrors" :key="error">
+                    <li x-text="error"></li>
+                </template>
+            </ul>
         </div>
 
         {{-- Submit --}}
@@ -389,16 +411,6 @@
                     </span>
                 </button>
             </div>
-        </div>
-
-        {{-- Validation Errors --}}
-        <div x-show="validationErrors.length > 0" x-cloak class="rounded-xl bg-danger-soft border border-danger/30 px-3 lg:px-4 py-2 lg:py-3 text-xs lg:text-sm text-danger">
-            <p class="font-semibold mb-1"><i class="fa-solid fa-exclamation-triangle mr-1" aria-hidden="true"></i> Please fix:</p>
-            <ul class="list-disc list-inside">
-                <template x-for="error in validationErrors" :key="error">
-                    <li x-text="error"></li>
-                </template>
-            </ul>
         </div>
 
     </form>
@@ -440,7 +452,8 @@ function patientBatchForm() {
         creatingHouseholdSaving: false,
         submitting: false,
         validationErrors: [],
-        entryCount: {{ $recentPatients->count() + 1 }},
+        fieldErrors: {},
+        entryCount: 1,
 
         init() {
             document.addEventListener('click', (e) => {
@@ -476,6 +489,12 @@ function patientBatchForm() {
             this.householdQuery = item.text;
             this.householdResults = [];
             this.householdDropdownOpen = false;
+        },
+
+        selectFirstHousehold() {
+            if (this.householdResults.length > 0) {
+                this.selectHousehold(this.householdResults[0]);
+            }
         },
 
         clearHousehold() {
@@ -534,6 +553,7 @@ function patientBatchForm() {
 
                 if (response.ok) {
                     this.selectedHousehold = data;
+                    this.creatingHousehold = false;
                     this.newHousehold = { zone_id: '', family_name_head: '', contact_number: '' };
 
                     Swal.fire({
@@ -580,17 +600,59 @@ function patientBatchForm() {
                 has_nhts: false,
             };
             this.validationErrors = [];
+            this.fieldErrors = {};
             this.creatingHousehold = false;
             this.newHousehold = { zone_id: '', family_name_head: '', contact_number: '' };
             this.newHouseholdErrors = {};
-            this.clearHousehold();
+            // Do NOT clear selectedHousehold - keep it for batch entry efficiency (household carry-over)
             this.birthPlaceResults = [];
             this.birthPlaceDropdownOpen = false;
+            // Refocus first field for rapid entry
+            this.$nextTick(() => {
+                this.$refs.firstNameInput?.focus();
+            });
+        },
+
+        // Debounced duplicate check on name + DOB
+        duplicateCheckTimer: null,
+        async checkDuplicate() {
+            if (this.duplicateCheckTimer) {
+                clearTimeout(this.duplicateCheckTimer);
+            }
+            this.duplicateCheckTimer = setTimeout(async () => {
+                const fn = this.form.first_name?.trim();
+                const ln = this.form.last_name?.trim();
+                const dob = this.form.date_of_birth;
+                if (fn && ln && dob) {
+                    try {
+                        const response = await safeFetch(`{{ route('search.patients') }}?query=${encodeURIComponent(fn + ' ' + ln)}`);
+                        if (response.ok) {
+                            const results = await response.json();
+                            const match = results.find(p =>
+                                p.first_name?.toLowerCase() === fn.toLowerCase() &&
+                                p.last_name?.toLowerCase() === ln.toLowerCase() &&
+                                p.date_of_birth === dob
+                            );
+                            if (match) {
+                                this.fieldErrors = {
+                                    ...this.fieldErrors,
+                                    first_name: `Patient "${match.name}" with this birthdate already exists. <a href="/patients/${match.id}" target="_blank" class="underline">View profile</a>`,
+                                    last_name: '',
+                                    date_of_birth: '',
+                                };
+                            }
+                        }
+                    } catch (e) {
+                        // Silently ignore duplicate check errors
+                    }
+                }
+            }, 500);
         },
 
         async submitForm() {
             this.submitting = true;
             this.validationErrors = [];
+            this.fieldErrors = {};
 
             if (!this.selectedHousehold) {
                 this.validationErrors.push('Please select or create a household.');
@@ -637,6 +699,8 @@ function patientBatchForm() {
                     }
                 } else {
                     if (data.errors) {
+                        // Map server errors to fieldErrors for inline display
+                        this.fieldErrors = data.errors;
                         this.validationErrors = Object.values(data.errors).flat();
                     } else {
                         this.validationErrors = [data.message || 'An error occurred.'];

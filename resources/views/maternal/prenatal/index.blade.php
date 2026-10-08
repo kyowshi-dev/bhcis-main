@@ -12,10 +12,9 @@
             <p class="text-sm mt-1" style="color: var(--ink-muted);">Active pregnancies, EDC, and next visit schedule.</p>
         </div>
         @if (auth()->user()?->hasPermission('patients'))
-            <a href="{{ route('patients.index') }}" class="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition hover:shadow-md w-full sm:w-auto"
-               style="background: var(--primary);">
-                <i class="fa-solid fa-plus" aria-hidden="true"></i> Register pregnancy
-            </a>
+            <x-btn href="{{ route('patients.index') }}" icon="fa-solid fa-plus" class="w-full sm:w-auto">
+                Register pregnancy
+            </x-btn>
         @endif
     </div>
 

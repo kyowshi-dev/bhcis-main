@@ -12,11 +12,7 @@
         <a href="{{ route('settings.index') }}" class="text-sm font-medium transition hover:underline" style="color: var(--primary);">Back to Settings</a>
     </div>
 
-    @if (session('success'))
-        <div class="rounded-xl border px-4 py-3" style="background: var(--teal-soft); border-color: var(--primary); color: var(--primary);">
-            {{ session('success') }}
-        </div>
-    @endif
+    <x-flash />
 
     <div class="rounded-xl border p-5 lg:p-6 max-w-md" style="background: var(--bg-surface); border-color: var(--border);">
         <p class="text-sm mb-4" style="color: var(--ink-muted);">Logged in as <strong style="color: var(--ink);">{{ $user->username }}</strong> ({{ $user->email }}).</p>
@@ -30,7 +26,7 @@
                        style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);"
                        autocomplete="current-password">
                 @error('current_password')
-                    <p class="mt-1 text-xs" style="color: var(--accent);">{{ $message }}</p>
+                    <p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>
                 @enderror
             </div>
             <div>
@@ -40,7 +36,7 @@
                        style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);"
                        autocomplete="new-password">
                 @error('password')
-                    <p class="mt-1 text-xs" style="color: var(--accent);">{{ $message }}</p>
+                    <p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>
                 @enderror
             </div>
             <div>

@@ -23,10 +23,10 @@ class AssignInitialRolesSeeder extends Seeder
             'Doctor' => ['patients', 'patients_destroy', 'consultations', 'medicines', 'maternal', 'print_handouts', 'dashboard_handouts'],
 
             // NURSE
-            'Nurse' => ['patients', 'patients_destroy', 'consultations', 'medicines', 'immunizations', 'maternal', 'print_handouts', 'dashboard_handouts'],
+            'Nurse' => ['patients', 'patients_destroy', 'consultations', 'medicines', 'immunizations', 'maternal', 'print_handouts', 'dashboard_handouts', 'nurse_batch_entry'],
 
             // MIDWIFE
-            'Midwife' => ['patients', 'patients_destroy', 'consultations', 'immunizations', 'maternal', 'reports', 'print_handouts', 'dashboard_handouts'],
+            'Midwife' => ['patients', 'patients_destroy', 'consultations', 'immunizations', 'maternal', 'reports', 'print_handouts', 'dashboard_handouts', 'nurse_batch_entry'],
 
             // BHW
             'BHW' => ['consultations', 'immunizations', 'maternal', 'reports', 'print_handouts', 'dashboard_handouts'],

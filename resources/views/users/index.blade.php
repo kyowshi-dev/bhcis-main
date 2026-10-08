@@ -4,23 +4,7 @@
 
 @section('content')
 <div class="space-y-4 lg:space-y-6">
-    @if (session('success'))
-        <div class="p-4 rounded-xl bg-teal-soft border border-primary/20 text-primary">
-            <div class="flex items-start gap-3">
-                <i class="fa-solid fa-check-circle mt-1"></i>
-                <span>{{ session('success') }}</span>
-            </div>
-        </div>
-    @endif
-
-    @if (session('error'))
-        <div class="p-4 rounded-xl bg-danger-soft border border-danger/30 text-danger">
-            <div class="flex items-start gap-3">
-                <i class="fa-solid fa-exclamation-circle mt-1"></i>
-                <span>{{ session('error') }}</span>
-            </div>
-        </div>
-    @endif
+    <x-flash />
 
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
@@ -149,7 +133,7 @@
             },
             showCancelButton: true,
             confirmButtonColor: 'var(--danger)',
-            cancelButtonColor: '#6b7280',
+            cancelButtonColor: 'var(--ink-muted)',
             confirmButtonText: 'Yes, Disable',
             cancelButtonText: 'Cancel',
             inputValidator: (value) => {
@@ -192,7 +176,7 @@
             },
             showCancelButton: true,
             confirmButtonColor: 'var(--primary)',
-            cancelButtonColor: '#6b7280',
+            cancelButtonColor: 'var(--ink-muted)',
             confirmButtonText: 'Enable User',
             cancelButtonText: 'Cancel',
             inputValidator: (value) => {

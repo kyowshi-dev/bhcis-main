@@ -14,17 +14,7 @@
         </a>
     </div>
 
-    @if (session('success'))
-        <div class="rounded-xl border px-4 py-3" style="background: var(--teal-soft); border-color: var(--primary); color: var(--primary);">
-            {{ session('success') }}
-        </div>
-    @endif
-
-    @if (session('error'))
-        <div class="rounded-xl border px-4 py-3" style="background: var(--danger-soft); border-color: var(--danger); color: var(--danger);">
-            {{ session('error') }}
-        </div>
-    @endif
+    <x-flash />
 
     <div class="lg:col-span-2">
         <div class="rounded-xl border overflow-hidden" style="background: var(--bg-surface-elevated); border-color: var(--border);">

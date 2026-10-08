@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'BHCIS') - Sta. Ana</title>
 
     <link rel="icon" type="image/svg+xml" href="{{ asset('img/logo.svg') }}">
@@ -49,7 +50,7 @@
             
             <div class="flex items-center justify-between p-3 lg:p-4 border-b border-border" :class="sidebarCollapsed ? 'justify-center' : ''">
                 <a href="{{ route('dashboard') }}" class="flex items-center gap-2" :class="sidebarCollapsed ? 'justify-center' : ''">
-                    <div class="logo-mark" style="background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.25);">
+                    <div class="logo-mark" style="background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.25);">
                         <img src="{{ asset('img/logo.svg') }}" alt="Santa Ana logo">
                     </div>
                     <span x-show="!sidebarCollapsed" x-transition:enter="transition-opacity duration-150" class="font-display font-semibold text-sm text-white">BHCIS</span>
@@ -62,7 +63,11 @@
             <nav class="flex-1 p-2 pt-2 space-y-0.5 overflow-y-auto" aria-label="Main navigation">
 
                 {{-- Dashboard - always visible --}}
-                <x-layouts.nav-link url="{{ route('dashboard') }}" label="Dashboard" icon="fa-solid fa-house"
+                @php
+                    $roleName = strtolower(trim((string) (auth()->user()?->role->role_name ?? auth()->user()?->healthWorker->role ?? '')));
+                    $dashboardLabel = $roleName === 'midwife' ? 'Maternal and Family Register' : 'Dashboard';
+                @endphp
+                <x-layouts.nav-link url="{{ route('dashboard') }}" :label="$dashboardLabel" icon="fa-solid fa-house"
                                     :active="request()->routeIs('dashboard')" />
 
                 {{-- Community category items --}}
@@ -380,11 +385,7 @@
 
             {{-- Page content --}}
             <main class="flex-1 px-[clamp(0.5rem,2vw,1.5rem)] pt-3 pb-2 lg:pt-4 lg:pb-3 overflow-auto">
-                @php
-                    $wideRoutes = ['dashboard', 'consultations.index', 'immunizations.index', 'patients.index', 'households.index', 'referrals.index', 'medicines.index', 'reports.index', 'zones.index', 'users.index', 'notifications.index'];
-                @endphp
-
-                <div class="{{ request()->routeIs($wideRoutes) ? 'max-w-[min(96vw,120rem)]' : 'max-w-[min(88vw,76rem)]' }} mx-auto">
+                <div class="max-w-[76rem] mx-auto">
 
                     @php
                         $breadcrumbs = \App\Helpers\BreadcrumbHelper::getBreadcrumbs();
