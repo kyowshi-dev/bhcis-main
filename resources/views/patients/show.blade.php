@@ -137,6 +137,67 @@
                 </div>
             @endif
 
+            @if ($patient->death)
+                <div class="mt-4 lg:mt-6 pt-3 lg:pt-4 border-t">
+                    <h4 class="text-xs font-bold text-ink-subtle uppercase mb-2 text-red-600">Death Record</h4>
+                    <dl class="space-y-2 text-xs lg:text-sm">
+                        <div class="flex justify-between gap-3">
+                            <dt style="color: var(--ink-muted);">Date of Death</dt>
+                            <dd class="font-semibold text-red-600">{{ $patient->death->date_of_death->format('M d, Y') }}</dd>
+                        </div>
+                        <div class="flex justify-between gap-3">
+                            <dt style="color: var(--ink-muted);">Place of Death</dt>
+                            <dd class="font-semibold" style="color: var(--ink);">{{ $patient->death->place_of_death }}</dd>
+                        </div>
+                        <div class="flex justify-between gap-3">
+                            <dt style="color: var(--ink-muted);">Cause</dt>
+                            <dd class="font-semibold" style="color: var(--ink);">
+                                @if ($patient->death->causeDiagnosis)
+                                    {{ $patient->death->causeDiagnosis->diagnosis_code }} - {{ $patient->death->causeDiagnosis->diagnosis_name }}
+                                @elseif ($patient->death->cause_text)
+                                    {{ $patient->death->cause_text }}
+                                @else
+                                    <span class="text-ink-muted">Not specified</span>
+                                @endif
+                            </dd>
+                        </div>
+                        <div class="flex justify-between gap-3">
+                            <dt style="color: var(--ink-muted);">Classification</dt>
+                            <dd class="font-semibold" style="color: var(--ink);">
+                                @php
+                                    $flags = [];
+                                    if ($patient->death->maternal_death) $flags[] = 'Maternal';
+                                    if ($patient->death->perinatal_death) $flags[] = 'Perinatal';
+                                    if ($patient->death->neonatal_death) $flags[] = 'Neonatal';
+                                    if ($patient->death->infant_death) $flags[] = 'Infant';
+                                    if ($patient->death->under_five_death) $flags[] = 'Under-5';
+                                @endphp
+                                @if (!empty($flags))
+                                    {{ implode(', ', $flags) }} death
+                                @else
+                                    <span class="text-ink-muted">None</span>
+                                @endif
+                            </dd>
+                        </div>
+                        <div class="flex justify-between gap-3">
+                            <dt style="color: var(--ink-muted);">Recorded By</dt>
+                            <dd class="font-semibold" style="color: var(--ink);">
+                                @if ($patient->death->recordedBy)
+                                    {{ $patient->death->recordedBy->first_name }} {{ $patient->death->recordedBy->last_name }}
+                                @else
+                                    <span class="text-ink-muted">Unknown</span>
+                                @endif
+                            </dd>
+                        </div>
+                    </dl>
+                    <div class="mt-3">
+                        <a href="{{ route('deaths.show', $patient->death->id) }}" class="inline-flex items-center justify-center w-full px-3 py-2 rounded-lg text-xs lg:text-sm font-medium bg-red-50 text-red-700 hover:bg-red-100 transition">
+                            View Death Record
+                        </a>
+                    </div>
+                </div>
+            @endif
+
             @if (auth()->user()?->hasPermission('patients_destroy'))
                 <div class="mt-4 lg:mt-6 pt-3 lg:pt-4 border-t">
                     <h4 class="text-xs font-bold text-ink-subtle uppercase mb-2">Data Management</h4>
