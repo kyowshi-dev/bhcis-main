@@ -46,4 +46,13 @@ class ApplicationSetting extends Model
             ['value' => (string) $value]
         );
     }
+
+    public static function gracefulErrorsEnabled(): bool
+    {
+        try {
+            return self::get('graceful_errors', '1') === '1';
+        } catch (\Throwable) {
+            return true;
+        }
+    }
 }

@@ -6,7 +6,7 @@
 <div class="max-w-2xl mx-auto space-y-6">
     <x-page-header
         title="Security Settings"
-        subtitle="Configure session, login lockout, and password policy for all users in the system."
+        subtitle="Configure session, login lockout, password policy, and error handling for all users in the system."
         icon="fa-solid fa-shield-halved"
     >
         <x-slot name="actions">
@@ -20,7 +20,7 @@
     </x-page-header>
 
     @if ($errors->any())
-        <div class="mb-6 p-4 rounded-lg" style="background: var(--danger-soft); border: 1px solid var(--danger);">
+        <div class="mb-6 p-4 rounded-lg" style="background: var(--danger-soft); border: 1px solid var(--danger);" data-auto-dismiss data-auto-dismiss-delay="10000">
             <h3 class="font-semibold text-sm mb-2" style="color: var(--danger);">Please fix the following errors:</h3>
             <ul class="space-y-1">
                 @foreach ($errors->all() as $error)
@@ -122,6 +122,19 @@
                     <span class="text-sm" style="color: var(--ink);">Require at least one symbol (!@#$%...)</span>
                 </label>
             </div>
+        </div>
+
+        <!-- Error Handling -->
+        <div class="pb-6 border-b border-[var(--border)]">
+            <h2 class="text-base font-semibold mb-1" style="color: var(--ink);">Error Handling</h2>
+            <p class="text-xs mb-4" style="color: var(--ink-muted);">
+                Controls the custom error pages, friendly dialogs, and session-expired messages shown across the system.
+            </p>
+            <label for="graceful_errors" class="flex items-start gap-3 cursor-pointer">
+                <input type="checkbox" name="graceful_errors" id="graceful_errors" value="1" @checked($gracefulErrors) class="mt-0.5 w-4 h-4 rounded border border-[var(--border)] focus:ring-2 focus:ring-offset-2" style="focus:ring-color: var(--primary);">
+                <span class="text-sm" style="color: var(--ink);">Enable custom messages and graceful error handling</span>
+            </label>
+            <p class="text-xs mt-2 ml-7" style="color: var(--ink-muted);">When off, errors fall back to the default system error pages and responses, and no custom error dialogs are shown.</p>
         </div>
 
         <!-- Info Box -->

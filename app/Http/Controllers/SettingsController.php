@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ImportBackupRequest;
 use App\Http\Requests\RestrictUserRequest;
+use App\Http\Requests\UpdateApplicationSettingsRequest;
 use App\Http\Requests\UpdatePasswordRequest;
+use App\Models\ApplicationSetting;
 use App\Services\AuditLogService;
 use App\Services\BackupService;
 use Illuminate\Http\RedirectResponse;
@@ -21,7 +23,24 @@ class SettingsController extends Controller
 
     public function index()
     {
-        return view('settings.index');
+        return view('settings.index', [
+            'projectedPopulation' => ApplicationSetting::get('projected_population'),
+            'sessionTimeout' => ApplicationSetting::get('session_timeout', '120'),
+        ]);
+    }
+
+    public function update(UpdateApplicationSettingsRequest $request): RedirectResponse
+    {
+        $validated = $request->validated();
+
+        ApplicationSetting::set('projected_population', $validated['projected_population'] ?? '');
+        ApplicationSetting::set('session_timeout', $validated['session_timeout']);
+
+        $this->audit->log('settings_updated', 'settings', $request);
+
+        return redirect()
+            ->route('settings.index')
+            ->with('success', 'System settings updated.');
     }
 
     public function account()

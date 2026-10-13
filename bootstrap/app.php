@@ -4,6 +4,7 @@ use App\Http\Middleware\DisableBackCache;
 use App\Http\Middleware\PermissionMiddleware;
 use App\Http\Middleware\RoleMiddleware;
 use App\Http\Middleware\SecurityHeaders;
+use App\Models\ApplicationSetting;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -50,6 +51,10 @@ return Application::configure(basePath: dirname(__DIR__))
          * OWASP A07:2021 - Identification and Authentication Failures
          */
         $exceptions->render(function (TokenMismatchException $e) {
+            if (! ApplicationSetting::gracefulErrorsEnabled()) {
+                return null;
+            }
+
             if (request()->expectsJson() || request()->ajax()) {
                 return response()->json([
                     'message' => 'Session expired. Please log in again.',
@@ -70,6 +75,10 @@ return Application::configure(basePath: dirname(__DIR__))
          * so users see a clear explanation instead of a raw error page.
          */
         $exceptions->render(function (ThrottleRequestsException $e) {
+            if (! ApplicationSetting::gracefulErrorsEnabled()) {
+                return null;
+            }
+
             if (request()->expectsJson() || request()->ajax()) {
                 return response()->json([
                     'message' => 'Too many attempts. Please wait a moment before trying again.',
@@ -85,6 +94,10 @@ return Application::configure(basePath: dirname(__DIR__))
          * Handle 403 Forbidden errors gracefully for AJAX requests.
          */
         $exceptions->render(function (HttpException $e) {
+            if (! ApplicationSetting::gracefulErrorsEnabled()) {
+                return null;
+            }
+
             if ($e->getStatusCode() === 403) {
                 if (request()->expectsJson() || request()->ajax()) {
                     $message = trim($e->getMessage());
@@ -95,7 +108,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 }
 
                 return response()
-                    ->view('errors.403', ['exception' => $e], 403);
+                    ->view('error-pages.403', ['exception' => $e], 403);
             }
 
             if ($e->getStatusCode() === 404) {
@@ -106,7 +119,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 }
 
                 return response()
-                    ->view('errors.404', ['exception' => $e], 404);
+                    ->view('error-pages.404', ['exception' => $e], 404);
             }
 
             return null;
@@ -118,6 +131,10 @@ return Application::configure(basePath: dirname(__DIR__))
          */
         $exceptions->render(function (Throwable $e) {
             if (app()->runningInConsole()) {
+                return null;
+            }
+
+            if (! ApplicationSetting::gracefulErrorsEnabled()) {
                 return null;
             }
 
@@ -147,6 +164,6 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             return response()
-                ->view('errors.500', ['exception' => $e], 500);
+                ->view('error-pages.500', ['exception' => $e], 500);
         });
     })->create();
