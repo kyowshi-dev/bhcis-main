@@ -22,7 +22,7 @@
         <p class="mt-1 text-xs text-ink-subtle">{{ $help }}</p>
     @endif
 
-    @error($name)
-        <p class="mt-1 text-xs font-medium text-danger">{{ $message }}</p>
-    @enderror
+@error($name)
+        <p class="mt-1 text-xs font-medium text-danger" data-auto-dismiss>{{ $message }}</p>
+@enderror
 </div>

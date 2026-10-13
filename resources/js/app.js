@@ -130,6 +130,49 @@ document.addEventListener('alpine:init', () => {
         diagnosis: false,
         prescription: false,
     });
+
+    // Theme: localStorage "bhcis-theme" = light | dark | system (default).
+    // isDark is the resolved mode; a cookie mirrors it so server-rendered
+    // ApexCharts can pick dark theme mode (see DashboardChartsService).
+    const THEME_KEY = 'bhcis-theme';
+    const THEME_COOKIE = 'bhcis-theme';
+    const systemDark = window.matchMedia('(prefers-color-scheme: dark)');
+
+    function readPreference() {
+        const stored = localStorage.getItem(THEME_KEY);
+        return stored === 'light' || stored === 'dark' ? stored : 'system';
+    }
+
+    function resolveDark(preference) {
+        return preference === 'system' ? systemDark.matches : preference === 'dark';
+    }
+
+    function applyTheme(dark) {
+        document.documentElement.classList.toggle('dark', dark);
+        const expires = '; expires=Fri, 31 Dec 2099 23:59:59 GMT; path=/';
+        document.cookie = `${THEME_COOKIE}=${dark ? 'dark' : 'light'}${expires}`;
+    }
+
+    const preference = readPreference();
+    applyTheme(resolveDark(preference));
+
+    systemDark.addEventListener('change', () => {
+        if (readPreference() === 'system') {
+            applyTheme(systemDark.matches);
+        }
+    });
+
+    window.Alpine.store('theme', {
+        preference,
+        get isDark() {
+            return resolveDark(this.preference);
+        },
+        toggle() {
+            this.preference = this.isDark ? 'light' : 'dark';
+            localStorage.setItem(THEME_KEY, this.preference);
+            applyTheme(this.isDark);
+        },
+    });
 });
 
 // --- Global form-submit loading overlay -------------------------------------
@@ -209,4 +252,107 @@ document.addEventListener('alpine:init', () => {
         }
         return nativeSubmit.apply(this, arguments);
     };
+})();
+
+// --- Auto-dismiss for validation alerts (banners + inline field errors) ---
+(function () {
+    const DEFAULT_DELAY_MS = 10000;
+    const FADE_MS = 300;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function initElement(el) {
+        if (el.dataset.autoDismissReady === '1') {
+            return;
+        }
+        el.dataset.autoDismissReady = '1';
+
+        const delay = parseInt(el.dataset.autoDismissDelay, 10) || DEFAULT_DELAY_MS;
+        let remaining = delay;
+        let timerId = null;
+        let startedAt = null;
+        let paused = false;
+
+        function dismiss() {
+            if (el.hidden || el.style.display === 'none') {
+                return;
+            }
+            if (!prefersReducedMotion) {
+                el.classList.add('is-auto-dismissing');
+                window.setTimeout(function () {
+                    el.style.display = 'none';
+                    el.hidden = true;
+                }, FADE_MS);
+            } else {
+                el.style.display = 'none';
+                el.hidden = true;
+            }
+        }
+
+        function start() {
+            if (paused) {
+                return;
+            }
+            startedAt = Date.now();
+            timerId = window.setTimeout(dismiss, remaining);
+        }
+
+        function pause() {
+            if (!startedAt || timerId === null) {
+                return;
+            }
+            clearTimeout(timerId);
+            timerId = null;
+            const elapsed = Date.now() - startedAt;
+            remaining = Math.max(0, remaining - elapsed);
+            startedAt = null;
+        }
+
+        function resume() {
+            if (paused || remaining <= 0) {
+                if (remaining <= 0) {
+                    dismiss();
+                }
+                return;
+            }
+            start();
+        }
+
+        el.addEventListener('mouseenter', pause);
+        el.addEventListener('mouseleave', resume);
+        el.addEventListener('focusin', pause);
+        el.addEventListener('focusout', resume);
+
+        start();
+    }
+
+    function initScope(root) {
+        root.querySelectorAll('[data-auto-dismiss]:not([data-auto-dismiss-ready])').forEach(initElement);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () {
+            initScope(document);
+        });
+    } else {
+        initScope(document);
+    }
+
+    const observer = new MutationObserver(function (mutations) {
+        for (const mutation of mutations) {
+            for (const node of mutation.addedNodes) {
+                if (node.nodeType === Node.ELEMENT_NODE) {
+                    if (node.matches && node.matches('[data-auto-dismiss]')) {
+                        initElement(node);
+                    }
+                    if (node.querySelectorAll) {
+                        node.querySelectorAll('[data-auto-dismiss]:not([data-auto-dismiss-ready])').forEach(initElement);
+                    }
+                }
+            }
+        }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    window.initAutoDismiss = initScope;
 })();

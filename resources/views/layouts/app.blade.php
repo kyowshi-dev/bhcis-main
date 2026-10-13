@@ -6,6 +6,16 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'BHCIS') - Sta. Ana</title>
 
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('bhcis-theme');
+                var dark = stored === 'dark' || (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
+
     <link rel="icon" type="image/svg+xml" href="{{ asset('img/logo.svg') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,13 +25,34 @@
 
 </head>
 
-<body x-data="{ sidebarOpen: false, sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true', showVitalsModal: false }" 
-      :class="{ 'overflow-hidden': sidebarOpen }" 
-      class="min-h-screen overflow-x-hidden font-sans text-ink antialiased bg-page" 
-      x-on:open-vitals-modal.window="showVitalsModal = true" 
+<body x-data="{
+        sidebarOpen: false,
+        sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true',
+        openDropdown: null,
+        showVitalsModal: false,
+        lastDrawerTrigger: null,
+        openDrawer(event) {
+            this.lastDrawerTrigger = event?.currentTarget ?? null;
+            this.openDropdown = null;
+            this.sidebarOpen = true;
+            this.$nextTick(() => {
+                const target = this.$refs.sidebar?.querySelector('[data-drawer-close]');
+                target?.focus();
+            });
+        },
+        closeDrawer() {
+            if (!this.sidebarOpen) return;
+            this.sidebarOpen = false;
+            this.$nextTick(() => this.lastDrawerTrigger?.focus());
+        }
+      }"
+      :class="{ 'overflow-hidden': sidebarOpen }"
+      class="min-h-screen overflow-x-hidden font-sans text-ink antialiased bg-page"
+      x-on:open-vitals-modal.window="showVitalsModal = true"
       x-on:close-vitals-modal.window="showVitalsModal = false"
+      x-on:keydown.escape.window="if (openDropdown) { openDropdown = null; } else if (sidebarOpen) { closeDrawer(); }"
       x-effect="localStorage.setItem('sidebarCollapsed', sidebarCollapsed)">
-    
+
     @php
         /** @var \App\Models\User|null $authUser */
         $authUser = auth()->user();
@@ -29,359 +60,13 @@
     @endphp
 
     <div class="relative z-10 flex min-h-screen">
-        
-        {{-- Mobile backdrop --}}
-        <div x-show="sidebarOpen" 
-             @click="sidebarOpen = false" 
-             x-transition:enter="transition ease-out duration-200" 
-             x-transition:enter-start="opacity-0" 
-             x-transition:enter-end="opacity-100" 
-             x-transition:leave="transition ease-in duration-150" 
-             x-transition:leave-start="opacity-100" 
-             x-transition:leave-end="opacity-0" 
-             class="fixed inset-0 z-40 bg-black/40 lg:hidden" 
-             style="display: none;">
-        </div>
 
-        {{-- Sidebar --}}
-        <aside :class="[sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0', sidebarCollapsed ? 'sidebar-collapsed' : '']"
-               :style="sidebarCollapsed ? 'width: 4rem' : 'width: 200px'"
-               class="app-sidebar transform fixed lg:sticky top-0 h-screen overflow-y-auto shrink-0 flex flex-col z-50 transition-all duration-300 ease-out border-r border-border shadow-md">
-            
-            <div class="flex items-center justify-between p-3 lg:p-4 border-b border-border" :class="sidebarCollapsed ? 'justify-center' : ''">
-                <a href="{{ route('dashboard') }}" class="flex items-center gap-2" :class="sidebarCollapsed ? 'justify-center' : ''">
-                    <div class="logo-mark" style="background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.25);">
-                        <img src="{{ asset('img/logo.svg') }}" alt="Santa Ana logo">
-                    </div>
-                    <span x-show="!sidebarCollapsed" x-transition:enter="transition-opacity duration-150" class="font-display font-semibold text-sm text-white">BHCIS</span>
-                </a>
-                <button @click="sidebarOpen = false" x-show="!sidebarCollapsed" class="lg:hidden p-1.5 rounded-lg hover:bg-white/10 transition-colors text-white/90">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            </div>
-
-            <nav class="flex-1 p-2 pt-2 space-y-0.5 overflow-y-auto" aria-label="Main navigation">
-
-                {{-- Dashboard - always visible --}}
-                @php
-                    $roleName = strtolower(trim((string) (auth()->user()?->role->role_name ?? auth()->user()?->healthWorker->role ?? '')));
-                    $dashboardLabel = $roleName === 'midwife' ? 'Maternal and Family Register' : 'Dashboard';
-                @endphp
-                <x-layouts.nav-link url="{{ route('dashboard') }}" :label="$dashboardLabel" icon="fa-solid fa-house"
-                                    :active="request()->routeIs('dashboard')" />
-
-                {{-- Community category items --}}
-                @if ($can('patients') || $can('household') || $can('zones'))
-                    <p class="sidebar-category-label px-2.5 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-white/40" aria-hidden="true">Community</p>
-                    @if ($can('patients'))
-                        <x-layouts.nav-link url="{{ route('patients.index') }}" label="Patients" icon="fa-solid fa-user-injured"
-                                            :active="request()->routeIs('patients*')" />
-                    @endif
-
-                    @if ($can('household'))
-                        <x-layouts.nav-link url="{{ route('households.index') }}" label="Households" icon="fa-solid fa-house-chimney"
-                                            :active="request()->routeIs('households*')" />
-                    @endif
-
-                    @if ($can('zones'))
-                        <x-layouts.nav-link url="{{ route('zones.index') }}" label="Zones" icon="fa-solid fa-map-location-dot"
-                                            :active="request()->routeIs('zones*')" />
-                    @endif
-                @endif
-
-                {{-- Health Care Services category items --}}
-                @if ($can('consultations') || $can('immunizations') || $can('maternal') || $can('nurse_batch_entry'))
-                    <p class="sidebar-category-label px-2.5 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-white/40" aria-hidden="true">Health Care Services</p>
-                    @if ($can('nurse_batch_entry'))
-                        <x-layouts.nav-link url="{{ route('batch-entry.index') }}" label="Batch Entry" icon="fa-solid fa-file-medical"
-                                            :active="request()->routeIs('batch-entry*')" />
-                    @endif
-
-                    @if ($can('consultations'))
-                        <x-layouts.nav-link url="{{ route('consultations.index') }}" label="Consultations" icon="fa-solid fa-stethoscope"
-                                            :active="request()->routeIs('consultations*')" />
-                    @endif
-
-                    @if ($can('immunizations'))
-                        <x-layouts.nav-link url="{{ route('immunizations.index') }}" label="Immunizations" icon="fa-solid fa-syringe"
-                                            :active="request()->routeIs('immunizations*')" />
-                    @endif
-
-                    @if ($can('maternal'))
-                        @php
-                            $maternalSectionUrl = request()->routeIs('maternal.postnatal*')
-                                ? route('maternal.postnatal.index')
-                                : (request()->routeIs('maternal.family-planning*')
-                                    ? route('maternal.family-planning.index')
-                                    : route('maternal.prenatal.index'));
-                        @endphp
-                        <x-layouts.nav-link url="{{ $maternalSectionUrl }}" label="Maternal Care" icon="fa-solid fa-person-pregnant"
-                                            :active="request()->routeIs('maternal*')" />
-                    @endif
-
-                    @if ($can('consultations'))
-                        <x-layouts.nav-link url="{{ route('referrals.index') }}" label="Referrals" icon="fa-solid fa-arrow-up-right-from-square"
-                                            :active="request()->routeIs('referrals*')" />
-                    @endif
-                @endif
-
-                {{-- Reports & Inventory category items --}}
-                @if ($can('medicines') || $can('reports'))
-                    <p class="sidebar-category-label px-2.5 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-white/40" aria-hidden="true">Reports & Inventory</p>
-                    @if ($can('medicines'))
-                        <x-layouts.nav-link url="{{ route('medicines.index') }}" label="Medicines" icon="fa-solid fa-pills"
-                                            :active="request()->routeIs('medicines*')" />
-                    @endif
-
-                    @if ($can('reports'))
-                        <x-layouts.nav-link url="{{ route('reports.index') }}" label="Reports" icon="fa-solid fa-file-lines"
-                                            :active="request()->routeIs('reports*')" />
-                    @endif
-                @endif
-
-                {{-- Administration category items --}}
-                @if ($can('users'))
-                    <p class="sidebar-category-label px-2.5 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-white/40" aria-hidden="true">Administration</p>
-                    <x-layouts.nav-link url="{{ route('users.index') }}" label="Users" icon="fa-solid fa-user-gear"
-                                        :active="request()->routeIs('users*')" />
-                    <x-layouts.nav-link url="{{ route('roles.index') }}" label="Roles" icon="fa-solid fa-user-shield"
-                                        :active="request()->routeIs('roles*')" />
-                    <x-layouts.nav-link url="{{ route('activity-logs.index') }}" label="Activity Logs" icon="fa-solid fa-clock-rotate-left"
-                                        :active="request()->routeIs('activity-logs*')" />
-                    <x-layouts.nav-link url="{{ route('privacy.index') }}" label="Privacy Settings" icon="fa-solid fa-shield-halved"
-                                        :active="request()->routeIs('privacy.index')" />
-
-                @endif
-
-                {{-- Settings - always at bottom --}}
-                <div class="pt-2 mt-2 border-t border-white/10">
-                    <x-layouts.nav-link url="{{ route('settings.index') }}" label="Settings" icon="fa-solid fa-gear"
-                                        :active="request()->routeIs('settings*')" />
-                </div>
-
-                {{-- Collapse toggle (desktop only) --}}
-                <div class="hidden lg:block pt-2 mt-2 border-t border-white/10">
-                    <button @click="sidebarCollapsed = !sidebarCollapsed"
-                            class="nav-link w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium transition-colors duration-200 text-white/60 hover:text-white hover:bg-white/10"
-                            :aria-label="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'">
-                        <svg class="w-5 h-5 mx-auto shrink-0 transition-transform duration-200" :class="{ 'rotate-180': sidebarCollapsed }" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M11 19l-7-7 7-7"/>
-                            <path d="M18 19l-7-7 7-7" x-show="!sidebarCollapsed"/>
-                        </svg>
-                        <span x-show="!sidebarCollapsed" x-transition:enter="transition-opacity duration-150" class="sidebar-collapse-label">Collapse</span>
-                    </button>
-                </div>
-            </nav>
-        </aside>
+        @include('layouts.partials.sidebar')
 
         {{-- Main content area --}}
         <div class="flex-1 flex flex-col min-w-0">
-            
-            {{-- Header --}}
-            <header class="app-header sticky top-0 z-40 shrink-0 flex items-center gap-3 px-4 lg:px-6 py-1 border-b border-white/10 shadow-sm">
-                <button @click="sidebarOpen = true" class="lg:hidden p-2 rounded-lg hover:bg-white/10 transition-colors text-white/90">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                </button>
 
-                @if ($authUser)
-                    @php
-                        $roleName = $authUser->role?->role_name ?? 'User';
-                        $username = (string) $authUser->username;
-                        $initials = mb_strtoupper(mb_substr($username, 0, 1));
-                        $notifications = Cache::remember(
-                            "header_notifications_{$authUser->id}",
-                            now()->addMinute(),
-                            fn () => $authUser->notifications()->latest()->take(5)->get(),
-                        );
-                        $unreadCount = Cache::remember(
-                            "header_unread_count_{$authUser->id}",
-                            now()->addMinute(),
-                            fn () => $authUser->notifications()->whereNull('read_at')->count(),
-                        );
-                    @endphp
-
-                    {{-- Global Search --}}
-                    <div x-data="globalSearch({ allowHouseholds: {{ $can('household') ? 'true' : 'false' }} })" class="relative hidden sm:block">
-                        <div class="relative">
-                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-xs text-white/50" aria-hidden="true"></i>
-                            <input type="search" x-model="query" @input.debounce.300ms="search()" @click.away="close()"
-                                   @keydown.escape="close()" @keydown.arrow-down.prevent="focusNext()" @keydown.arrow-up.prevent="focusPrev()" @keydown.enter.prevent="selectActive()"
-                                   placeholder="Search patients, households..."
-                                   class="w-56 lg:w-72 rounded-lg border border-white/20 bg-white/10 pl-9 pr-3 py-1.5 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all"
-                                   role="combobox" aria-autocomplete="list" aria-haspopup="listbox" :aria-expanded="(results.length > 0).toString()">
-                        </div>
-                        <div x-show="results.length > 0" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
-                             class="absolute top-full left-0 mt-2 w-full rounded-xl border border-border shadow-lg bg-surface-elevated z-50 max-h-80 overflow-y-auto"
-                             role="listbox">
-                                <template x-for="(item, index) in results" :key="item.url">
-                                    <a :href="item.url" class="flex items-center gap-3 px-4 py-2.5 text-sm text-ink hover:bg-black/5 transition-colors border-b border-border last:border-0"
-                                       :class="{ 'bg-teal-soft': index === activeIndex }" role="option" :aria-selected="(index === activeIndex).toString()">
-                                        <span class="flex-1 min-w-0">
-                                            <span x-html="highlightMatch(item.label, query)" class="block truncate"></span>
-                                            <span x-show="item.subtext" x-text="item.subtext" class="block text-xs text-ink-muted truncate"></span>
-                                        </span>
-                                    </a>
-                                </template>
-                        </div>
-                    </div>
-                @endif
-
-                <div class="ml-auto flex items-center gap-4">
-                    @if ($authUser)
-                        {{-- Notifications Dropdown --}}
-                        <div x-data="{ notificationsOpen: false }" class="relative">
-                            <button type="button"
-                                    @click="notificationsOpen = !notificationsOpen"
-                                    @click.away="notificationsOpen = false"
-                                    @keydown.escape="notificationsOpen = false"
-                                    :aria-expanded="notificationsOpen.toString()"
-                                    aria-haspopup="true"
-                                    class="relative p-2 rounded-lg hover:bg-white/10 transition-colors text-white/90 hover:text-white">
-                                <i class="fa-solid fa-bell text-lg" aria-hidden="true"></i>
-                                @if ($unreadCount > 0)
-                                    <span class="absolute top-1 right-1 inline-flex items-center justify-center h-5 w-5 text-xs font-bold rounded-full text-white" style="background: var(--color-danger);">
-                                        {{ $unreadCount > 9 ? '9+' : $unreadCount }}
-                                    </span>
-                                @endif
-                            </button>
-
-                            <div x-show="notificationsOpen"
-                                 x-transition:enter="transition ease-out duration-200"
-                                 x-transition:enter-start="opacity-0 transform translate-y-1"
-                                 x-transition:enter-end="opacity-100 transform translate-y-0"
-                                 x-transition:leave="transition ease-in duration-150"
-                                 x-transition:leave-start="opacity-100 transform translate-y-0"
-                                 x-transition:leave-end="opacity-0 transform translate-y-1"
-                                 @keydown.escape="notificationsOpen = false"
-                                 role="menu"
-                                 class="absolute right-0 mt-3 w-80 rounded-xl border border-border shadow-md bg-surface-elevated z-50"
-                                 style="display: none;">
-                                
-                                <div class="px-4 py-3 border-b border-border">
-                                    <div class="flex items-center justify-between">
-                                        <h3 class="font-semibold text-ink">Notifications</h3>
-                                        @if ($unreadCount > 0)
-                                            <form action="{{ route('notifications.mark-all-read') }}" method="POST" class="inline">
-                                                @csrf
-                                                <button type="submit" class="text-xs font-medium text-primary hover:opacity-70 transition-opacity">
-                                                    Mark all as read
-                                                </button>
-                                            </form>
-                                        @endif
-                                    </div>
-                                </div>
-
-                                <div class="max-h-96 overflow-y-auto">
-                                    @forelse ($notifications as $notification)
-                                        <div class="px-4 py-3 border-b border-border hover:bg-black/3 transition-colors {{ is_null($notification->read_at) ? 'bg-teal-soft' : '' }}">
-                                            <div class="flex gap-3">
-                                                <div class="flex-1">
-                                                    <p class="text-sm font-medium text-ink">
-                                                        @if (! empty($notification->data['url']))
-                                                            <a href="{{ $notification->data['url'] }}" @click="notificationsOpen = false" class="hover:text-primary transition-colors">{{ $notification->data['title'] ?? 'Notification' }}</a>
-                                                        @else
-                                                            {{ $notification->data['title'] ?? 'Notification' }}
-                                                        @endif
-                                                    </p>
-                                                    <p class="text-xs text-ink-muted mt-1">{{ $notification->data['message'] ?? '' }}</p>
-                                                    <p class="text-xs text-ink-subtle mt-2">{{ $notification->created_at->diffForHumans() }}</p>
-                                                </div>
-                                                @if (is_null($notification->read_at))
-                                                    <form action="{{ route('notifications.mark-read', $notification->id) }}" method="POST" class="inline">
-                                                        @csrf
-                                                        <button type="submit" class="p-1 rounded hover:bg-black/10 transition-colors" title="Mark as read">
-                                                            <i class="fa-solid fa-check text-xs text-primary" aria-hidden="true"></i>
-                                                        </button>
-                                                    </form>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    @empty
-                                        <div class="px-4 py-8 text-center">
-                                            <i class="fa-solid fa-bell-slash text-2xl text-ink-subtle opacity-50 mb-2" aria-hidden="true"></i>
-                                            <p class="text-sm text-ink-muted">No notifications yet</p>
-                                        </div>
-                                    @endforelse
-                                </div>
-
-                                <div class="px-4 py-3 border-t border-border">
-                                    <a href="{{ route('notifications.index') }}" class="block text-center text-sm font-medium text-primary hover:opacity-75 transition-opacity">
-                                        View all notifications
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        {{-- Profile Dropdown --}}
-                        <div x-data="{ profileOpen: false }" class="relative">
-                            <button type="button"
-                                    @click="profileOpen = !profileOpen"
-                                    @click.away="profileOpen = false"
-                                    @keydown.escape="profileOpen = false"
-                                    :aria-expanded="profileOpen.toString()"
-                                    aria-haspopup="true"
-                                    class="flex items-center gap-3 rounded-xl px-3 py-2 hover:shadow-sm transition-all duration-200  border border-white/20 hover:bg-white/15 text-white">
-                                @if ($authUser->profile_photo_path)
-                                    <img src="/storage/{{ $authUser->profile_photo_path }}" alt="{{ $username }}" class="h-8 w-8 rounded-full object-cover">
-                                @else
-                                    <span class="h-8 w-8 rounded-full flex items-center justify-center text-xs font-semibold bg-white/20 text-white">
-                                        {{ $initials }}
-                                    </span>
-                                @endif
-                                <span class="hidden sm:block text-left leading-tight">
-                                    <span class="block text-sm font-semibold text-white">
-                                    {{ ucwords($username) }}
-                                    </span>
-                                    <span class="inline-flex mt-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-white/20 text-white">
-                                        {{ $roleName }}
-                                    </span>
-                                </span>
-                                <svg class="w-4 h-4 hidden sm:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <path d="M6 9l6 6 6-6"></path>
-                                </svg>
-                            </button>
-
-                            <div x-show="profileOpen"
-                                 x-transition:enter="transition ease-out duration-200"
-                                 x-transition:enter-start="opacity-0 transform translate-y-1"
-                                 x-transition:enter-end="opacity-100 transform translate-y-0"
-                                 x-transition:leave="transition ease-in duration-150"
-                                 x-transition:leave-start="opacity-100 transform translate-y-0"
-                                 x-transition:leave-end="opacity-0 transform translate-y-1"
-                                 @keydown.escape="profileOpen = false"
-                                 role="menu"
-                                 class="absolute right-0 mt-3 w-52 rounded-xl border border-border shadow-md bg-surface-elevated z-50"
-                                 style="display: none;">
-                                
-                                <div class="px-4 py-3 text-xs border-b border-border text-ink-muted">
-                                    <div class="font-semibold text-ink">{{ $username }}</div>
-                                    <div>{{ $roleName }}</div>
-                                </div>
-
-                                <div class="p-2 space-y-1">
-                                    <a href="{{ route('profile.show') }}" class="block px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 hover:bg-black/5 text-ink">
-                                        My Profile
-                                    </a>
-                                    @if($authUser->hasPermission('users'))
-                                        <a href="{{ route('profile.settings') }}" class="block px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 hover:bg-black/5 text-ink">
-                                            Session Settings
-                                        </a>
-                                    @endif
-                                </div>
-
-                                <div class="p-3 border-t border-border">
-                                    <form id="headerLogoutForm" action="{{ route('logout') }}" method="POST" class="w-full">
-                                        @csrf
-                                        <button type="submit" class="w-full inline-flex items-center justify-center rounded-lg text-sm font-semibold transition-all duration-200 hover:bg-black/5 active:scale-[0.98] border border-border text-ink py-1.5 bg-transparent">
-                                            Logout
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
-                </div>
-            </header>
+            @include('layouts.partials.header')
 
             {{-- Page content --}}
             <main class="flex-1 px-[clamp(0.5rem,2vw,1.5rem)] pt-3 pb-2 lg:pt-4 lg:pb-3 overflow-auto">
@@ -413,14 +98,8 @@
 
                 </div>
             </main>
-            
-            <footer class="shrink-0 text-center py-3 text-sm border-t border-border" style="background: var(--bg-surface); color: var(--ink-subtle);">
-                &copy; {{ date('Y') }} Barangay Sta. Ana Health Center. All rights reserved.
-                <span class="mx-1">|</span>
-                <a href="{{ route('privacy.policy') }}" class="hover:underline" style="color: var(--ink-muted);">Privacy Policy</a>
-                <span class="mx-1">|</span>
-                <a href="{{ route('privacy.liability') }}" class="hover:underline" style="color: var(--ink-muted);">Liability</a>
-            </footer>
+
+            @include('layouts.partials.footer')
         </div>
     </div>
 
@@ -489,6 +168,7 @@
                 'liveRequests' => route('consultations.live-requests'),
             ],
             'sessionLifetimeMinutes' => (int) config('session.lifetime'),
+            'gracefulErrors' => \App\Models\ApplicationSetting::gracefulErrorsEnabled(),
             'openConsultationFor' => session('open_consultation_for') ? (int) session('open_consultation_for') : null,
             'printReferralId' => session('print_referral_id') ? (int) session('print_referral_id') : null,
             'canPollLiveRequests' => auth()->check() && auth()->user()->hasPermission('consultations'),

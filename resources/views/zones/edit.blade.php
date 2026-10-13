@@ -23,7 +23,7 @@
             <div>
                 <label for="zone_number" class="block text-xs font-medium mb-1" style="color: var(--ink-muted);">Zone number <span style="color: var(--danger);">*</span></label>
                 <input type="text" id="zone_number" name="zone_number" value="{{ old('zone_number', $zone->zone_number) }}" required class="w-full rounded-lg border py-2 px-3 text-sm focus:outline-none focus:ring-2 transition" style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);">
-                @error('zone_number')<p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>@enderror
+                @error('zone_number')<p class="mt-1 text-xs" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p>@enderror
             </div>
             <div>
                 <label for="assigned_worker_id" class="block text-xs font-medium mb-1" style="color: var(--ink-muted);">Assign health worker</label>
@@ -35,7 +35,7 @@
                         </option>
                     @endforeach
                 </select>
-                @error('assigned_worker_id')<p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>@enderror
+                @error('assigned_worker_id')<p class="mt-1 text-xs" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p>@enderror
             </div>
         </div>
         <button type="submit" class="px-4 py-2.5 rounded-xl text-white text-sm font-semibold transition duration-200 hover:shadow-md" style="background: var(--accent);">

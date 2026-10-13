@@ -30,14 +30,14 @@ PHP 8.2+ · Laravel 12 · Blade + Tailwind CSS v4 · MySQL
 ## Features
 
 - **Forgot Password OTP Auth** - Verify user forgot-password through OTP SMTP Service
-- **Consultations & Referrals** - intake, vitals (versioned), diagnoses, prescriptions, consultation finalization, outward referrals with status tracking, and printable DOH-style referral forms.
+- **Consultations & Referrals** - intake, vitals (versioned), diagnoses, prescriptions, consultation finalization, outward referrals with status tracking, and printable referral forms.
 - **Maternal Care** - prenatal profile & pregnancy tracking, prenatal visit records, postpartum/postnatal visits, obstetric history, and family planning client management with visit logging.
 - **Immunizations** - child & adult immunization schedules, vaccine administration, marked-as-done tracking, no-show handling, and infant enrollment with printable Immunization Cards Export.
 - **Households & Patients** - zone-based household registry, patient records, shared-searchable records, encryption of sensitive PHI.
 - **Reports** - morbidity, MCH-EPI-FP Reports with PDF downloads and CSV export for households.
 - **Administration** - user/role management, data-driven permissions, application settings, notifications, audit-logged actions.
 - **ICD-10 Diagnosis Lookup** - Standard ICD-10 Diagnosis Lookup using WHO ICD-10 Version:2019 (Latest) latest and appropriate in BHC reporting
-- **DOH-style Print Handouts & PDF Forms** - black 1px border, fixed-grid print layouts generated via Spatie Laravel PDF + Browsershot/DOMPDF.
+- **Print Handouts & PDF Forms** - black 1px border, fixed-grid print layouts generated via dompdf.
 
 ## Tech Stack
 

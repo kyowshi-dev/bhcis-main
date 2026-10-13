@@ -1,108 +1,88 @@
 @extends('auth.layout')
 
 @section('title', 'Verify Password Reset')
+@section('heading', 'Reset password')
+@section('helper', 'Isulod ang 6-digit code nga gipadala sa imong email ug paghimo og bag-ong password.')
 
 @section('content')
-<div class="auth-card animate-in opacity-0">
-    <div class="text-center mb-6">
-        <div class="flex items-center justify-center gap-3">
-            <div class="logo-mark" style="width: 56px; height: 56px; border-radius: 14px;">
-                <img src="{{ asset('img/logo.svg') }}" alt="Santa Ana logo">
-            </div>
-            <div class="text-left">
-                <h1 class="font-extrabold auth-title leading-snug mb-0">Barangay Health Center Information System</h1>
-                <p class="muted-xs leading-tight">Sta. Ana Health Center</p>
-            </div>
-        </div>
-        <p class="text-xs mt-4 muted-xs leading-relaxed">Isulod ang 6-digit code nga gipadala sa imong email ug paghimo og bag-ong password.</p>
+@if ($maskedEmail)
+    <p class="flex items-center justify-center gap-1.5 text-xs mb-4" style="color: var(--ink-muted);">
+        <i class="fa-solid fa-envelope" aria-hidden="true"></i>
+        <span>Code sent to</span>
+        <strong class="font-semibold" style="color: var(--ink);">{{ $maskedEmail }}</strong>
+    </p>
+@endif
 
-        @if ($maskedEmail)
-            <p class="flex items-center justify-center gap-1.5 text-xs mt-3" style="color: var(--ink-muted);">
-                <i class="fa-solid fa-envelope" aria-hidden="true"></i>
-                <span>Code sent to</span>
-                <strong class="font-semibold" style="color: var(--ink);">{{ $maskedEmail }}</strong>
-            </p>
-        @endif
+<form action="{{ route('password.forgot.verify.submit') }}" method="POST" id="verify-form">
+    @csrf
+    <input type="hidden" name="username" value="{{ $username }}">
+
+    @if (session('status'))
+        <div class="mb-4 p-3 text-sm border-l-4 bg-teal-soft" style="border-left-color: var(--primary); color: var(--primary);" data-auto-dismiss data-auto-dismiss-delay="10000">
+            <p class="font-medium text-sm">{{ session('status') }}</p>
+        </div>
+    @endif
+
+    @if ($errors->any())
+        <div class="mb-4 p-3 text-sm border-l-4 bg-danger-soft" style="border-left-color: var(--danger); color: var(--danger);" data-auto-dismiss data-auto-dismiss-delay="10000">
+            <p class="font-medium text-sm">{{ $errors->first() }}</p>
+        </div>
+    @endif
+
+    <div class="mb-5">
+        <label id="otp-label" class="block text-sm font-medium mb-2.5 text-center" style="color: var(--ink);">Verification code</label>
+
+        <div class="otp-row" role="group" aria-labelledby="otp-label">
+            @for ($i = 0; $i < 6; $i++)
+                <input type="text" class="otp-digit @error('otp') is-invalid @enderror"
+                       id="otp-{{ $i }}" inputmode="numeric" pattern="[0-9]" maxlength="1"
+                       autocomplete="one-time-code" aria-label="Verification code digit {{ $i + 1 }}"
+                       @if ($i === 0 && ! old('otp')) autofocus @endif>
+            @endfor
+        </div>
+        <input type="hidden" name="otp" id="otp" value="{{ old('otp') }}" autocomplete="off">
+
+        <div class="flex items-center justify-between gap-3 mt-3">
+            <p class="otp-hint">Code expires in 15 minutes.</p>
+            <button type="button" id="resend-btn" class="resend-btn" disabled>
+                <span id="resend-label">Resend code in 1:00</span>
+            </button>
+        </div>
     </div>
 
-    <form action="{{ route('password.forgot.verify.submit') }}" method="POST" id="verify-form">
-        @csrf
-        <input type="hidden" name="username" value="{{ $username }}">
-
-        @if (session('status'))
-            <div class="mb-4 p-3 text-sm border-l-4 bg-teal-soft" style="border-left-color: var(--primary); color: var(--primary);">
-                <p class="font-medium text-sm">{{ session('status') }}</p>
-            </div>
-        @endif
-
-        @if ($errors->any())
-            <div class="mb-4 p-3 text-sm border-l-4 bg-danger-soft" style="border-left-color: var(--danger); color: var(--danger);">
-                <p class="font-medium text-sm">{{ $errors->first() }}</p>
-            </div>
-        @endif
-
-        <div class="mb-5">
-            <label id="otp-label" class="block text-sm font-medium mb-2.5 text-center" style="color: var(--ink);">Verification code</label>
-
-            <div class="otp-row" role="group" aria-labelledby="otp-label">
-                @for ($i = 0; $i < 6; $i++)
-                    <input type="text" class="otp-digit @error('otp') is-invalid @enderror"
-                           id="otp-{{ $i }}" inputmode="numeric" pattern="[0-9]" maxlength="1"
-                           autocomplete="one-time-code" aria-label="Verification code digit {{ $i + 1 }}"
-                           @if ($i === 0 && ! old('otp')) autofocus @endif>
-                @endfor
-            </div>
-            <input type="hidden" name="otp" id="otp" value="{{ old('otp') }}" autocomplete="off">
-
-            <div class="flex items-center justify-between gap-3 mt-3">
-                <p class="otp-hint">Code expires in 15 minutes.</p>
-                <button type="button" id="resend-btn" class="resend-btn" disabled>
-                    <span id="resend-label">Resend code in 1:00</span>
-                </button>
-            </div>
+    <div class="mb-4">
+        <label for="password" class="block text-sm font-medium mb-2.5" style="color: var(--ink);">New password</label>
+        <div class="pw-wrap">
+            <input type="password" name="password" id="password"
+                   class="auth-input" placeholder="At least 8 characters" minlength="8" required autocomplete="new-password">
+            <button type="button" class="pw-toggle" aria-controls="password" aria-label="Show password">
+                <i class="fa-solid fa-eye" aria-hidden="true"></i>
+            </button>
         </div>
+    </div>
 
-        <div class="mb-4">
-            <label for="password" class="block text-sm font-medium mb-2.5" style="color: var(--ink);">New password</label>
-            <div class="pw-wrap">
-                <input type="password" name="password" id="password"
-                       class="auth-input" placeholder="At least 8 characters" minlength="8" required>
-                <button type="button" class="pw-toggle" aria-controls="password" aria-label="Show password">
-                    <i class="fa-solid fa-eye" aria-hidden="true"></i>
-                </button>
-            </div>
+    <div class="mb-5">
+        <label for="password_confirmation" class="block text-sm font-medium mb-2.5" style="color: var(--ink);">Confirm new password</label>
+        <div class="pw-wrap">
+            <input type="password" name="password_confirmation" id="password_confirmation"
+                   class="auth-input" placeholder="Repeat your new password" minlength="8" required autocomplete="new-password">
+            <button type="button" class="pw-toggle" aria-controls="password_confirmation" aria-label="Show password">
+                <i class="fa-solid fa-eye" aria-hidden="true"></i>
+            </button>
         </div>
+    </div>
 
-        <div class="mb-5">
-            <label for="password_confirmation" class="block text-sm font-medium mb-2.5" style="color: var(--ink);">Confirm new password</label>
-            <div class="pw-wrap">
-                <input type="password" name="password_confirmation" id="password_confirmation"
-                       class="auth-input" placeholder="Repeat your new password" minlength="8" required>
-                <button type="button" class="pw-toggle" aria-controls="password_confirmation" aria-label="Show password">
-                    <i class="fa-solid fa-eye" aria-hidden="true"></i>
-                </button>
-            </div>
-        </div>
+    <button type="submit" class="auth-btn" id="submit-btn" disabled>Reset password</button>
+</form>
 
-        <button type="submit" class="auth-btn" id="submit-btn" disabled>Reset password</button>
-    </form>
+<form id="resend-form" action="{{ route('password.forgot.submit') }}" method="POST" class="hidden">
+    @csrf
+    <input type="hidden" name="username" value="{{ $username }}">
+</form>
 
-    <form id="resend-form" action="{{ route('password.forgot.submit') }}" method="POST" class="hidden">
-        @csrf
-        <input type="hidden" name="username" value="{{ $username }}">
-    </form>
-
-    <p class="text-center text-xs mt-5" style="color: var(--ink-muted);">
-        <a href="{{ route('login') }}" class="font-medium" style="color: var(--primary); text-decoration: underline;">Back to sign in</a>
-    </p>
-
-    <p class="text-center text-xs mt-6" style="color: var(--ink-muted);">
-        &copy; {{ date('Y') }} | Developed by
-        <a href="facebook.com/charlz.chavaria" class="font-medium" style="color: var(--primary);">
-            PHINMA COC Students
-        </a>
-    </p>
-</div>
+<p class="text-center text-xs mt-5" style="color: var(--ink-muted);">
+    <a href="{{ route('login') }}" class="font-medium" style="color: var(--primary); text-decoration: underline;">Back to sign in</a>
+</p>
 
 <script>
 (function () {

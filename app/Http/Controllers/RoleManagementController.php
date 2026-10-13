@@ -18,7 +18,7 @@ class RoleManagementController extends Controller
     {
         $this->authorizePermission('users');
 
-        $roles = Role::with('permissions')->orderBy('role_name')->get();
+        $roles = Role::with('permissions')->withCount('users')->orderBy('role_name')->get();
 
         return view('roles.index', [
             'roles' => $roles,

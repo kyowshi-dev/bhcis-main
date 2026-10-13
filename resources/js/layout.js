@@ -1,4 +1,4 @@
-document.querySelectorAll(".nav-link, .nav-submenu").forEach(function (link) {
+document.querySelectorAll(".nav-link").forEach(function (link) {
     var href = link.getAttribute("href") || "";
     var path = href.replace(/^https?:\/\/[^/]+/, "").replace(/\/$/, "") || "/";
     var current = window.location.pathname.replace(/\/$/, "") || "/";
@@ -18,6 +18,9 @@ document.querySelectorAll(".nav-link, .nav-submenu").forEach(function (link) {
  * On 404 (not found): shows SweetAlert, returns a rejected promise.
  * On 500 (server error): shows SweetAlert with reload option.
  * On network error: shows SweetAlert, returns a rejected promise.
+ *
+ * Custom dialogs are suppressed when window.BHCIS.gracefulErrors is false
+ * (Graceful Errors setting is off); 419 still redirects to login without a dialog.
  *
  * The returned promise resolves with the raw Response for ok statuses,
  * so callers can still call .json() / .text() etc.
@@ -80,11 +83,17 @@ function safeFetch(url, options) {
         });
 }
 
+function _gracefulErrorsEnabled() {
+    return !window.BHCIS || window.BHCIS.gracefulErrors !== false;
+}
+
 function _safeFetchHandleSessionExpired() {
-    if (typeof Swal === "undefined") {
-        window.location.href =
-            (window.BHCIS && window.BHCIS.routes && window.BHCIS.routes.login) ||
-            "/login";
+    var loginUrl =
+        (window.BHCIS && window.BHCIS.routes && window.BHCIS.routes.login) ||
+        "/login";
+
+    if (!_gracefulErrorsEnabled() || typeof Swal === "undefined") {
+        window.location.href = loginUrl;
         return;
     }
 
@@ -97,13 +106,15 @@ function _safeFetchHandleSessionExpired() {
         allowOutsideClick: false,
         allowEscapeKey: false,
     }).then(function () {
-        window.location.href =
-            (window.BHCIS && window.BHCIS.routes && window.BHCIS.routes.login) ||
-            "/login";
+        window.location.href = loginUrl;
     });
 }
 
 function _safeFetchShowError(title, text) {
+    if (!_gracefulErrorsEnabled()) {
+        return;
+    }
+
     if (typeof Swal === "undefined") {
         alert(title + ": " + text);
         return;
@@ -119,6 +130,10 @@ function _safeFetchShowError(title, text) {
 }
 
 function _safeFetchShowServerError(status) {
+    if (!_gracefulErrorsEnabled()) {
+        return;
+    }
+
     if (typeof Swal === "undefined") {
         alert("A server error occurred (" + status + "). Please try again.");
         return;

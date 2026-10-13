@@ -33,7 +33,7 @@
                     required
                 >
                 @error('first_name')
-                    <p class="mt-1 text-xs text-danger">{{ $message }}</p>
+                    <p class="mt-1 text-xs text-danger" data-auto-dismiss>{{ $message }}</p>
                 @enderror
             </div>
 
@@ -50,7 +50,7 @@
                     required
                 >
                 @error('last_name')
-                    <p class="mt-1 text-xs text-danger">{{ $message }}</p>
+                    <p class="mt-1 text-xs text-danger" data-auto-dismiss>{{ $message }}</p>
                 @enderror
             </div>
 
@@ -67,7 +67,7 @@
                     required
                 >
                 @error('username')
-                    <p class="mt-1 text-xs text-danger">{{ $message }}</p>
+                    <p class="mt-1 text-xs text-danger" data-auto-dismiss>{{ $message }}</p>
                 @enderror
             </div>
 
@@ -84,7 +84,7 @@
                     required
                 >
                 @error('email')
-                    <p class="mt-1 text-xs text-danger">{{ $message }}</p>
+                    <p class="mt-1 text-xs text-danger" data-auto-dismiss>{{ $message }}</p>
                 @enderror
             </div>
 
@@ -101,7 +101,7 @@
                     placeholder="0912-345-6789"
                 >
                 @error('contact_number')
-                    <p class="mt-1 text-xs text-danger">{{ $message }}</p>
+                    <p class="mt-1 text-xs text-danger" data-auto-dismiss>{{ $message }}</p>
                 @enderror
             </div>
 
@@ -117,7 +117,7 @@
                     required
                 >
                 @error('password')
-                    <p class="mt-1 text-xs text-danger">{{ $message }}</p>
+                    <p class="mt-1 text-xs text-danger" data-auto-dismiss>{{ $message }}</p>
                 @enderror
             </div>
 
@@ -137,7 +137,7 @@
                     @endforeach
                 </select>
                 @error('role_id')
-                    <p class="mt-1 text-xs text-danger">{{ $message }}</p>
+                    <p class="mt-1 text-xs text-danger" data-auto-dismiss>{{ $message }}</p>
                 @enderror
             </div>
 
