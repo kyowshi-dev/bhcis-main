@@ -15,7 +15,7 @@ class ReferralController extends Controller
 {
     public function index(Request $request): View
     {
-        $this->authorizePermission('consultations');
+        $this->authorizePermission('referrals');
 
         $status = $request->filled('status') && in_array($request->input('status'), OutwardReferral::STATUSES, true)
             ? $request->input('status')
@@ -36,14 +36,14 @@ class ReferralController extends Controller
 
     public function print(int $id): View
     {
-        $this->authorizePermission('consultations');
+        $this->authorizePermission('referrals');
 
         return view('referrals.print', ReferralQueryService::printData($id, auth()->user()));
     }
 
     public function updateStatus(Request $request, int $id): RedirectResponse
     {
-        $this->authorizePermission('consultations');
+        $this->authorizePermission('referrals');
 
         $referral = OutwardReferral::findOrFail($id);
 
@@ -78,7 +78,7 @@ class ReferralController extends Controller
         $label = OutwardReferral::STATUS_LABELS[$status] ?? ucfirst(str_replace('_', ' ', $status));
 
         NotificationService::sendToPermissionHolders(
-            'consultations',
+            'referrals',
             'referral_status_changed',
             'Referral #'.$referral->id.' '.$label.' - '.$patientLabel,
             'The referral to '.$referral->destination_facility.' was marked '.strtolower($label).'.',

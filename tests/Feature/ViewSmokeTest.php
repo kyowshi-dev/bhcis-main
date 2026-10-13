@@ -16,7 +16,7 @@ class ViewSmokeTest extends TestCase
     {
         parent::setUp();
 
-        foreach (['patients', 'consultations', 'immunizations', 'households', 'users', 'zones', 'notifications'] as $perm) {
+        foreach (['patients', 'consultations', 'referrals', 'immunizations', 'households', 'users', 'zones', 'notifications'] as $perm) {
             DB::table('permissions')->updateOrInsert(
                 ['name' => $perm],
                 ['description' => $perm, 'created_at' => now(), 'updated_at' => now()]
@@ -27,7 +27,7 @@ class ViewSmokeTest extends TestCase
     private function createSuperUser(): User
     {
         return $this->createUserWithPermissions([
-            'patients', 'consultations', 'immunizations', 'households', 'users', 'zones', 'notifications',
+            'patients', 'consultations', 'referrals', 'immunizations', 'households', 'users', 'zones', 'notifications',
         ]);
     }
 
@@ -39,7 +39,7 @@ class ViewSmokeTest extends TestCase
 
         DB::table('zones')->insert(['id' => 1, 'zone_number' => '1']);
         $householdId = DB::table('households')->insertGetId([
-            'zone_id' => 1, 'family_name_head' => 'Test',
+            'zone_id' => 1, 'head_last_name' => 'Test',
             'created_at' => now(), 'updated_at' => now(),
         ]);
         $patientId = DB::table('patients')->insertGetId([
