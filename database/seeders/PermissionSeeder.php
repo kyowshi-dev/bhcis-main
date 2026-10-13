@@ -17,6 +17,7 @@ class PermissionSeeder extends Seeder
             ['name' => 'patients', 'description' => 'Access to Patients module'],
             ['name' => 'patients_destroy', 'description' => 'Archive, restore, and permanently delete patient records'],
             ['name' => 'consultations', 'description' => 'Access to Consultations module'],
+            ['name' => 'referrals', 'description' => 'Access to Referrals module (track outward referrals and update their status)'],
             ['name' => 'immunizations', 'description' => 'Access to Immunizations module'],
             ['name' => 'medicines', 'description' => 'Access to Medicines module'],
             ['name' => 'reports', 'description' => 'Access to Reports module'],

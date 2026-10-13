@@ -42,7 +42,7 @@ class BhwLeastPrivilegeTest extends TestCase
     {
         $householdId = DB::table('households')->insertGetId([
             'zone_id' => $zoneId,
-            'family_name_head' => 'Test Family',
+            'head_last_name' => 'Test Family',
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -116,7 +116,8 @@ class BhwLeastPrivilegeTest extends TestCase
             'is_philhealth_member' => 'n',
             'is_pcb_member' => 'n',
             'create_new_household' => 1,
-            'new_household_family_name_head' => 'Dela Cruz',
+            'new_household_head_first_name' => 'Juan',
+            'new_household_head_last_name' => 'Dela Cruz',
             'new_household_zone_id' => 1,
             'new_household_contact_number' => '09123456789',
         ];
