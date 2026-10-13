@@ -25,7 +25,8 @@ final class BatchEntryService
             // Zone-scoped workers may create households in any zone (no restriction on creation).
             $createdHousehold = Household::create([
                 'zone_id' => $validated['new_household_zone_id'],
-                'family_name_head' => trim($validated['new_household_family_name_head']),
+                'head_first_name' => ucwords(strtolower(trim($validated['new_household_head_first_name']))),
+                'head_last_name' => ucwords(strtolower(trim($validated['new_household_head_last_name']))),
                 'contact_number' => ($validated['new_household_contact_number'] ?? null) !== null ? trim($validated['new_household_contact_number']) : null,
             ]);
             $householdId = $createdHousehold->id;

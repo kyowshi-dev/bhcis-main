@@ -32,13 +32,13 @@ final class HouseholdExportService
      */
     public static function writeCsvRows($handle, Collection $households, array $memberCounts): void
     {
-        fputcsv($handle, ['ID', 'Zone', 'Family Name', 'Contact Number', 'Registered Date', 'Member Count']);
+        fputcsv($handle, ['ID', 'Zone', 'Head of Household', 'Contact Number', 'Registered Date', 'Resident Count']);
 
         foreach ($households as $household) {
             fputcsv($handle, [
                 $household->id,
                 $household->zone_number,
-                $household->family_name_head,
+                fullName($household->head_last_name, $household->head_first_name, $household->head_middle_name, $household->head_suffix),
                 $household->contact_number ?? '',
                 $household->created_at,
                 $memberCounts[$household->id] ?? 0,

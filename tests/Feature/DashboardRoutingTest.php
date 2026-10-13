@@ -23,7 +23,8 @@ class DashboardRoutingTest extends TestCase
         $this->actingAs($bhw)
             ->get(route('dashboard'))
             ->assertOk()
-            ->assertSee('Pending Queue')
+            ->assertSee('BHW Dashboard')
+            ->assertSee('Patients waiting')
             ->assertDontSee('Top presenting illnesses');
     }
 
@@ -71,6 +72,9 @@ class DashboardRoutingTest extends TestCase
             ->get(route('dashboard'))
             ->assertOk()
             ->assertSee('Nurse Dashboard')
+            ->assertSee('Enrol New Patient')
+            ->assertSee('Quick actions')
+            ->assertDontSee('Pending review')
             ->assertDontSee('Top Illnesses');
     }
 

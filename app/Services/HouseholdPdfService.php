@@ -45,9 +45,9 @@ final class HouseholdPdfService
         $html .= '<table>';
         $html .= '<thead><tr>';
         $html .= '<th>Zone</th>';
-        $html .= '<th>Family Name</th>';
+        $html .= '<th>Head of Household</th>';
         $html .= '<th>Contact</th>';
-        $html .= '<th style="text-align: center;">Members</th>';
+        $html .= '<th style="text-align: center;">Residents</th>';
         $html .= '<th>Registered</th>';
         $html .= '</tr></thead>';
         $html .= '<tbody>';
@@ -55,7 +55,7 @@ final class HouseholdPdfService
         foreach ($households as $household) {
             $html .= '<tr>';
             $html .= '<td>'.htmlspecialchars((string) $household->zone_number).'</td>';
-            $html .= '<td>'.htmlspecialchars($household->family_name_head).'</td>';
+            $html .= '<td>'.htmlspecialchars(fullName($household->head_last_name, $household->head_first_name, $household->head_middle_name, $household->head_suffix)).'</td>';
             $html .= '<td>'.htmlspecialchars($household->contact_number ?? '-').'</td>';
             $html .= '<td style="text-align: center;">'.($memberCounts[$household->id] ?? 0).'</td>';
             $html .= '<td>'.Carbon::parse($household->created_at)->format('M d, Y').'</td>';

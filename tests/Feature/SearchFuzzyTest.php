@@ -36,7 +36,7 @@ class SearchFuzzyTest extends TestCase
             ?? DB::table('households')->insertGetId([
                 'id' => 1,
                 'zone_id' => 1,
-                'family_name_head' => 'Test',
+                'head_last_name' => 'Test',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -111,7 +111,7 @@ class SearchFuzzyTest extends TestCase
         $householdId = DB::table('households')->insertGetId([
             'id' => 1,
             'zone_id' => 1,
-            'family_name_head' => 'Del Rosario',
+            'head_last_name' => 'Del Rosario',
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -143,14 +143,14 @@ class SearchFuzzyTest extends TestCase
         DB::table('households')->insertGetId([
             'id' => 1,
             'zone_id' => 1,
-            'family_name_head' => 'Del Rosario',
+            'head_last_name' => 'Del Rosario',
             'created_at' => now(),
             'updated_at' => now(),
         ]);
         DB::table('households')->insertGetId([
             'id' => 2,
             'zone_id' => 2,
-            'family_name_head' => 'Dela Rosa',
+            'head_last_name' => 'Dela Rosa',
             'created_at' => now(),
             'updated_at' => now(),
         ]);

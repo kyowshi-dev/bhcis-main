@@ -17,11 +17,14 @@ final class HouseholdService
         return $household;
     }
 
-    public static function create(array $validated): void
+    public static function create(array $validated): int
     {
-        DB::table('households')->insert([
+        return DB::table('households')->insertGetId([
             'zone_id' => $validated['zone_id'],
-            'family_name_head' => trim($validated['family_name_head']),
+            'head_first_name' => ucwords(strtolower($validated['head_first_name'])),
+            'head_middle_name' => self::normalizeName($validated['head_middle_name'] ?? null),
+            'head_last_name' => ucwords(strtolower($validated['head_last_name'])),
+            'head_suffix' => self::trimOrNull($validated['head_suffix'] ?? null),
             'contact_number' => $validated['contact_number'] !== null ? trim($validated['contact_number']) : null,
             'created_at' => now(),
             'updated_at' => now(),
@@ -32,10 +35,31 @@ final class HouseholdService
     {
         DB::table('households')->where('id', $id)->update([
             'zone_id' => $validated['zone_id'],
-            'family_name_head' => trim($validated['family_name_head']),
+            'head_first_name' => ucwords(strtolower($validated['head_first_name'])),
+            'head_middle_name' => self::normalizeName($validated['head_middle_name'] ?? null),
+            'head_last_name' => ucwords(strtolower($validated['head_last_name'])),
+            'head_suffix' => self::trimOrNull($validated['head_suffix'] ?? null),
             'contact_number' => $validated['contact_number'] !== null ? trim($validated['contact_number']) : null,
             'updated_at' => now(),
         ]);
+    }
+
+    private static function normalizeName(?string $value): ?string
+    {
+        if ($value === null || trim($value) === '') {
+            return null;
+        }
+
+        return ucwords(strtolower(trim($value)));
+    }
+
+    private static function trimOrNull(?string $value): ?string
+    {
+        if ($value === null || trim($value) === '') {
+            return null;
+        }
+
+        return trim($value);
     }
 
     public static function reassignZones(array $ids, int $newZoneId): void

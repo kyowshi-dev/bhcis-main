@@ -296,7 +296,7 @@ class ConsultationMaternalLinkTest extends TestCase
     {
         $householdId = DB::table('households')->insertGetId([
             'zone_id' => 1,
-            'family_name_head' => 'Test',
+            'head_last_name' => 'Test',
             'created_at' => now(),
             'updated_at' => now(),
         ]);

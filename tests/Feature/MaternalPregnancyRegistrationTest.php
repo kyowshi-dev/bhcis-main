@@ -43,7 +43,7 @@ class MaternalPregnancyRegistrationTest extends TestCase
     private function patient(): Patient
     {
         return Patient::create([
-            'household_id' => Household::create(['zone_id' => 1, 'family_name_head' => 'Dela Cruz'])->id,
+            'household_id' => Household::create(['zone_id' => 1, 'head_last_name' => 'Dela Cruz'])->id,
             'first_name' => 'Maria',
             'last_name' => 'Dela Cruz',
             'sex' => 'Female',

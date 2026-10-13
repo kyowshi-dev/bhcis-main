@@ -44,7 +44,8 @@ class InputCharacterSecurityTest extends TestCase
         return array_merge([
             'create_new_household' => 1,
             'new_household_zone_id' => 1,
-            'new_household_family_name_head' => 'Dela Cruz',
+            'new_household_head_first_name' => 'Juan',
+            'new_household_head_last_name' => 'Dela Cruz',
             'first_name' => 'Juan',
             'last_name' => 'Dela Cruz',
             'sex' => 'Male',
@@ -69,7 +70,7 @@ class InputCharacterSecurityTest extends TestCase
         $this->zone();
 
         $this->post(route('patients.store'), $this->patientPayload([
-            'new_household_family_name_head' => '<script>alert(1)</script>',
+            'new_household_head_last_name' => '<script>alert(1)</script>',
             'first_name' => 'Juan<script>',
             'last_name' => 'Dela Cruz',
             'middle_name' => '<script>',
@@ -78,7 +79,7 @@ class InputCharacterSecurityTest extends TestCase
             'mother_name' => '<script>alert(1)</script>',
             'spouse_name' => '<script>alert(1)</script>',
         ]))->assertSessionHasErrors([
-            'new_household_family_name_head',
+            'new_household_head_last_name',
             'first_name',
             'middle_name',
             'suffix',
@@ -111,8 +112,8 @@ class InputCharacterSecurityTest extends TestCase
 
         $this->post(route('households.store'), [
             'zone_id' => 1,
-            'family_name_head' => '<script>alert(1)</script>',
-        ])->assertSessionHasErrors('family_name_head');
+            'head_last_name' => '<script>alert(1)</script>',
+        ])->assertSessionHasErrors('head_last_name');
 
         $this->assertDatabaseCount('households', 0);
     }
@@ -136,7 +137,7 @@ class InputCharacterSecurityTest extends TestCase
         $this->post(route('immunizations.enroll-infant'), [
             'create_household' => 1,
             'zone_id' => 1,
-            'family_name_head' => '<script>alert(1)</script>',
+            'head_last_name' => '<script>alert(1)</script>',
             'first_name' => 'Baby',
             'last_name' => 'Dela Cruz',
             'sex' => 'Male',
@@ -146,7 +147,7 @@ class InputCharacterSecurityTest extends TestCase
             'father_name' => '<script>alert(1)</script>',
             'guardian_name' => '<script>alert(1)</script>',
         ])->assertSessionHasErrors([
-            'family_name_head',
+            'head_last_name',
             'mother_name',
             'father_name',
             'guardian_name',
@@ -216,7 +217,7 @@ class InputCharacterSecurityTest extends TestCase
         $this->zone();
         $householdId = DB::table('households')->insertGetId([
             'zone_id' => 1,
-            'family_name_head' => 'Dela Cruz',
+            'head_last_name' => 'Dela Cruz',
             'created_at' => now(),
             'updated_at' => now(),
         ]);

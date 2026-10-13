@@ -115,7 +115,7 @@ class ImmunizationDueNotificationTest extends TestCase
         );
 
         return Patient::create([
-            'household_id' => Household::create(['zone_id' => $zoneId, 'family_name_head' => 'Dela Cruz'])->id,
+            'household_id' => Household::create(['zone_id' => $zoneId, 'head_last_name' => 'Dela Cruz'])->id,
             'first_name' => 'Baby',
             'last_name' => 'Dela Cruz',
             'sex' => 'Male',

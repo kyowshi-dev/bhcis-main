@@ -38,7 +38,8 @@ class StoreBatchPatientRequest extends FormRequest
 
             // New household fields (only if creating)
             'new_household_zone_id' => ['nullable', 'required_if:create_new_household,1', 'integer', 'exists:zones,id'],
-            'new_household_family_name_head' => ['nullable', 'required_if:create_new_household,1', 'string', 'max:255', new NameCharacters],
+            'new_household_head_first_name' => ['nullable', 'required_if:create_new_household,1', 'string', 'max:255', new NameCharacters],
+            'new_household_head_last_name' => ['nullable', 'required_if:create_new_household,1', 'string', 'max:255', new NameCharacters],
             'new_household_contact_number' => ['nullable', 'string', 'max:32', 'regex:/^[0-9+\-\s()]*$/'],
 
             // Patient data - required fields for DOH compliance
@@ -86,7 +87,8 @@ class StoreBatchPatientRequest extends FormRequest
             'household_id.required' => 'You must select an existing household or create a new one.',
             'household_id.exists' => 'Selected household does not exist.',
             'new_household_zone_id.required_if' => 'Zone is required when creating a new household.',
-            'new_household_family_name_head.required_if' => 'Family name (head) is required when creating a new household.',
+            'new_household_head_first_name.required_if' => 'Head first name is required when creating a new household.',
+            'new_household_head_last_name.required_if' => 'Head last name (family name) is required when creating a new household.',
         ];
     }
 
@@ -116,11 +118,14 @@ class StoreBatchPatientRequest extends FormRequest
         if ($createNew === 1) {
             $this->merge([
                 'new_household_zone_id' => $this->input('new_household_zone_id') ? (int) $this->input('new_household_zone_id') : null,
+                'new_household_head_first_name' => trim((string) $this->input('new_household_head_first_name')),
+                'new_household_head_last_name' => trim((string) $this->input('new_household_head_last_name')),
             ]);
         } else {
             $this->merge([
                 'new_household_zone_id' => null,
-                'new_household_family_name_head' => null,
+                'new_household_head_first_name' => null,
+                'new_household_head_last_name' => null,
                 'new_household_contact_number' => null,
             ]);
         }

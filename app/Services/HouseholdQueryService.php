@@ -40,8 +40,11 @@ final class HouseholdQueryService
         if (! empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
-                $q->where('households.family_name_head', 'like', "%{$search}%")
-                    ->orWhere('households.contact_number', 'like', "%{$search}%");
+                $q->where('households.head_first_name', 'like', "%{$search}%")
+                    ->orWhere('households.head_middle_name', 'like', "%{$search}%")
+                    ->orWhere('households.head_last_name', 'like', "%{$search}%")
+                    ->orWhere('households.contact_number', 'like', "%{$search}%")
+                    ->orWhere('zones.zone_number', 'like', "%{$search}%");
             });
         }
 
@@ -66,7 +69,8 @@ final class HouseholdQueryService
     {
         return self::filteredQuery($filters, $user)
             ->orderBy('zones.zone_number')
-            ->orderBy('households.family_name_head')
+            ->orderBy('households.head_last_name')
+            ->orderBy('households.head_first_name')
             ->paginate($perPage)
             ->withQueryString();
     }
@@ -89,7 +93,8 @@ final class HouseholdQueryService
 
         if ($ordered) {
             $query->orderBy('zones.zone_number')
-                ->orderBy('households.family_name_head');
+                ->orderBy('households.head_last_name')
+                ->orderBy('households.head_first_name');
         }
 
         return $query->get();

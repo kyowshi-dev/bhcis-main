@@ -7,7 +7,7 @@
     $enrollHasErrors = $errors->hasAny([
         'first_name', 'middle_name', 'last_name', 'sex',
         'date_of_birth', 'birth_weight', 'mother_name', 'mother_id', 'father_name',
-        'household_id', 'create_household', 'zone_id', 'family_name_head', 'contact_number', 'duplicate',
+        'household_id', 'create_household', 'zone_id', 'head_first_name', 'head_last_name', 'contact_number', 'duplicate',
     ]);
     $duplicateMsg = $enrollHasErrors ? $errors->first('duplicate') : null;
 @endphp
@@ -24,7 +24,7 @@
             @csrf
             <div class="p-5 space-y-4">
                 @if ($duplicateMsg)
-                    <div class="rounded-xl border px-4 py-3 text-sm" style="background: var(--accent-soft); border-color: var(--amber); color: var(--amber);">
+                    <div class="rounded-xl border px-4 py-3 text-sm" style="background: var(--accent-soft); border-color: var(--amber); color: var(--amber);" data-auto-dismiss data-auto-dismiss-delay="10000">
                         <i class="fa-solid fa-circle-exclamation mr-1.5" aria-hidden="true"></i>{{ $duplicateMsg }}
                     </div>
                 @endif
@@ -43,7 +43,7 @@
                                        class="w-full rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
                                        style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
                                 @error('first_name')
-                                    <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p>
+                                    <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p>
                                 @enderror
                             </div>
 
@@ -59,7 +59,7 @@
                                        class="w-full rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
                                        style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
                                 @error('last_name')
-                                    <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p>
+                                    <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p>
                                 @enderror
                             </div>
                         </div>
@@ -71,7 +71,7 @@
                                class="w-full rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
                                style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
                         @error('middle_name')
-                            <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p>
+                            <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p>
                         @enderror
                     </div>
 
@@ -86,7 +86,7 @@
                             <option value="Female" @selected(old('sex') === 'Female')>Female</option>
                         </select>
                         @error('sex')
-                            <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p>
+                            <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p>
                         @enderror
                     </div>
 
@@ -99,7 +99,7 @@
                                class="w-full rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
                                style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
                         @error('date_of_birth')
-                            <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p>
+                            <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p>
                         @enderror
                     </div>
 
@@ -112,7 +112,7 @@
                                class="w-full rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
                                style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
                         @error('birth_weight')
-                            <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p>
+                            <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p>
                         @enderror
                     </div>
 
@@ -171,10 +171,10 @@
                                 </div>
 
                                 @error('mother_name')
-                                    <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p>
+                                    <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p>
                                 @enderror
                                 @error('mother_id')
-                                    <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p>
+                                    <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p>
                                 @enderror
                             </div>
 
@@ -185,7 +185,7 @@
                                        class="w-full rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
                                        style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
                                 @error('father_name')
-                                    <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p>
+                                    <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p>
                                 @enderror
                             </div>
                         </div>
@@ -208,7 +208,7 @@
                             <div class="flex items-center gap-2.5 min-w-0">
                                 <i class="fa-solid fa-house-chimney text-sm" style="color: var(--primary);" aria-hidden="true"></i>
                                 <div class="min-w-0">
-                                    <p class="text-sm font-medium truncate" style="color: var(--ink);" x-text="selected?.family_name_head"></p>
+                                    <p class="text-sm font-medium truncate" style="color: var(--ink);" x-text="selected?.display_name"></p>
                                     <p class="text-xs" style="color: var(--ink-muted);" x-text="`${selected?.zone?.zone_number ?? 'Zone'} · ${selected?.patients_count ?? 0} member(s)`"></p>
                                 </div>
                             </div>
@@ -227,7 +227,7 @@
                                             <i class="fa-solid fa-house-chimney text-xs" aria-hidden="true"></i>
                                         </span>
                                         <div class="min-w-0">
-                                            <p class="text-sm font-medium truncate" style="color: var(--ink);" x-text="household.family_name_head"></p>
+                                            <p class="text-sm font-medium truncate" style="color: var(--ink);" x-text="household.display_name"></p>
                                             <p class="text-xs" style="color: var(--ink-muted);" x-text="`${household.zone?.zone_number ?? 'Zone'} · ${household.patients_count ?? 0} member(s)`"></p>
                                         </div>
                                     </div>
@@ -273,20 +273,33 @@
                                     @endforeach
                                 </select>
                                 @error('zone_id')
-                                    <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p>
+                                    <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p>
                                 @enderror
                             </div>
 
                             <div>
-                                <label for="enroll_family_head" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">
-                                    Family name (head) <span style="color: var(--danger);">*</span>
+                                <label for="enroll_head_first" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">
+                                    Head First Name <span style="color: var(--danger);">*</span>
                                 </label>
-                                <input id="enroll_family_head" name="family_name_head" type="text" required maxlength="255"
-                                       x-model="familyHead"
+                                <input id="enroll_head_first" name="head_first_name" type="text" required maxlength="255"
+                                       x-model="headFirstName"
                                        class="w-full rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
                                        style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
-                                @error('family_name_head')
-                                    <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p>
+                                @error('head_first_name')
+                                    <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label for="enroll_head_last" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">
+                                    Head Last Name (Family) <span style="color: var(--danger);">*</span>
+                                </label>
+                                <input id="enroll_head_last" name="head_last_name" type="text" required maxlength="255"
+                                       x-model="headLastName"
+                                       class="w-full rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
+                                       style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
+                                @error('head_last_name')
+                                    <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p>
                                 @enderror
                             </div>
 
@@ -296,7 +309,7 @@
                                        class="w-full rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
                                        style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
                                 @error('contact_number')
-                                    <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p>
+                                    <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p>
                                 @enderror
                             </div>
                         </div>
@@ -320,7 +333,8 @@
     function infantEnroll() {
         return {
             surname: @js(old('last_name', '')),
-            familyHead: @js(old('family_name_head', '')),
+            headFirstName: @js(old('head_first_name', '')),
+            headLastName: @js(old('head_last_name', '')),
             matches: [],
             searching: false,
             selected: null,
@@ -330,8 +344,8 @@
             searchingMothers: false,
             motherSelected: null,
             init() {
-                if (this.createHousehold && ! this.familyHead) {
-                    this.familyHead = this.surname;
+                if (this.createHousehold && ! this.headLastName) {
+                    this.headLastName = this.surname;
                 }
             },
             async searchMatches() {
@@ -350,12 +364,12 @@
             },
             attach(household) {
                 this.selected = household;
-                this.familyHead = household.family_name_head;
+                this.headLastName = household.display_name;
             },
             toggleCreate() {
                 this.createHousehold = !this.createHousehold;
-                if (this.createHousehold && ! this.familyHead) {
-                    this.familyHead = this.surname;
+                if (this.createHousehold && ! this.headLastName) {
+                    this.headLastName = this.surname;
                 }
             },
             async searchMothers() {

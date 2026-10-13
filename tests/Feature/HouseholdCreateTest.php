@@ -64,14 +64,74 @@ class HouseholdCreateTest extends TestCase
 
         $this->post(route('households.store'), [
             'zone_id' => 1,
-            'family_name_head' => 'Dela Cruz',
+            'head_first_name' => 'Juan',
+            'head_middle_name' => 'Santos',
+            'head_last_name' => 'Dela Cruz',
+            'head_suffix' => 'Jr.',
             'contact_number' => '+63-9171234567',
         ])->assertRedirect(route('households.index'));
 
         $this->assertDatabaseHas('households', [
             'zone_id' => 1,
-            'family_name_head' => 'Dela Cruz',
+            'head_first_name' => 'Juan',
+            'head_middle_name' => 'Santos',
+            'head_last_name' => 'Dela Cruz',
+            'head_suffix' => 'Jr.',
             'contact_number' => '+63-9171234567',
         ]);
+    }
+
+    public function test_members_json_returns_household_and_members(): void
+    {
+        $this->actingAs($this->authorizedUser());
+
+        $householdId = DB::table('households')->insertGetId([
+            'zone_id' => 1,
+            'head_first_name' => 'Juan',
+            'head_last_name' => 'Dela Cruz',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('household_members')->insert([
+            'household_id' => $householdId,
+            'first_name' => 'Maria',
+            'last_name' => 'Dela Cruz',
+            'sex' => 'Female',
+            'date_of_birth' => '2000-01-01',
+            'relationship' => 'Spouse',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->getJson(route('households.members', $householdId));
+
+        $response->assertOk();
+        $response->assertJsonPath('household.id', $householdId);
+        $response->assertJsonCount(1, 'members');
+        $response->assertJsonPath('members.0.first_name', 'Maria');
+    }
+
+    public function test_members_json_denies_household_outside_assigned_zones(): void
+    {
+        $user = $this->authorizedUser();
+
+        $otherZoneId = DB::table('zones')->insertGetId([
+            'zone_number' => '99',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $householdId = DB::table('households')->insertGetId([
+            'zone_id' => $otherZoneId,
+            'head_first_name' => 'Outside',
+            'head_last_name' => 'Zone',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->getJson(route('households.members', $householdId))
+            ->assertStatus(403);
     }
 }

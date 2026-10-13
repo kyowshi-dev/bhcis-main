@@ -13,6 +13,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class BatchEntryController extends Controller
@@ -89,17 +90,28 @@ class BatchEntryController extends Controller
             return response()->json([]);
         }
 
-        $households = Household::query()
-            ->where('family_name_head', 'LIKE', "%{$query}%")
-            ->select(['id', 'family_name_head', 'zone_id', 'contact_number'])
-            ->with('zone:id,zone_number')
+        $households = DB::table('households')
+            ->join('zones', 'households.zone_id', '=', 'zones.id')
+            ->where(function ($qb) use ($query) {
+                $qb->where('households.head_first_name', 'LIKE', "%{$query}%")
+                    ->orWhere('households.head_last_name', 'LIKE', "%{$query}%")
+                    ->orWhere('zones.zone_number', 'LIKE', "%{$query}%")
+                    ->orWhere('households.contact_number', 'LIKE', "%{$query}%");
+            })
+            ->distinct()
+            ->select('households.id', 'households.head_first_name', 'households.head_middle_name', 'households.head_last_name', 'households.head_suffix', 'zones.zone_number', 'households.contact_number')
             ->limit(10)
             ->get()
-            ->map(fn ($h) => [
-                'id' => $h->id,
-                'text' => $h->family_name_head,
-                'subtext' => ($h->zone ? "Zone {$h->zone->zone_number}" : 'No zone').($h->contact_number ? " - {$h->contact_number}" : ''),
-            ]);
+            ->map(function ($h) {
+                $contact = $h->contact_number ? " - {$h->contact_number}" : '';
+                $headName = fullName($h->head_last_name, $h->head_first_name, $h->head_middle_name, $h->head_suffix);
+
+                return [
+                    'id' => $h->id,
+                    'text' => $headName,
+                    'subtext' => "Head: {$headName} | Zone {$h->zone_number}{$contact}",
+                ];
+            });
 
         return response()->json($households);
     }
@@ -113,7 +125,8 @@ class BatchEntryController extends Controller
 
         $household = Household::create([
             'zone_id' => $validated['zone_id'],
-            'family_name_head' => $validated['family_name_head'],
+            'head_first_name' => ucwords(strtolower($validated['head_first_name'])),
+            'head_last_name' => ucwords(strtolower($validated['head_last_name'])),
             'contact_number' => $validated['contact_number'] ?? null,
         ]);
 
@@ -121,7 +134,7 @@ class BatchEntryController extends Controller
 
         return response()->json([
             'id' => $household->id,
-            'text' => $household->family_name_head,
+            'text' => $household->display_name,
             'subtext' => ($household->zone ? "Zone {$household->zone->zone_number}" : 'No zone').($household->contact_number ? " - {$household->contact_number}" : ''),
         ]);
     }

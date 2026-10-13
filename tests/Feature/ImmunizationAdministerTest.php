@@ -39,7 +39,7 @@ class ImmunizationAdministerTest extends TestCase
     {
         DB::table('zones')->insertOrIgnore(['id' => $zone, 'zone_number' => 'Zone '.$zone, 'created_at' => now(), 'updated_at' => now()]);
 
-        return Household::create(['zone_id' => $zone, 'family_name_head' => 'Dela Cruz']);
+        return Household::create(['zone_id' => $zone, 'head_last_name' => 'Dela Cruz']);
     }
 
     private function makeInfant(Carbon $dob): Patient

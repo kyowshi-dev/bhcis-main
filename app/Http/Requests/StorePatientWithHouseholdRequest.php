@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\HouseholdMember;
 use App\Models\Patient;
 use App\Rules\NameCharacters;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -36,9 +37,13 @@ class StorePatientWithHouseholdRequest extends FormRequest
                 $isCreatingHousehold ? 'nullable' : 'exists:households,id',
             ],
 
+            // Link to existing household member (optional)
+            'household_member_id' => ['nullable', 'integer', 'exists:household_members,id'],
+
             // New household fields (only if creating)
             'new_household_zone_id' => ['nullable', 'required_if:create_new_household,1', 'integer', 'exists:zones,id'],
-            'new_household_family_name_head' => ['nullable', 'required_if:create_new_household,1', 'string', 'max:255', new NameCharacters],
+            'new_household_head_first_name' => ['nullable', 'required_if:create_new_household,1', 'string', 'max:255', new NameCharacters],
+            'new_household_head_last_name' => ['nullable', 'required_if:create_new_household,1', 'string', 'max:255', new NameCharacters],
             'new_household_contact_number' => ['nullable', 'string', 'max:32', 'regex:/^[0-9+\-\s()]*$/'],
 
             // Patient data
@@ -82,7 +87,8 @@ class StorePatientWithHouseholdRequest extends FormRequest
             'date_of_birth.before' => 'Birth date cannot be in the future.',
             'household_id.required' => 'You must select an existing household or create a new one.',
             'new_household_zone_id.required_if' => 'Zone is required when creating a new household.',
-            'new_household_family_name_head.required_if' => 'Family name (head) is required when creating a new household.',
+            'new_household_head_first_name.required_if' => 'Head first name is required when creating a new household.',
+            'new_household_head_last_name.required_if' => 'Head last name (family name) is required when creating a new household.',
         ];
     }
 
@@ -113,13 +119,40 @@ class StorePatientWithHouseholdRequest extends FormRequest
         if ($createNew === 1) {
             $this->merge([
                 'new_household_zone_id' => $this->input('new_household_zone_id') ? (int) $this->input('new_household_zone_id') : null,
+                'new_household_head_first_name' => trim((string) $this->input('new_household_head_first_name')),
+                'new_household_head_last_name' => trim((string) $this->input('new_household_head_last_name')),
             ]);
         } else {
             $this->merge([
                 'new_household_zone_id' => null,
-                'new_household_family_name_head' => null,
+                'new_household_head_first_name' => null,
+                'new_household_head_last_name' => null,
                 'new_household_contact_number' => null,
             ]);
         }
+    }
+
+    /**
+     * Configure the validator instance.
+     */
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $memberId = $this->input('household_member_id');
+            $householdId = $this->input('household_id');
+
+            if ($memberId && $householdId) {
+                $member = HouseholdMember::where('id', $memberId)
+                    ->where('household_id', $householdId)
+                    ->whereNull('deleted_at')
+                    ->first();
+
+                if (! $member) {
+                    $validator->errors()->add('household_member_id', 'The selected household member does not belong to the chosen household.');
+                } elseif ($member->patient_id !== null) {
+                    $validator->errors()->add('household_member_id', 'The selected resident is already linked to another patient. Please choose a different resident or register as a new resident.');
+                }
+            }
+        });
     }
 }

@@ -215,6 +215,17 @@ class ImmunizationController extends Controller
         $healthWorkers = ImmunizationQueryService::healthWorkers();
 
         $recordsByVaccine = $records->groupBy('vaccine_id');
+
+        $latestRecordWith = fn (string $column) => $records
+            ->first(fn ($record) => $record->{$column} !== null)
+            ?->{$column};
+
+        $previousMeasurements = (object) [
+            'temp_recorded' => $latestRecordWith('temp_recorded'),
+            'child_weight_kg' => $latestRecordWith('child_weight_kg'),
+            'child_height_cm' => $latestRecordWith('child_height_cm'),
+        ];
+
         $schedule = $vaccines->map(function ($vaccine) use ($recordsByVaccine) {
             $doses = $recordsByVaccine->get($vaccine->id, collect());
             $latestDose = $doses->sortByDesc('date_given')->first();
@@ -249,6 +260,7 @@ class ImmunizationController extends Controller
             'eligibility' => $eligibility,
             'schedulesByVaccine' => $schedulesByVaccine,
             'noShowEvents' => $noShowEvents,
+            'previousMeasurements' => $previousMeasurements,
             'isImmunizationEnrolled' => $patient->is_immunization_enrolled,
         ];
     }
@@ -446,24 +458,37 @@ class ImmunizationController extends Controller
             'zone_id' => ['nullable', 'integer', 'exists:zones,id'],
         ]);
 
-        $query = Household::withCount('patients')
-            ->with('zone')
-            ->where('family_name_head', 'like', '%'.addcslashes($validated['surname'], '%_').'%');
+        $query = DB::table('households')
+            ->join('zones', 'households.zone_id', '=', 'zones.id')
+            ->leftJoin('patients', 'patients.household_id', '=', 'households.id')
+            ->where(function ($qb) use ($validated) {
+                $qb->where('households.head_last_name', 'like', '%'.addcslashes($validated['surname'], '%_').'%')
+                    ->orWhere('households.head_first_name', 'like', '%'.addcslashes($validated['surname'], '%_').'%');
+            });
 
         if (! empty($validated['zone_id'])) {
-            $query->where('zone_id', $validated['zone_id']);
+            $query->where('households.zone_id', $validated['zone_id']);
         }
 
-        $results = $query->orderBy('family_name_head')->limit(10)->get();
+        $results = $query->distinct()
+            ->select('households.id', 'households.head_first_name', 'households.head_middle_name', 'households.head_last_name', 'households.head_suffix', 'households.zone_id', 'zones.zone_number')
+            ->selectRaw('COUNT(DISTINCT patients.id) as patients_count')
+            ->groupBy('households.id', 'households.head_first_name', 'households.head_middle_name', 'households.head_last_name', 'households.head_suffix', 'households.zone_id', 'zones.zone_number')
+            ->orderBy('households.head_last_name')
+            ->orderBy('households.head_first_name')
+            ->limit(10)
+            ->get();
 
         return response()->json(
-            $results->map(fn (Household $household) => [
-                'id' => $household->id,
-                'family_name_head' => $household->family_name_head,
-                'zone_id' => $household->zone_id,
-                'zone' => ['zone_number' => $household->zone->zone_number],
-                'patients_count' => $household->patients_count,
-            ])->values()
+            $results->map(function ($h) {
+                return [
+                    'id' => $h->id,
+                    'display_name' => fullName($h->head_last_name, $h->head_first_name, $h->head_middle_name, $h->head_suffix),
+                    'zone_id' => $h->zone_id,
+                    'zone' => ['zone_number' => $h->zone_number],
+                    'patients_count' => $h->patients_count,
+                ];
+            })->values()
         );
     }
 

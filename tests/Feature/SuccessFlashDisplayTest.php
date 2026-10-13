@@ -104,7 +104,8 @@ class SuccessFlashDisplayTest extends TestCase
         return array_merge([
             'create_new_household' => 1,
             'new_household_zone_id' => 1,
-            'new_household_family_name_head' => 'Dela Cruz',
+            'new_household_head_first_name' => 'Juan',
+            'new_household_head_last_name' => 'Dela Cruz',
             'first_name' => 'Juan',
             'last_name' => 'Dela Cruz',
             'middle_name' => 'Santos',
@@ -157,7 +158,7 @@ class SuccessFlashDisplayTest extends TestCase
 
         $householdId = DB::table('households')->insertGetId([
             'zone_id' => 1,
-            'family_name_head' => 'Test',
+            'head_last_name' => 'Test',
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -192,7 +193,7 @@ class SuccessFlashDisplayTest extends TestCase
 
         $household = Household::create([
             'zone_id' => 1,
-            'family_name_head' => 'Dela Cruz',
+            'head_last_name' => 'Dela Cruz',
         ]);
 
         return Patient::create([

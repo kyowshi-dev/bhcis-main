@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\HouseholdHelper;
+use App\Http\Requests\StoreHouseholdMemberRequest;
 use App\Http\Requests\StoreHouseholdRequest;
+use App\Http\Requests\UpdateHouseholdMemberRequest;
 use App\Http\Requests\UpdateHouseholdRequest;
 use App\Models\Household;
+use App\Models\HouseholdMember;
 use App\Services\HouseholdExportService;
 use App\Services\HouseholdPdfService;
 use App\Services\HouseholdQueryService;
@@ -76,7 +79,7 @@ class HouseholdController extends Controller
     {
         $this->authorizePermission('household');
 
-        $household = HouseholdService::findOrFail($id);
+        $household = Household::findOrFail($id);
 
         if (! auth()->user()->canAccessHousehold((int) $household->id)) {
             abort(403, 'This household is outside your assigned zones.');
@@ -217,5 +220,159 @@ class HouseholdController extends Controller
         return redirect()
             ->route('households.index')
             ->with('success', count($data['household_ids']).' household(s) reassigned to the new zone.');
+    }
+
+    public function show($id): View
+    {
+        $this->authorizePermission('household');
+
+        $household = Household::findOrFail($id);
+
+        if (! auth()->user()->canAccessHousehold((int) $household->id)) {
+            abort(403, 'This household is outside your assigned zones.');
+        }
+
+        $members = $household->members()
+            ->with('patient')
+            ->whereNull('deleted_at')
+            ->orderBy('relationship')
+            ->orderBy('first_name')
+            ->get();
+
+        $patientCount = $household->patients()->whereNull('deleted_at')->count();
+
+        return view('households.show', [
+            'household' => $household,
+            'members' => $members,
+            'patientCount' => $patientCount,
+        ]);
+    }
+
+    public function membersJson($id)
+    {
+        $household = Household::findOrFail($id);
+
+        if (! auth()->user()->canAccessHousehold((int) $household->id)) {
+            return response()->json(['error' => 'This household is outside your assigned zones.'], 403);
+        }
+
+        $members = HouseholdMember::query()
+            ->where('household_id', $household->id)
+            ->whereNull('deleted_at')
+            ->with('patient:id,first_name,middle_name,last_name,suffix')
+            ->orderBy('relationship')
+            ->orderBy('first_name')
+            ->get()
+            ->map(function (HouseholdMember $member): array {
+                $patientLinked = $member->patient !== null;
+
+                return [
+                    'id' => $member->id,
+                    'full_name' => $member->full_name,
+                    'first_name' => $member->first_name,
+                    'middle_name' => $member->middle_name,
+                    'last_name' => $member->last_name,
+                    'suffix' => $member->suffix,
+                    'sex' => $member->sex,
+                    'age' => $member->age,
+                    'date_of_birth' => $member->date_of_birth?->format('Y-m-d'),
+                    'relationship' => $member->relationship,
+                    'patient_linked' => $patientLinked,
+                    'patient_name' => $member->patient ? fullName($member->patient->last_name, $member->patient->first_name, $member->patient->middle_name, $member->patient->suffix) : null,
+                ];
+            });
+
+        return response()->json([
+            'household' => [
+                'id' => $household->id,
+                'display_name' => $household->display_name,
+                'head_first_name' => $household->head_first_name,
+                'head_middle_name' => $household->head_middle_name,
+                'head_last_name' => $household->head_last_name,
+                'head_suffix' => $household->head_suffix,
+                'zone_number' => $household->zone->zone_number ?? '',
+                'contact_number' => $household->contact_number,
+            ],
+            'members' => $members,
+        ]);
+    }
+
+    public function storeMember(StoreHouseholdMemberRequest $request, $id): RedirectResponse
+    {
+        $this->authorizePermission('household');
+
+        $household = Household::findOrFail($id);
+
+        if (! auth()->user()->canAccessHousehold((int) $household->id)) {
+            abort(403, 'This household is outside your assigned zones.');
+        }
+
+        $this->guardZoneAccess((int) $household->zone_id);
+
+        $data = $request->validated();
+        $data['household_id'] = $household->id;
+
+        HouseholdMember::create($data);
+
+        return redirect()
+            ->route('households.show', $household->id)
+            ->with('success', 'Household member added successfully.');
+    }
+
+    public function updateMember(UpdateHouseholdMemberRequest $request, $id, $memberId): RedirectResponse
+    {
+        $this->authorizePermission('household');
+
+        $household = Household::findOrFail($id);
+
+        if (! auth()->user()->canAccessHousehold((int) $household->id)) {
+            abort(403, 'This household is outside your assigned zones.');
+        }
+
+        $member = HouseholdMember::where('household_id', $household->id)
+            ->where('id', $memberId)
+            ->whereNull('deleted_at')
+            ->firstOrFail();
+
+        $this->guardZoneAccess((int) $household->zone_id);
+
+        $data = $request->validated();
+
+        $member->update($data);
+
+        return redirect()
+            ->route('households.show', $household->id)
+            ->with('success', 'Household member updated successfully.');
+    }
+
+    public function destroyMember($id, $memberId): RedirectResponse
+    {
+        $this->authorizePermission('household');
+
+        $household = Household::findOrFail($id);
+
+        if (! auth()->user()->canAccessHousehold((int) $household->id)) {
+            abort(403, 'This household is outside your assigned zones.');
+        }
+
+        $member = HouseholdMember::where('household_id', $household->id)
+            ->where('id', $memberId)
+            ->whereNull('deleted_at')
+            ->firstOrFail();
+
+        $this->guardZoneAccess((int) $household->zone_id);
+
+        // Prevent deleting a member linked to a patient
+        if ($member->patient_id !== null) {
+            return redirect()
+                ->route('households.show', $household->id)
+                ->with('error', 'Cannot remove a member who is linked to a patient record.');
+        }
+
+        $member->delete();
+
+        return redirect()
+            ->route('households.show', $household->id)
+            ->with('success', 'Household member removed successfully.');
     }
 }

@@ -48,7 +48,7 @@ class BhwCrossZoneEnrollmentTest extends TestCase
     {
         return DB::table('households')->insertGetId([
             'zone_id' => $zoneId,
-            'family_name_head' => $familyNameHead,
+            'head_last_name' => $familyNameHead,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -241,7 +241,7 @@ class BhwCrossZoneEnrollmentTest extends TestCase
             ->getJson('/immunizations/household-match?surname=Agad')
             ->assertOk()
             ->assertJsonCount(1)
-            ->assertJsonPath('0.family_name_head', 'Agad');
+            ->assertJsonPath('0.display_name', 'Agad');
     }
 
     /** @test */

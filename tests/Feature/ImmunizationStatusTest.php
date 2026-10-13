@@ -34,7 +34,7 @@ class ImmunizationStatusTest extends TestCase
         DB::table('zones')->insertOrIgnore(['id' => 1, 'zone_number' => 'Zone 1', 'created_at' => now(), 'updated_at' => now()]);
 
         return Patient::create([
-            'household_id' => Household::create(['zone_id' => 1, 'family_name_head' => 'Dela Cruz'])->id,
+            'household_id' => Household::create(['zone_id' => 1, 'head_last_name' => 'Dela Cruz'])->id,
             'first_name' => 'Baby',
             'last_name' => 'Dela Cruz',
             'sex' => 'Male',

@@ -78,7 +78,7 @@
                          x-transition:enter="transition ease-out duration-150"
                          x-transition:enter-start="opacity-0 translate-y-1"
                          x-transition:enter-end="opacity-100 translate-y-0"
-                         class="absolute z-20 w-full bg-surface mt-1 border border-border rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                         class="absolute z-50 w-full bg-surface mt-1 border border-border rounded-xl shadow-lg max-h-60 overflow-y-auto">
                         <ul>
                             <template x-for="item in householdResults" :key="item.id">
                                 <li class="px-3 lg:px-4 py-2 lg:py-2.5 hover:bg-black/5 cursor-pointer border-b last:border-0 text-xs lg:text-sm"
@@ -125,11 +125,18 @@
                         <p x-show="newHouseholdErrors.zone_id" x-text="newHouseholdErrors.zone_id" class="text-danger text-xs mt-1"></p>
                     </div>
                     <div>
-                        <label class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">Family Name (Head) <span class="text-danger">*</span></label>
-                        <input type="text" x-model="newHousehold.family_name_head" required
+                        <label class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">Head First Name <span class="text-danger">*</span></label>
+                        <input type="text" x-model="newHousehold.head_first_name" required
+                               class="w-full px-3 lg:px-4 py-2 rounded-xl border border-border focus:ring-accent-blue focus:border-accent-blue text-sm"
+                               placeholder="e.g. Juan">
+                        <p x-show="newHouseholdErrors.head_first_name" x-text="newHouseholdErrors.head_first_name" class="text-danger text-xs mt-1"></p>
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">Head Last Name (Family) <span class="text-danger">*</span></label>
+                        <input type="text" x-model="newHousehold.head_last_name" required
                                class="w-full px-3 lg:px-4 py-2 rounded-xl border border-border focus:ring-accent-blue focus:border-accent-blue text-sm"
                                placeholder="e.g. Santos">
-                        <p x-show="newHouseholdErrors.family_name_head" x-text="newHouseholdErrors.family_name_head" class="text-danger text-xs mt-1"></p>
+                        <p x-show="newHouseholdErrors.head_last_name" x-text="newHouseholdErrors.head_last_name" class="text-danger text-xs mt-1"></p>
                     </div>
                     <div>
                         <label class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">Contact Number <span class="text-ink-muted font-normal normal-case">(optional)</span></label>
@@ -139,7 +146,7 @@
                     </div>
                     <div class="flex items-end">
                         <button type="button" @click="createHousehold()"
-                                :disabled="creatingHouseholdSaving || !newHousehold.zone_id || !newHousehold.family_name_head.trim()"
+                                :disabled="creatingHouseholdSaving || !newHousehold.zone_id || !newHousehold.head_first_name.trim() || !newHousehold.head_last_name.trim()"
                                 class="px-4 py-2 rounded-xl text-white font-semibold text-xs lg:text-sm shadow-md transition disabled:opacity-50"
                                 style="background: var(--primary);">
                             <span x-show="!creatingHouseholdSaving">
@@ -293,7 +300,7 @@
                              x-transition:enter="transition ease-out duration-150"
                              x-transition:enter-start="opacity-0 translate-y-1"
                              x-transition:enter-end="opacity-100 translate-y-0"
-                             class="absolute z-20 w-full bg-surface mt-1 border border-border rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                             class="absolute z-50 w-full bg-surface mt-1 border border-border rounded-xl shadow-lg max-h-60 overflow-y-auto">
                             <ul>
                                 <template x-for="item in birthPlaceResults" :key="item.id">
                                     <li role="option" aria-selected="false"
@@ -447,7 +454,7 @@ function patientBatchForm() {
         birthPlaceSearching: false,
         selectedHousehold: null,
         creatingHousehold: false,
-        newHousehold: { zone_id: '', family_name_head: '', contact_number: '' },
+        newHousehold: { zone_id: '', head_first_name: '', head_last_name: '', contact_number: '' },
         newHouseholdErrors: {},
         creatingHouseholdSaving: false,
         submitting: false,
@@ -544,7 +551,8 @@ function patientBatchForm() {
                     },
                     body: JSON.stringify({
                         zone_id: this.newHousehold.zone_id,
-                        family_name_head: this.newHousehold.family_name_head,
+                        head_first_name: this.newHousehold.head_first_name,
+                        head_last_name: this.newHousehold.head_last_name,
                         contact_number: this.newHousehold.contact_number,
                     }),
                 });
@@ -554,7 +562,7 @@ function patientBatchForm() {
                 if (response.ok) {
                     this.selectedHousehold = data;
                     this.creatingHousehold = false;
-                    this.newHousehold = { zone_id: '', family_name_head: '', contact_number: '' };
+this.newHousehold = { zone_id: '', head_first_name: '', head_last_name: '', contact_number: '' };
 
                     Swal.fire({
                         icon: 'success',
@@ -569,11 +577,12 @@ function patientBatchForm() {
                     const errors = data.errors || {};
                     this.newHouseholdErrors = {
                         zone_id: errors.zone_id?.[0] || '',
-                        family_name_head: errors.family_name_head?.[0] || '',
+                        head_first_name: errors.head_first_name?.[0] || '',
+                        head_last_name: errors.head_last_name?.[0] || '',
                     };
                 }
             } catch (e) {
-                this.newHouseholdErrors = { family_name_head: 'Network error. Please try again.' };
+                this.newHouseholdErrors = { head_first_name: 'Network error. Please try again.', head_last_name: 'Network error. Please try again.' };
             } finally {
                 this.creatingHouseholdSaving = false;
             }
@@ -602,7 +611,7 @@ function patientBatchForm() {
             this.validationErrors = [];
             this.fieldErrors = {};
             this.creatingHousehold = false;
-            this.newHousehold = { zone_id: '', family_name_head: '', contact_number: '' };
+            this.newHousehold = { zone_id: '', head_first_name: '', head_last_name: '', contact_number: '' };
             this.newHouseholdErrors = {};
             // Do NOT clear selectedHousehold - keep it for batch entry efficiency (household carry-over)
             this.birthPlaceResults = [];

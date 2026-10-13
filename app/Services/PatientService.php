@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Household;
+use App\Models\HouseholdMember;
 use App\Models\Patient;
 use Illuminate\Validation\ValidationException;
 
@@ -12,16 +13,16 @@ final class PatientService
     {
         $transientHousehold = Household::query()
             ->where(function ($qb) {
-                $qb->whereRaw('LOWER(family_name_head) LIKE ?', ['%transient%'])
-                    ->orWhereRaw('LOWER(family_name_head) LIKE ?', ['%unmapped%']);
+                $qb->whereRaw('LOWER(head_last_name) LIKE ?', ['%transient%'])
+                    ->orWhereRaw('LOWER(head_last_name) LIKE ?', ['%unmapped%']);
             })
-            ->select(['id', 'family_name_head'])
+            ->select(['id', 'head_last_name'])
             ->first();
 
         if (! $transientHousehold) {
             $transientHousehold = Household::create([
                 'zone_id' => 1,
-                'family_name_head' => 'Transient/Unmapped',
+                'head_last_name' => 'Transient/Unmapped',
             ]);
         }
 
@@ -48,7 +49,8 @@ final class PatientService
         if ((int) $validated['create_new_household'] === 1) {
             $createdHousehold = Household::create([
                 'zone_id' => $validated['new_household_zone_id'],
-                'family_name_head' => trim($validated['new_household_family_name_head']),
+                'head_first_name' => ucwords(strtolower(trim($validated['new_household_head_first_name']))),
+                'head_last_name' => ucwords(strtolower(trim($validated['new_household_head_last_name']))),
                 'contact_number' => ($validated['new_household_contact_number'] ?? null) !== null ? trim($validated['new_household_contact_number']) : null,
             ]);
             $householdId = $createdHousehold->id;
@@ -77,7 +79,7 @@ final class PatientService
         }
 
         // --- 3. INSERT PATIENT DATA (Sanitized) ---
-        return Patient::create([
+        $patient = Patient::create([
             'household_id' => $householdId,
             'enrolled_by' => $user?->id,
             // Auto-Capitalize Names
@@ -107,5 +109,56 @@ final class PatientService
             'has_4ps' => $validated['has_4ps'],
             'has_nhts' => $validated['has_nhts'],
         ]);
+
+        // --- 4. LINK OR CREATE HOUSEHOLD MEMBER ---
+        self::linkOrCreateMember($patient, $validated, $householdId);
+
+        return $patient;
+    }
+
+    private static function linkOrCreateMember(Patient $patient, array $validated, int $householdId): void
+    {
+        $memberId = $validated['household_member_id'] ?? null;
+
+        if ($memberId) {
+            // Link existing member
+            $member = HouseholdMember::where('id', $memberId)
+                ->where('household_id', $householdId)
+                ->whereNull('deleted_at')
+                ->first();
+
+            if ($member) {
+                $member->update(['patient_id' => $patient->id]);
+            }
+
+            return;
+        }
+
+        // Auto-create member from patient data
+        $relationship = self::mapFamilyRelationship($validated['family_relationship']);
+
+        HouseholdMember::create([
+            'household_id' => $householdId,
+            'patient_id' => $patient->id,
+            'first_name' => $patient->first_name,
+            'middle_name' => $patient->middle_name,
+            'last_name' => $patient->last_name,
+            'suffix' => $patient->suffix,
+            'sex' => $patient->sex,
+            'date_of_birth' => $patient->date_of_birth,
+            'age' => null,
+            'relationship' => $relationship,
+        ]);
+    }
+
+    private static function mapFamilyRelationship(string $rel): string
+    {
+        return match ($rel) {
+            'Father' => 'Father',
+            'Mother' => 'Mother',
+            'Son' => 'Son',
+            'Daughter' => 'Daughter',
+            default => 'Other',
+        };
     }
 }

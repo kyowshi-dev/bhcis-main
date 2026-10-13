@@ -64,7 +64,10 @@ return new class extends Migration
         Schema::create('households', function (Blueprint $table) {
             $table->id();
             $table->foreignId('zone_id')->constrained('zones');
-            $table->string('family_name_head');
+            $table->string('head_first_name')->nullable();
+            $table->string('head_middle_name')->nullable();
+            $table->string('head_last_name');
+            $table->string('head_suffix')->nullable();
             $table->string('contact_number')->nullable();
             $table->timestamps();
         });
@@ -240,6 +243,8 @@ return new class extends Migration
             ['key' => 'password_require_uppercase', 'value' => '1'],
             ['key' => 'password_require_number', 'value' => '1'],
             ['key' => 'password_require_symbol', 'value' => '0'],
+            ['key' => 'graceful_errors', 'value' => '1'],
+            ['key' => 'projected_population', 'value' => '0'],
         ];
 
         foreach ($settings as $setting) {

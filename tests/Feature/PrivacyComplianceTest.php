@@ -29,7 +29,7 @@ class PrivacyComplianceTest extends TestCase
     private function createPatient(array $overrides = []): Patient
     {
         return Patient::create(array_merge([
-            'household_id' => Household::create(['zone_id' => 1, 'family_name_head' => 'Dela Cruz'])->id,
+            'household_id' => Household::create(['zone_id' => 1, 'head_last_name' => 'Dela Cruz'])->id,
             'first_name' => 'Maria',
             'last_name' => 'Dela Cruz',
             'sex' => 'Female',

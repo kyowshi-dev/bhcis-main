@@ -42,7 +42,7 @@ class ImmunizationIndexTest extends TestCase
         $this->zone($zoneId);
 
         return Patient::create([
-            'household_id' => Household::create(['zone_id' => $zoneId, 'family_name_head' => 'Dela Cruz'])->id,
+            'household_id' => Household::create(['zone_id' => $zoneId, 'head_last_name' => 'Dela Cruz'])->id,
             'first_name' => 'Baby',
             'last_name' => 'Dela Cruz',
             'sex' => 'Male',
@@ -199,7 +199,7 @@ class ImmunizationIndexTest extends TestCase
         $this->actingAs($this->userWithPermission());
 
         $this->zone(1);
-        $household = Household::create(['zone_id' => 1, 'family_name_head' => 'Dela Cruz']);
+        $household = Household::create(['zone_id' => 1, 'head_last_name' => 'Dela Cruz']);
 
         Patient::create([
             'household_id' => $household->id,
@@ -240,7 +240,7 @@ class ImmunizationIndexTest extends TestCase
         $this->actingAs($this->userWithPermission());
 
         $this->zone(1);
-        $household = Household::create(['zone_id' => 1, 'family_name_head' => 'Dela Cruz']);
+        $household = Household::create(['zone_id' => 1, 'head_last_name' => 'Dela Cruz']);
 
         Patient::create([
             'household_id' => $household->id,

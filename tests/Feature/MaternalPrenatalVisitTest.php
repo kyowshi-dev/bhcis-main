@@ -54,7 +54,7 @@ class MaternalPrenatalVisitTest extends TestCase
     private function pregnancy(): Pregnancy
     {
         $patient = Patient::create([
-            'household_id' => Household::create(['zone_id' => 1, 'family_name_head' => 'Santos'])->id,
+            'household_id' => Household::create(['zone_id' => 1, 'head_last_name' => 'Santos'])->id,
             'first_name' => 'Ana',
             'last_name' => 'Santos',
             'sex' => 'Female',

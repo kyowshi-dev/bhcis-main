@@ -32,7 +32,8 @@ class StoreInfantWithHouseholdRequest extends FormRequest
             'household_id' => $isCreating ? ['nullable', 'integer', 'exists:households,id'] : ['required', 'integer', 'exists:households,id'],
             'create_household' => ['nullable', 'boolean'],
             'zone_id' => ['nullable', 'required_if:create_household,1', 'integer', 'exists:zones,id'],
-            'family_name_head' => ['nullable', 'required_if:create_household,1', 'string', 'max:255', new NameCharacters],
+            'head_first_name' => ['nullable', 'required_if:create_household,1', 'string', 'max:255', new NameCharacters],
+            'head_last_name' => ['nullable', 'required_if:create_household,1', 'string', 'max:255', new NameCharacters],
             'contact_number' => ['nullable', 'string', 'max:32', 'regex:/^[0-9+\-\s()]*$/'],
 
             // Infant identity
@@ -61,7 +62,8 @@ class StoreInfantWithHouseholdRequest extends FormRequest
             'middle_name.name_characters' => 'Middle name cannot contain numbers or special symbols.',
             'date_of_birth.before' => 'Birth date cannot be in the future.',
             'zone_id.required_if' => 'Zone is required when creating a new household.',
-            'family_name_head.required_if' => 'Family name (head) is required when creating a new household.',
+            'head_first_name.required_if' => 'Head first name is required when creating a new household.',
+            'head_last_name.required_if' => 'Head last name (family name) is required when creating a new household.',
         ];
     }
 
@@ -94,6 +96,8 @@ class StoreInfantWithHouseholdRequest extends FormRequest
     {
         $this->merge([
             'create_household' => $this->boolean('create_household') ? 1 : 0,
+            'head_first_name' => $this->input('head_first_name') !== null ? trim((string) $this->input('head_first_name')) : null,
+            'head_last_name' => $this->input('head_last_name') !== null ? trim((string) $this->input('head_last_name')) : null,
         ]);
     }
 }
