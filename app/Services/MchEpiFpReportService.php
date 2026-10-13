@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Helpers\PatientCode;
+use App\Models\ApplicationSetting;
 use App\Models\FamilyPlanningClient;
 use App\Models\PostnatalRecord;
 use App\Models\User;
@@ -139,6 +140,12 @@ final class MchEpiFpReportService
                     : null,
                 'fp' => self::wantsProgram($program, self::PROGRAM_FP)
                     ? self::fpSummaries($start, $end, $zone, $user)
+                    : null,
+                'natality' => self::wantsProgram($program, self::PROGRAM_MATERNAL)
+                    ? self::natalitySummaries($start, $end, $zone, $user)
+                    : null,
+                'mortality' => self::wantsProgram($program, self::PROGRAM_MATERNAL)
+                    ? self::mortalitySummaries($start, $end, $zone, $user)
                     : null,
             ],
             'rows' => $paginate
@@ -622,11 +629,213 @@ final class MchEpiFpReportService
             ->whereIn('vaccines_lookup.category', ['Adult', 'Both'])
             ->count();
 
+        // Sex disaggregation of doses
+        $dosesBySex = (clone $dosesQuery)
+            ->select('patients.sex as sex', DB::raw('COUNT(*) as total'))
+            ->groupBy('patients.sex')
+            ->pluck('total', 'sex')
+            ->toArray();
+
+        $dosesBySex = array_merge(
+            ['Male' => 0, 'Female' => 0, 'Total' => 0],
+            $dosesBySex
+        );
+        $dosesBySex['Total'] = $dosesBySex['Male'] + $dosesBySex['Female'];
+
+        // CPAB: Children with HepB birth dose (HEPA_B_24H) in period
+        $cpab = (clone $dosesQuery)
+            ->where('vaccines_lookup.vaccine_code', 'HEPA_B_24H')
+            ->distinct('immunization_records.patient_id')
+            ->count('immunization_records.patient_id');
+
+        // FIC: Fully Immunized Children (all required doses before 12 months)
+        // Required: BCG, HepB birth, PENTA 3, OPV 3, IPV 1, PCV 3, MCV 1 (AMV or MMR)
+        // Simplified: count children < 12 months who have all required doses recorded
+        $fic = self::countFullyImmunizedChildren($start, $end, $zone, $user);
+
         return [
             'dosesByVaccine' => $dosesByVaccine,
             'childDoses' => (int) $childDoses,
             'adultDoses' => (int) $adultDoses,
             'totalDoses' => (int) $childDoses + (int) $adultDoses,
+            'dosesBySex' => $dosesBySex,
+            'cpab' => (int) $cpab,
+            'fic' => (int) $fic,
+        ];
+    }
+
+    /**
+     * Count Fully Immunized Children (FIC) in the period.
+     * A child is FIC if they received: BCG, HepB birth dose, PENTA 1-3, OPV 1-3, IPV 1, PCV 1-3, MCV 1 (AMV or MMR) before 12 months.
+     */
+    private static function countFullyImmunizedChildren(Carbon $start, Carbon $end, ?string $zone, ?User $user): int
+    {
+        $vaccineIds = DB::table('vaccines_lookup')
+            ->whereIn('vaccine_code', ['BCG', 'HEPA_B_24H', 'PENTA', 'OPV', 'IPV', 'PCV', 'MCV_AMV', 'MCV_MMR'])
+            ->pluck('id', 'vaccine_code')
+            ->toArray();
+
+        if (empty($vaccineIds)) {
+            return 0;
+        }
+
+        // Find children who turned 12 months in the period (or were immunized in period)
+        // Use database-agnostic date_add: MySQL uses DATE_ADD, SQLite uses DATE(..., '+12 months')
+        $driver = DB::connection()->getDriverName();
+        $dateClause = $driver === 'sqlite'
+            ? "DATE(patients.date_of_birth, '+12 months')"
+            : 'DATE_ADD(patients.date_of_birth, INTERVAL 12 MONTH)';
+
+        $childQuery = DB::table('patients')
+            ->join('households', 'patients.household_id', '=', 'households.id')
+            ->join('zones', 'households.zone_id', '=', 'zones.id')
+            ->where('patients.is_immunization_enrolled', true)
+            ->whereRaw($dateClause.' <= ?', [$end->toDateString()]);
+
+        self::applyZoneScope($childQuery, $zone, $user);
+
+        $children = $childQuery->pluck('patients.id')->toArray();
+
+        if (empty($children)) {
+            return 0;
+        }
+
+        $ficCount = 0;
+        $requiredVaccines = [
+            'BCG' => 1,
+            'HEPA_B_24H' => 1,
+            'PENTA' => 3,
+            'OPV' => 3,
+            'IPV' => 1,
+            'PCV' => 3,
+            'MCV_AMV' => 1, // or MCV_MMR
+        ];
+
+        foreach ($children as $childId) {
+            $records = DB::table('immunization_records')
+                ->where('patient_id', $childId)
+                ->where('no_show', false)
+                ->whereIn('vaccine_id', $vaccineIds)
+                ->select('vaccine_id', DB::raw('MAX(dose_number) as max_dose'))
+                ->groupBy('vaccine_id')
+                ->pluck('max_dose', 'vaccine_id')
+                ->toArray();
+
+            $hasAll = true;
+            foreach ($requiredVaccines as $code => $requiredDoses) {
+                $vaccineId = $vaccineIds[$code] ?? null;
+                if ($vaccineId === null || ! isset($records[$vaccineId])) {
+                    // For MCV, accept either AMV or MMR
+                    if ($code === 'MCV_AMV') {
+                        $mmrId = $vaccineIds['MCV_MMR'] ?? null;
+                        if ($mmrId === null || ! isset($records[$mmrId])) {
+                            $hasAll = false;
+                            break;
+                        }
+                    } else {
+                        $hasAll = false;
+                        break;
+                    }
+                } elseif ((int) $records[$vaccineId] < $requiredDoses) {
+                    $hasAll = false;
+                    break;
+                }
+            }
+
+            if ($hasAll) {
+                $ficCount++;
+            }
+        }
+
+        return $ficCount;
+    }
+
+    /**
+     * Natality summaries for M1 Section I: Live births by mother age bands, CBR.
+     *
+     * @return array<string, mixed>
+     */
+    private static function natalitySummaries(Carbon $start, Carbon $end, ?string $zone, ?User $user): array
+    {
+        $allowed = self::accessiblePatientQuery($zone, $user);
+
+        $liveBirthsQuery = DB::table('postnatal_records')
+            ->join('patients', 'postnatal_records.patient_id', '=', 'patients.id')
+            ->join('pregnancies', 'postnatal_records.pregnancy_id', '=', 'pregnancies.id')
+            ->whereIn('patients.id', $allowed)
+            ->where('postnatal_records.pregnancy_outcome', 'live_birth')
+            ->whereBetween('postnatal_records.delivery_date', [$start->toDateString(), $end->toDateString()]);
+
+        $liveBirths = (clone $liveBirthsQuery)->count();
+
+        // Mother age bands: 10-14, 15-19, 20-49
+        // Fetch raw data and compute age bands in PHP for SQLite compatibility
+        $births = (clone $liveBirthsQuery)
+            ->select('patients.date_of_birth', 'postnatal_records.delivery_date')
+            ->get();
+
+        $byAgeBand = ['10-14' => 0, '15-19' => 0, '20-49' => 0];
+        foreach ($births as $birth) {
+            // Extract year from date strings for reliable age calculation
+            $dobYear = (int) substr($birth->date_of_birth, 0, 4);
+            $deliveryYear = (int) substr($birth->delivery_date, 0, 4);
+            $dobMonthDay = (int) substr($birth->date_of_birth, 5, 4);
+            $deliveryMonthDay = (int) substr($birth->delivery_date, 5, 4);
+
+            $age = $deliveryYear - $dobYear;
+            if ($deliveryMonthDay < $dobMonthDay) {
+                $age--;
+            }
+
+            if ($age >= 10 && $age <= 14) {
+                $byAgeBand['10-14']++;
+            } elseif ($age >= 15 && $age <= 19) {
+                $byAgeBand['15-19']++;
+            } else {
+                $byAgeBand['20-49']++;
+            }
+        }
+
+        // Crude Birth Rate = live births / projected population * 1000
+        $projectedPopulation = (int) ApplicationSetting::get('projected_population', 0);
+        $cbr = $projectedPopulation > 0 ? round(($liveBirths / $projectedPopulation) * 1000, 2) : 0;
+
+        return [
+            'liveBirths' => (int) $liveBirths,
+            'byMotherAge' => $byAgeBand,
+            'cbr' => $cbr,
+        ];
+    }
+
+    /**
+     * Mortality summaries for M1 Section H: total deaths, maternal, under-5, infant, neonatal, perinatal.
+     *
+     * @return array<string, mixed>
+     */
+    private static function mortalitySummaries(Carbon $start, Carbon $end, ?string $zone, ?User $user): array
+    {
+        $allowed = self::accessiblePatientQuery($zone, $user);
+
+        $deathsQuery = DB::table('deaths')
+            ->join('patients', 'deaths.patient_id', '=', 'patients.id')
+            ->whereIn('patients.id', $allowed)
+            ->whereBetween('deaths.date_of_death', [$start->toDateString(), $end->toDateString()]);
+
+        $totalDeaths = (clone $deathsQuery)->count();
+
+        $maternalDeaths = (clone $deathsQuery)->where('maternal_death', true)->count();
+        $perinatalDeaths = (clone $deathsQuery)->where('perinatal_death', true)->count();
+        $neonatalDeaths = (clone $deathsQuery)->where('neonatal_death', true)->count();
+        $infantDeaths = (clone $deathsQuery)->where('infant_death', true)->count();
+        $underFiveDeaths = (clone $deathsQuery)->where('under_five_death', true)->count();
+
+        return [
+            'totalDeaths' => (int) $totalDeaths,
+            'maternalDeaths' => (int) $maternalDeaths,
+            'perinatalDeaths' => (int) $perinatalDeaths,
+            'neonatalDeaths' => (int) $neonatalDeaths,
+            'infantDeaths' => (int) $infantDeaths,
+            'underFiveDeaths' => (int) $underFiveDeaths,
         ];
     }
 
@@ -690,6 +899,18 @@ final class MchEpiFpReportService
                 ];
             });
 
+        $clientsBySex = (clone $clientsQuery)
+            ->select('patients.sex as sex', DB::raw('COUNT(*) as total'))
+            ->groupBy('patients.sex')
+            ->pluck('total', 'sex')
+            ->toArray();
+
+        $clientsBySex = array_merge(
+            ['Male' => 0, 'Female' => 0, 'Total' => 0],
+            $clientsBySex
+        );
+        $clientsBySex['Total'] = $clientsBySex['Male'] + $clientsBySex['Female'];
+
         return [
             'rows' => $rows,
             'totalNew' => (int) $rows->sum('new_acceptors'),
@@ -698,6 +919,7 @@ final class MchEpiFpReportService
             'totalOthers' => (int) $rows->sum('others'),
             'totalVisits' => (int) $rows->sum('visits'),
             'totalClients' => (int) $rows->sum('total'),
+            'clientsBySex' => $clientsBySex,
         ];
     }
 

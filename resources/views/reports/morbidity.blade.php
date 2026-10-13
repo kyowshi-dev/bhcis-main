@@ -84,50 +84,151 @@
                             Download PDF
                         </button>
                     </div>
+                    <div class="sm:w-40">
+                        <a href="{{ route('reports.morbidity.export.csv', ['month' => $month, 'year' => $year, 'sex' => $sex, 'zone' => $selectedZone, 'age_group' => $age_group]) }}"
+                           class="block w-full text-center px-3 lg:px-4 py-2 rounded-lg text-white text-xs lg:text-sm font-medium transition-colors hover:opacity-90"
+                           style="background: var(--primary);">
+                            Export CSV
+                        </a>
+                    </div>
                 </div>
             </form>
         </div>
 
-    <div class="bg-surface rounded-xl mt-7 lg:rounded-2xl border border-border overflow-hidden print:shadow-none">
-        <div class="p-3 lg:p-6 border-b border-border bg-teal-soft">
-            <p class="font-semibold text-xs lg:text-sm text-ink">Integrated Health Information System - Sta. Ana</p>
-            <p class="text-xs lg:text-sm text-ink-muted">In Compliance with Department of Health - Field Health Service Information System (FHSIS)</p>
-            <p class="text-xs lg:text-sm text-ink-muted mt-1">Report Period: {{ $reportDate }}</p>
-        </div>
+    @include('reports.partials._fhsis-header', [
+    'formCode' => 'M2',
+    'reportDate' => $reportDate,
+    'projectedPopulation' => \App\Models\ApplicationSetting::get('projected_population'),
+    'mode' => 'screen',
+])
 
-        <div class="overflow-x-auto">
-            <table class="min-w-full text-left text-xs lg:text-sm">
-                <thead class="bg-teal-soft border-b border-border">
-                    <tr>
-                        <th class="px-2 lg:px-4 py-2 lg:py-3 font-semibold text-ink w-12 lg:w-16 whitespace-nowrap">Rank</th>
-                        <th class="px-2 lg:px-4 py-2 lg:py-3 font-semibold text-ink w-20 lg:w-24 whitespace-nowrap">ICD Code</th>
-                        <th class="px-2 lg:px-4 py-2 lg:py-3 font-semibold text-ink">Diagnosis / Cause</th>
-                        <th class="px-2 lg:px-4 py-2 lg:py-3 font-semibold text-ink w-20 lg:w-24 text-right whitespace-nowrap">Cases</th>
+@php
+    $ageBands = $matrix['ageBands'] ?? [];
+    $sexLabels = $matrix['sexLabels'] ?? ['Male', 'Female', 'Total'];
+    $matrixRows = $matrix['rows'] ?? collect();
+    $leadingCauses = $leadingCauses ?? [];
+@endphp
+
+{{-- M2 Matrix Table --}}
+<div class="mb-6">
+    <h3 class="text-sm font-semibold mb-3 text-ink">M2 Matrix: Cases by Diagnosis, Age Band, and Sex</h3>
+    <div class="overflow-x-auto">
+        <table class="min-w-full text-left text-xs lg:text-sm">
+            <thead class="bg-teal-soft border-b border-border sticky top-0 z-10">
+                <tr>
+                    <th class="px-2 lg:px-3 py-2 font-semibold text-ink w-24 whitespace-nowrap sticky left-0 z-20">Diagnosis</th>
+                    <th class="px-2 lg:px-3 py-2 font-semibold text-ink w-16 whitespace-nowrap sticky left-24 z-20">ICD</th>
+                    <th class="px-1 lg:px-2 py-2 font-semibold text-ink w-14 whitespace-nowrap text-center">Total</th>
+                    @foreach ($ageBands as $band)
+                        @foreach ($sexLabels as $sexLabel)
+                            <th class="px-1 lg:px-2 py-2 font-semibold text-ink w-12 whitespace-nowrap text-center">{{ $band }}<br>{{ $sexLabel }}</th>
+                        @endforeach
+                    @endforeach
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+                @forelse ($matrixRows as $row)
+                    <tr class="hover:bg-teal-soft/50">
+                        <td class="px-2 lg:px-3 py-2 text-ink sticky left-0 z-10">{{ $row->diagnosis_name }}</td>
+                        <td class="px-2 lg:px-3 py-2 text-ink sticky left-24 z-10">{{ $row->diagnosis_code }}</td>
+                        <td class="px-1 lg:px-2 py-2 text-center font-semibold text-ink">{{ number_format($row->total_cases) }}</td>
+                        @foreach ($ageBands as $band)
+                            @foreach ($sexLabels as $sexLabel)
+                                <td class="px-1 lg:px-2 py-2 text-center text-ink">
+                                    {{ number_format($row->{"{$band}_{$sexLabel}"} ?? 0) }}
+                                </td>
+                            @endforeach
+                        @endforeach
                     </tr>
-                </thead>
-                <tbody class="divide-y divide-border">
-                    @forelse ($rows as $rank => $row)
-                        <tr class="hover:bg-teal-soft/50">
-                            <td class="px-2 lg:px-4 py-2 lg:py-3 font-medium text-ink">{{ $rank + 1 }}</td>
-                            <td class="px-2 lg:px-4 py-2 lg:py-3 text-ink">{{ $row->diagnosis_code }}</td>
-                            <td class="px-2 lg:px-4 py-2 lg:py-3 text-ink">{{ $row->diagnosis_name }}</td>
-                            <td class="px-2 lg:px-4 py-2 lg:py-3 text-right font-semibold text-ink">{{ number_format($row->case_count) }}</td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="4" class="px-4 py-6 lg:py-8 text-center text-ink-muted text-sm">No morbidity data for this period.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                @empty
+                    <tr>
+                        <td colspan="{{ 3 + count($ageBands) * count($sexLabels) }}" class="px-4 py-6 lg:py-8 text-center text-ink-muted text-sm">No morbidity data for this period.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
 
-        @if ($rows->isNotEmpty())
-            <div class="px-3 lg:px-4 py-2 lg:py-3 bg-teal-soft border-t border-border text-xs lg:text-sm font-semibold text-ink">
-                Total cases: {{ number_format($totalCases) }}
+{{-- Leading Causes Sections A.2.a-g --}}
+<div class="space-y-6">
+    @foreach (['all_ages', 'males', 'females', 'under_5', 'adolescents_10_19', 'seniors_60_plus', 'all_ages_by_rate'] as $sectionKey)
+        @if (isset($leadingCauses[$sectionKey]))
+            @php
+                $section = $leadingCauses[$sectionKey];
+                $rows = $section['rows'] ?? collect();
+                $isRateSection = $sectionKey === 'all_ages_by_rate';
+            @endphp
+            <div class="rounded-xl border p-4 lg:p-5" style="background: var(--bg-surface); border-color: var(--border);">
+                <h4 class="text-xs lg:text-sm font-semibold mb-3" style="color: var(--ink);">{{ $section['label'] }}</h4>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-left text-xs lg:text-sm">
+                        <thead class="bg-teal-soft border-b border-border">
+                            <tr>
+                                <th class="px-2 lg:px-3 py-2 font-semibold text-ink w-10 whitespace-nowrap">Rank</th>
+                                <th class="px-2 lg:px-3 py-2 font-semibold text-ink w-16 whitespace-nowrap">ICD</th>
+                                <th class="px-2 lg:px-3 py-2 font-semibold text-ink">Diagnosis</th>
+                                <th class="px-2 lg:px-3 py-2 font-semibold text-ink w-14 whitespace-nowrap text-right">Cases</th>
+                                @if ($isRateSection)
+                                    <th class="px-2 lg:px-3 py-2 font-semibold text-ink w-24 whitespace-nowrap text-right">Rate/100k</th>
+                                @endif
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-border">
+                            @foreach ($rows->take(10) as $row)
+                                <tr class="hover:bg-teal-soft/50">
+                                    <td class="px-2 lg:px-3 py-2 font-medium text-ink">{{ $row->rank ?? $loop->iteration }}</td>
+                                    <td class="px-2 lg:px-3 py-2 text-ink">{{ $row->diagnosis_code }}</td>
+                                    <td class="px-2 lg:px-3 py-2 text-ink">{{ $row->diagnosis_name }}</td>
+                                    <td class="px-2 lg:px-3 py-2 text-right font-semibold text-ink">{{ number_format($row->case_count) }}</td>
+                                    @if ($isRateSection)
+                                        <td class="px-2 lg:px-3 py-2 text-right text-ink">{{ number_format($row->rate_per_100k ?? 0, 2) }}</td>
+                                    @endif
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
         @endif
+    @endforeach
 </div>
+
+{{-- Keep original ranked table as fallback --}}
+@if ($rows->isNotEmpty())
+<div class="mt-6 rounded-xl border p-4 lg:p-5" style="background: var(--bg-surface); border-color: var(--border);">
+    <h3 class="text-sm font-semibold mb-3 text-ink">Ranked Leading Causes (All Ages)</h3>
+    <div class="overflow-x-auto">
+        <table class="min-w-full text-left text-xs lg:text-sm">
+            <thead class="bg-teal-soft border-b border-border">
+                <tr>
+                    <th class="px-2 lg:px-4 py-2 lg:py-3 font-semibold text-ink w-12 lg:w-16 whitespace-nowrap">Rank</th>
+                    <th class="px-2 lg:px-4 py-2 lg:py-3 font-semibold text-ink w-20 lg:w-24 whitespace-nowrap">ICD Code</th>
+                    <th class="px-2 lg:px-4 py-2 lg:py-3 font-semibold text-ink">Diagnosis / Cause</th>
+                    <th class="px-2 lg:px-4 py-2 lg:py-3 font-semibold text-ink w-20 lg:w-24 text-right whitespace-nowrap">Cases</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+                @forelse ($rows as $rank => $row)
+                    <tr class="hover:bg-teal-soft/50">
+                        <td class="px-2 lg:px-4 py-2 lg:py-3 font-medium text-ink">{{ $rank + 1 }}</td>
+                        <td class="px-2 lg:px-4 py-2 lg:py-3 text-ink">{{ $row->diagnosis_code }}</td>
+                        <td class="px-2 lg:px-4 py-2 lg:py-3 text-ink">{{ $row->diagnosis_name }}</td>
+                        <td class="px-2 lg:px-4 py-2 lg:py-3 text-right font-semibold text-ink">{{ number_format($row->case_count) }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="4" class="px-4 py-6 lg:py-8 text-center text-ink-muted text-sm">No morbidity data for this period.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+    <div class="px-3 lg:px-4 py-2 lg:py-3 bg-teal-soft border-t border-border text-xs lg:text-sm font-semibold text-ink mt-3">
+        Total cases: {{ number_format($totalCases) }}
+    </div>
+</div>
+@endif
 
 <script>
 (function () {

@@ -53,11 +53,15 @@
                 <input type="text" id="search" name="search" value="{{ $filters['search'] }}" placeholder="Last name or first name" class="w-full rounded-lg border py-2 text-xs lg:text-sm focus:outline-none focus:ring-2 transition" style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);" autocomplete="off">
             </div>
 
-            <div class="flex gap-2">
+            <div class="flex gap-2 flex-wrap">
                 <button type="submit" class="px-4 py-2 rounded-lg text-white text-xs lg:text-sm font-medium transition-colors hover:opacity-90" style="background: var(--primary);">Apply</button>
                 <button type="button" x-on:click="downloadPdf()" class="px-4 py-2 rounded-lg text-white text-xs lg:text-sm font-medium transition-colors hover:opacity-90" style="background: var(--primary);">
                     Download PDF
                 </button>
+                <a href="{{ route('reports.mch-epi-fp.export.csv', $filters) }}"
+                   class="px-4 py-2 rounded-lg text-white text-xs lg:text-sm font-medium transition-colors hover:opacity-90" style="background: var(--primary);">
+                    Export CSV
+                </a>
             </div>
         </div>
     </form>
@@ -92,6 +96,30 @@
                         <dd class="font-semibold" style="color: var(--ink);">{{ number_format($maternal['totalDeliveries']) }}</dd>
                     </div>
                     <div class="flex justify-between gap-3">
+                        <dt style="color: var(--ink-muted);">TT doses</dt>
+                        <dd class="font-semibold" style="color: var(--ink);">{{ number_format($maternal['ttDoses']) }}</dd>
+                    </div>
+                    <div class="flex justify-between gap-3">
+                        <dt style="color: var(--ink-muted);">Iron supplementation</dt>
+                        <dd class="font-semibold" style="color: var(--ink);">{{ number_format($maternal['ironSupplemented']) }}</dd>
+                    </div>
+                    <div class="flex justify-between gap-3">
+                        <dt style="color: var(--ink-muted);">Syphilis screening - reactive</dt>
+                        <dd class="font-semibold" style="color: var(--ink);">{{ number_format($maternal['syphilisPositive']) }}</dd>
+                    </div>
+                    <div class="flex justify-between gap-3 text-xs" style="color: var(--ink-muted);">
+                        <dt>Deliveries by attendant</dt>
+                        <dd>
+                            @if ($maternal['deliveriesByAttendant']->isEmpty())
+                                -
+                            @else
+                                @foreach ($maternal['deliveriesByAttendant'] as $attendant)
+                                    {{ \App\Services\MchEpiFpReportService::attendantLabel((string) $attendant->key) }}: {{ number_format($attendant->total) }}@unless($loop->last) · @endunless
+                                @endforeach
+                            @endif
+                        </dd>
+                    </div>
+                    <div class="flex justify-between gap-3">
                         <dt style="color: var(--ink-muted);">Postnatal visits</dt>
                         <dd class="font-semibold" style="color: var(--ink);">{{ number_format($maternal['postpartum24h'] + $maternal['postpartum7d'] + $maternal['postpartum14d'] + $maternal['postpartum28d']) }}</dd>
                     </div>
@@ -118,6 +146,24 @@
                     <div class="flex justify-between gap-3">
                         <dt style="color: var(--ink-muted);">Total doses given</dt>
                         <dd class="font-semibold" style="color: var(--ink);">{{ number_format($epi['totalDoses']) }}</dd>
+                    </div>
+                    <div class="flex justify-between gap-3">
+                        <dt style="color: var(--ink-muted);">Fully Immunized Children (FIC)</dt>
+                        <dd class="font-semibold" style="color: var(--ink);">{{ number_format($epi['fic'] ?? 0) }}</dd>
+                    </div>
+                    <div class="flex justify-between gap-3">
+                        <dt style="color: var(--ink-muted);">Child Protected at Birth (CPAB)</dt>
+                        <dd class="font-semibold" style="color: var(--ink);">{{ number_format($epi['cpab'] ?? 0) }}</dd>
+                    </div>
+                    <div class="flex justify-between gap-3 text-xs" style="color: var(--ink-muted);">
+                        <dt>Doses by sex</dt>
+                        <dd>
+                            @if (!empty($epi['dosesBySex']))
+                                Male: {{ number_format($epi['dosesBySex']['Male'] ?? 0) }} · Female: {{ number_format($epi['dosesBySex']['Female'] ?? 0) }} · Total: {{ number_format($epi['dosesBySex']['Total'] ?? 0) }}
+                            @else
+                                -
+                            @endif
+                        </dd>
                     </div>
                 </dl>
             </div>
@@ -147,6 +193,47 @@
                         <dt style="color: var(--ink-muted);">Visits conducted</dt>
                         <dd class="font-semibold" style="color: var(--ink);">{{ number_format($fp['totalVisits']) }}</dd>
                     </div>
+                    <div class="flex justify-between gap-3">
+                        <dt style="color: var(--ink-muted);">Total clients</dt>
+                        <dd class="font-semibold" style="color: var(--ink);">{{ number_format($fp['totalClients'] ?? 0) }}</dd>
+                    </div>
+                    <div class="flex justify-between gap-3 text-xs" style="color: var(--ink-muted);">
+                        <dt>Clients by sex</dt>
+                        <dd>
+                            @if (!empty($fp['clientsBySex']))
+                                Male: {{ number_format($fp['clientsBySex']['Male'] ?? 0) }} · Female: {{ number_format($fp['clientsBySex']['Female'] ?? 0) }} · Total: {{ number_format($fp['clientsBySex']['Total'] ?? 0) }}
+                            @else
+                                -
+                            @endif
+                        </dd>
+                    </div>
+                </dl>
+            </div>
+        @endif
+
+        @if (!empty($report['summaries']['natality']))
+            @php $natality = $report['summaries']['natality']; @endphp
+            <div class="rounded-xl border p-4 lg:p-5" style="background: var(--bg-surface); border-color: var(--border);">
+                <h2 class="text-sm font-semibold mb-3" style="color: var(--ink);">Natality (M1 Section I)</h2>
+                <dl class="space-y-2 text-xs lg:text-sm">
+                    <div class="flex justify-between gap-3">
+                        <dt style="color: var(--ink-muted);">Live births</dt>
+                        <dd class="font-semibold" style="color: var(--ink);">{{ number_format($natality['liveBirths'] ?? 0) }}</dd>
+                    </div>
+                    <div class="flex justify-between gap-3">
+                        <dt style="color: var(--ink-muted);">Crude Birth Rate (per 1,000)</dt>
+                        <dd class="font-semibold" style="color: var(--ink);">{{ number_format($natality['cbr'] ?? 0, 2) }}</dd>
+                    </div>
+                    <div class="flex justify-between gap-3 text-xs" style="color: var(--ink-muted);">
+                        <dt>Live births by mother age band</dt>
+                        <dd>
+                            @if (!empty($natality['byMotherAge']))
+                                10-14: {{ number_format($natality['byMotherAge']['10-14'] ?? 0) }} · 15-19: {{ number_format($natality['byMotherAge']['15-19'] ?? 0) }} · 20-49: {{ number_format($natality['byMotherAge']['20-49'] ?? 0) }}
+                            @else
+                                -
+                            @endif
+                        </dd>
+                    </div>
                 </dl>
             </div>
         @endif
@@ -162,14 +249,14 @@
     $rowsByProgram = $report['rows']->groupBy('program');
 @endphp
 
-<div class="bg-surface rounded-xl mt-7 lg:rounded-2xl border border-border overflow-hidden print:shadow-none">
-    <div class="p-3 lg:p-6 border-b border-border bg-teal-soft">
-        <p class="font-semibold text-xs lg:text-sm text-ink">Integrated Health Information System - Sta. Ana</p>
-        <p class="text-xs lg:text-sm text-ink-muted">In Compliance with Department of Health - Field Health Service Information System (FHSIS)</p>
-        <p class="text-xs lg:text-sm text-ink-muted mt-1">Report Period: {{ $report['reportDate'] }}</p>
-    </div>
+@include('reports.partials._fhsis-header', [
+    'formCode' => 'M1',
+    'reportDate' => $report['reportDate'],
+    'projectedPopulation' => \App\Models\ApplicationSetting::get('projected_population'),
+    'mode' => 'screen',
+])
 
-    @foreach ($registerPrograms as $registerProgram)
+@foreach ($registerPrograms as $registerProgram)
         @if ($report['summaries'][$registerProgram] === null)
             @continue
         @endif
@@ -227,7 +314,6 @@
             <x-pagination :paginator="$report['rows']" />
         </div>
     @endif
-</div>
 
 <script>
 (function () {
