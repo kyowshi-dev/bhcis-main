@@ -26,7 +26,10 @@ final class DashboardChartsService
             ->withLegend()
             ->setDataLabelsEnabled(true)
             ->setAnimated(false)
-            ->setColors(['#0d4a3c']);
+            // Mid-tone green reads on both light and dark cards (first visit
+            // before the theme cookie exists); ApexCharts axes follow theme mode.
+            ->setColors(['#15803d'])
+            ->setThemeMode(self::chartThemeMode());
 
         for ($daysAgo = 6; $daysAgo >= 0; $daysAgo--) {
             $date = $today->copy()->subDays($daysAgo);
@@ -41,17 +44,18 @@ final class DashboardChartsService
      */
     public static function presentingIllnessesChart(Collection $rows): PieChartModel
     {
-        $colors = ['#0d4a3c', '#f97316', '#ec4899', '#22c55e', '#3b82f6', '#f59e0b'];
+        $colors = ['#15803d', '#f97316', '#ec4899', '#22c55e', '#3b82f6', '#f59e0b'];
 
         $chart = (new PieChartModel)
             ->setTitle('Top presenting illnesses')
             ->asDonut()
             ->withoutLegend()
             ->setDataLabelsEnabled(false)
-            ->setColors($colors);
+            ->setColors($colors)
+            ->setThemeMode(self::chartThemeMode());
 
         if ($rows->isEmpty()) {
-            $chart->addSlice('No diagnoses', 1, '#cbd5e1');
+            $chart->addSlice('No diagnoses', 1, '#94a3b8');
 
             return $chart;
         }
@@ -65,5 +69,14 @@ final class DashboardChartsService
         }
 
         return $chart;
+    }
+
+    /**
+     * Resolved theme from the unencrypted cookie written by the app JS
+     * ("light" or "dark"; preference "system" is resolved client-side).
+     */
+    private static function chartThemeMode(): string
+    {
+        return ($_COOKIE['bhcis-theme'] ?? null) === 'dark' ? 'dark' : 'light';
     }
 }

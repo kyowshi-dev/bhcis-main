@@ -90,16 +90,21 @@
                                 ->where('households.zone_id', $zone->id)
                                 ->select(
                                     'households.id',
-                                    'households.family_name_head',
+                                    'households.head_first_name',
+                                    'households.head_middle_name',
+                                    'households.head_last_name',
+                                    'households.head_suffix',
                                     'households.contact_number',
                                     DB::raw('COUNT(p.id) as member_count')
                                 )
-                                ->groupBy('households.id', 'households.family_name_head', 'households.contact_number')
+                                ->groupBy('households.id', 'households.head_first_name', 'households.head_middle_name', 'households.head_last_name', 'households.head_suffix', 'households.contact_number')
                                 ->get();
                         @endphp
                         @forelse ($households as $household)
                             <tr class="transition-colors hover:bg-black/[0.02]">
-                                <td class="px-3 lg:px-4 py-2 lg:py-3" style="color: var(--ink);">{{ $household->family_name_head }}</td>
+                                <td class="px-3 lg:px-4 py-2 lg:py-3" style="color: var(--ink);">
+                                    {{ fullName($household->head_last_name, $household->head_first_name, $household->head_middle_name, $household->head_suffix) }}
+                                </td>
                                 <td class="px-3 lg:px-4 py-2 lg:py-3 hidden sm:table-cell" style="color: var(--ink-muted);">{{ $household->contact_number ?? '-' }}</td>
                                 <td class="px-3 lg:px-4 py-2 lg:py-3 hidden md:table-cell" style="color: var(--ink-muted);">{{ $household->member_count ?? 0 }}</td>
                             </tr>

@@ -9,7 +9,7 @@
 @endphp
 
 @if ($success || $error || $errorsAny)
-    <div class="mb-3 space-y-2" role="region" aria-label="Status messages">
+    <div class="mb-3 space-y-2" role="region" aria-label="Status messages" data-auto-dismiss data-auto-dismiss-delay="10000">
         @if ($success)
             <div class="flex items-start gap-3 rounded-xl border border-primary/25 bg-teal-soft px-4 py-3 text-sm" role="status">
                 <i class="fa-solid fa-circle-check mt-0.5 text-primary" aria-hidden="true"></i>

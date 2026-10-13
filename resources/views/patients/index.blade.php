@@ -30,11 +30,11 @@
         </div>
         <div class="flex items-center gap-2 shrink-0">
             <a href="{{ route('patients.index', array_filter(['sort' => $patientSort, 'dir' => $patientDir, 'trashed' => $showTrashed ? null : 1])) }}"
-               class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-200 border {{ $showTrashed ? 'border-amber bg-amber-50 text-amber' : 'border-border text-ink-muted hover:bg-black/[0.03]' }}">
+               class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-200 border {{ $showTrashed ? 'border-amber bg-amber-soft text-amber' : 'border-border text-ink-muted hover:bg-black/[0.03]' }}">
                 <i class="fa-solid fa-box-archive" aria-hidden="true"></i>
                 {{ $showTrashed ? 'Showing Archived' : 'Archived' }}
             </a>
-            <x-btn href="{{ url('/patients/create') }}" icon="fa-solid fa-user-plus">
+            <x-btn href="{{ route('patients.create') }}" icon="fa-solid fa-user-plus">
                 Enrol New Patient
             </x-btn>
         </div>
@@ -128,7 +128,7 @@
                             <td class="px-4 py-2.5 font-medium whitespace-nowrap" style="color: var(--ink);">
                                 {{ \App\Helpers\PatientCode::format((int) $patient->id) }}
                                 @if($patient->trashed())
-                                    <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber">Archived</span>
+                                    <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-soft text-amber">Archived</span>
                                 @endif
                             </td>
                             <td class="px-4 py-2.5" style="color: var(--ink);">
@@ -175,7 +175,7 @@
                                         <div class="mb-3 flex justify-center"><i class="fa-solid fa-clipboard-list text-3xl" style="color: var(--ink-subtle);"></i></div>
                                         <p class="text-sm font-medium" style="color: var(--ink);">No patient records yet</p>
                                         <p class="text-xs mt-1 mb-3" style="color: var(--ink-muted);">Start by registering a patient to track their health data</p>
-                                        <x-btn href="{{ url('/patients/create') }}" icon="fa-solid fa-plus">
+                                        <x-btn href="{{ route('patients.create') }}" icon="fa-solid fa-plus">
     Register first patient
 </x-btn>
                                     </div>

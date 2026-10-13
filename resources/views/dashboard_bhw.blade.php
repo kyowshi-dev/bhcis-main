@@ -28,7 +28,7 @@
                        style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);"
                        autocomplete="off">
             </div>
-            <a href="{{ url('/patients/create') }}" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-white transition hover:opacity-90 shrink-0" style="background: var(--primary);">
+            <a href="{{ route('patients.create') }}" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-white transition hover:opacity-90 shrink-0" style="background: var(--primary);">
                 <i class="fa-solid fa-user-plus" aria-hidden="true"></i>
                 Enrol New Patient
             </a>
@@ -52,53 +52,8 @@
             <div class="flex justify-center mb-2"><i class="fa-solid fa-user-plus text-3xl" style="color: var(--ink-subtle);" aria-hidden="true"></i></div>
             <p class="text-sm font-medium" style="color: var(--ink);">No patient found</p>
             <p class="text-xs mt-1 mb-3" style="color: var(--ink-muted);">Try searching with a different name or ID</p>
-            <a href="{{ url('/patients/create') }}" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-white transition hover:opacity-90" style="background: var(--primary);"><i class="fa-solid fa-plus" aria-hidden="true"></i> Enrol a new patient</a>
+            <a href="{{ route('patients.create') }}" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-white transition hover:opacity-90" style="background: var(--primary);"><i class="fa-solid fa-plus" aria-hidden="true"></i> Enrol a new patient</a>
         </div>
-    </div>
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-        <x-kpi-card
-            label="Total patients"
-            :value="$totalPatients ?? 0"
-            icon="fa-solid fa-users"
-            tone="primary"
-            :href="route('patients.index')"
-            :hrefLabel="auth()->user()?->hasPermission('patients') ? 'View registry' : null"
-            :zeroState="auth()->user()?->hasPermission('patients') ? null : 'Registered records'"
-            :animateDelay="3"
-        />
-
-        <x-kpi-card
-            label="Consultations today"
-            :value="$consultationsToday ?? 0"
-            icon="fa-solid fa-stethoscope"
-            tone="primary"
-            :href="route('consultations.index')"
-            :hrefLabel="'View visits'"
-            :animateDelay="4"
-        />
-
-        <x-kpi-card
-            label="Pending Queue"
-            :value="$pendingConsultations ?? 0"
-            icon="fa-solid fa-hourglass-half"
-            :tone="($pendingConsultations ?? 0) > 0 ? 'blue' : 'primary'"
-            :href="route('consultations.index')"
-            :hrefLabel="($pendingConsultations ?? 0) > 0 ? 'Open queue' : null"
-            :zeroState="($pendingConsultations ?? 0) === 0 ? 'Queue is clear' : null"
-            :animateDelay="5"
-        />
-
-        <x-kpi-card
-            label="Referrals today"
-            :value="$referralsToday ?? 0"
-            icon="fa-solid fa-arrow-right-arrow-left"
-            tone="amber"
-            :href="route('referrals.index')"
-            :hrefLabel="auth()->user()?->hasPermission('consultations') ? 'View referrals' : null"
-            :zeroState="auth()->user()?->hasPermission('consultations') ? null : 'All referred patients'"
-            :animateDelay="6"
-        />
     </div>
 
     <div>

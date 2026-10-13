@@ -106,6 +106,7 @@
 
         <div class="lg:col-span-4 space-y-4">
             @php $canConsultations = auth()->user()?->hasPermission('consultations') ?? false; @endphp
+            @php $canReferrals = auth()->user()?->hasPermission('referrals') ?? false; @endphp
             @if ($canConsultations)
             <div class="animate-in opacity-0 delay-6 rounded-xl border p-4 lg:p-5"
                  style="background: var(--bg-surface); border-color: var(--border); box-shadow: var(--shadow-sm);">
@@ -150,11 +151,13 @@
                     </ul>
                 @endif
 
+                @if ($canReferrals)
                 <a href="{{ route('referrals.index') }}"
                    class="block mt-3 text-center text-xs font-semibold hover:underline"
                    style="color: var(--primary);">
                     View all referrals
                 </a>
+                @endif
             </div>
             @endif
 
@@ -168,12 +171,14 @@
                         <i class="fa-solid fa-folder-open mr-2" aria-hidden="true"></i>
                         Open patient records
                     </a>
+                    @if ($canReferrals)
                     <a href="{{ route('referrals.index') }}"
                        class="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold border transition hover:bg-black/[0.02]"
                        style="border-color: var(--border); color: var(--primary);">
                         <i class="fa-solid fa-arrow-up-right-from-square mr-2" aria-hidden="true"></i>
                         View referrals
                     </a>
+                    @endif
                 </div>
             </div>
         </div>

@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'BHCIS') - Sta. Ana</title>
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('bhcis-theme');
+                var dark = stored === 'dark' || (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
     <link rel="icon" type="image/svg+xml" href="{{ asset('img/logo.svg') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,37 +23,217 @@
     <style>
         .auth-body {
             min-height: 100vh;
+            font-family: var(--font-sans, Poppins, sans-serif);
+            color: var(--ink);
+            background: var(--bg-page);
+        }
+
+        .auth-shell {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Brand panel: compact strip on mobile, full panel from lg --- */
+
+        .auth-brand {
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            color: var(--on-primary);
+            background: linear-gradient(165deg, var(--primary-light) 0%, var(--primary) 50%, var(--primary-hover) 100%);
+        }
+
+        .auth-brand::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: url('{{ asset('img/bg.svg') }}') center/cover no-repeat;
+            opacity: 0.08;
+            pointer-events: none;
+        }
+
+        .auth-brand-inner {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 2rem;
+            width: 100%;
+        }
+
+        .auth-brand-top {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+        }
+
+        .auth-brand-logo {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            flex-shrink: 0;
+        }
+
+        .auth-brand-name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        .auth-brand-facility {
+            font-size: 0.78rem;
+            opacity: 0.85;
+            margin-top: 0.15rem;
+        }
+
+        .auth-brand-foot {
+            display: none;
+            font-size: 0.78rem;
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+
+        .auth-brand-foot a {
+            color: var(--on-primary);
+            font-weight: 600;
+        }
+
+        .auth-brand-foot a:hover {
+            text-decoration: underline;
+        }
+
+        /* --- Form panel --- */
+
+        .auth-panel {
+            position: relative;
+            overflow: hidden;
+            flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: var(--font-sans, Poppins, sans-serif);
-            background:
-                linear-gradient(160deg, rgba(13, 74, 60, 0.88) 0%, rgba(10, 61, 50, 0.92) 100%),
-                url('{{ asset('img/bg.svg') }}') center/cover no-repeat,
-                var(--bg-page);
+            padding: clamp(1.25rem, 4vw, 3rem) clamp(1rem, 4vw, 2.5rem);
+        }
+
+        /* Decorative polka dots - static, token-colored, aria-hidden */
+        .auth-deco {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .auth-deco svg {
+            position: absolute;
+            display: block;
+            overflow: visible;
+        }
+
+        .auth-deco-tr {
+            top: 1.5rem;
+            right: 1.5rem;
+        }
+
+        .auth-deco-bl {
+            bottom: 1.5rem;
+            left: 1.5rem;
         }
 
         .auth-card {
-            width: min(92vw, 480px);
-            margin-left: auto;
-            margin-right: auto;
+            position: relative;
+            z-index: 1;
+            width: min(100%, 26rem);
             background: var(--bg-surface-elevated);
-            border: 1px solid rgba(255, 255, 255, 0.6);
+            border: 1px solid var(--border);
             border-radius: 1.25rem;
-            box-shadow: 0 24px 60px -16px rgba(0, 0, 0, 0.45);
-            padding: clamp(1.5rem, 3vw, 2.5rem);
+            box-shadow: var(--shadow-lg);
+            padding: clamp(1.5rem, 4vw, 2.25rem);
         }
 
-        .auth-title {
-            font-size: clamp(1rem, 2.2vw, 1.25rem);
-            color: var(--primary);
+        /* Brand-panel polka dots - desktop only */
+        .auth-brand-deco {
+            display: none;
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
         }
+
+        .auth-brand-deco svg {
+            position: absolute;
+            display: block;
+            overflow: visible;
+        }
+
+        .auth-brand-deco-tr {
+            top: 1.5rem;
+            right: 1.5rem;
+        }
+
+        .auth-brand-deco-br {
+            bottom: 1.5rem;
+            right: 1.5rem;
+        }
+
+        .auth-heading {
+            font-size: clamp(1.35rem, 3vw, 1.6rem);
+            font-weight: 700;
+            color: var(--ink);
+            line-height: 1.25;
+        }
+
+        .auth-helper {
+            font-size: 0.82rem;
+            color: var(--ink-muted);
+            line-height: 1.55;
+            margin-top: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .auth-card-foot {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            font-size: 0.75rem;
+            line-height: 1.5;
+            color: var(--ink-muted);
+        }
+
+        .auth-card-foot a {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .auth-card-foot a:hover {
+            text-decoration: underline;
+        }
+
+        .auth-links-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .auth-brand-inline-meta {
+            display: none;
+        }
+
+        /* --- Fields / button --- */
 
         .auth-input {
             width: 100%;
+            min-height: 3rem;
             border: 1px solid var(--border);
             border-radius: 0.75rem;
-            padding: 0.75rem 1rem;
+            padding: 0.8rem 1rem;
             font-size: 0.875rem;
             color: var(--ink);
             background: #ffffff;
@@ -63,11 +252,12 @@
 
         .auth-btn {
             width: 100%;
+            min-height: 3rem;
             border-radius: 0.75rem;
             padding: 0.75rem 1rem;
             font-size: 0.875rem;
             font-weight: 600;
-            color: #ffffff;
+            color: var(--on-primary);
             background: var(--primary);
             box-shadow: 0 4px 14px -2px rgba(13, 74, 60, 0.5);
             transition: opacity 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
@@ -157,13 +347,13 @@
         .pw-toggle {
             position: absolute;
             top: 50%;
-            right: 0.85rem;
+            right: 0.25rem;
             transform: translateY(-50%);
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 28px;
-            height: 28px;
+            width: 44px;
+            height: 44px;
             border: none;
             background: transparent;
             color: var(--ink-muted);
@@ -174,25 +364,144 @@
             color: var(--ink);
         }
 
+        .pw-toggle:focus-visible {
+            outline: none;
+            border-radius: 0.5rem;
+            box-shadow: 0 0 0 3px var(--ring);
+        }
+
         .pw-wrap .auth-input {
-            padding-right: 2.75rem;
+            padding-right: 3.25rem;
+        }
+
+        /* --- Split-screen from lg --- */
+
+        @media (min-width: 1024px) {
+            .auth-shell {
+                flex-direction: row;
+            }
+
+            .auth-brand {
+                flex: 0 0 clamp(340px, 40%, 520px);
+                align-items: stretch;
+                padding: clamp(2rem, 4vw, 3.5rem);
+            }
+
+            .auth-brand-top {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1.5rem;
+            }
+
+            .auth-brand-logo {
+                width: 64px;
+                height: 64px;
+                border-radius: 16px;
+                box-shadow: var(--shadow-md);
+            }
+
+            .auth-brand-name {
+                font-size: clamp(1.35rem, 1.8vw, 1.75rem);
+                line-height: 1.25;
+            }
+
+            .auth-brand-facility {
+                font-size: 0.9rem;
+                margin-top: 0.35rem;
+            }
+
+            .auth-brand-foot {
+                display: block;
+            }
+
+            .auth-brand-deco {
+                display: block;
+            }
+        }
+
+        @media (max-width: 1023.98px) {
+            .auth-brand-inline-meta {
+                display: block;
+            }
         }
     </style>
 </head>
 <body class="auth-body antialiased">
-    <div class="relative z-10 w-full px-4">
-        @yield('content')
+    <div class="auth-shell">
+        <aside class="auth-brand" aria-label="BHCIS Sta. Ana identity">
+            <div class="auth-brand-deco" aria-hidden="true">
+                <svg class="auth-brand-deco-tr" width="48" height="48" viewBox="0 0 48 48" focusable="false">
+                    <circle cx="38" cy="10" r="7" fill="rgba(255,255,255,0.16)" />
+                    <circle cx="18" cy="22" r="4" fill="rgba(255,255,255,0.11)" />
+                </svg>
+                <svg class="auth-brand-deco-br" width="48" height="48" viewBox="0 0 48 48" focusable="false">
+                    <circle cx="10" cy="38" r="8" fill="rgba(255,255,255,0.14)" />
+                    <circle cx="30" cy="26" r="4" fill="rgba(255,255,255,0.10)" />
+                </svg>
+            </div>
+            <div class="auth-brand-inner">
+                <div class="auth-brand-top">
+                    <div class="logo-mark auth-brand-logo">
+                        <img src="{{ asset('img/logo.svg') }}" alt="">
+                    </div>
+                    <div>
+                        <p class="auth-brand-name">Barangay Health Center Information System</p>
+                        <p class="auth-brand-facility">Sta. Ana Health Center</p>
+                    </div>
+                </div>
+                <div class="auth-brand-foot">
+                    @include('auth.partials._credit')
+                </div>
+            </div>
+        </aside>
+
+        <main class="auth-panel">
+            <div class="auth-deco" aria-hidden="true">
+                <svg class="auth-deco-tr" width="48" height="48" viewBox="0 0 48 48" focusable="false">
+                    <circle cx="38" cy="10" r="7" style="fill: var(--primary)" opacity="0.14" />
+                    <circle cx="18" cy="22" r="4" style="fill: var(--primary)" opacity="0.10" />
+                </svg>
+                <svg class="auth-deco-bl" width="48" height="48" viewBox="0 0 48 48" focusable="false">
+                    <circle cx="10" cy="38" r="8" style="fill: var(--primary)" opacity="0.14" />
+                    <circle cx="30" cy="26" r="4" style="fill: var(--primary)" opacity="0.10" />
+                </svg>
+            </div>
+            <div class="auth-card animate-in opacity-0">
+                <h1 class="auth-heading">@yield('heading', 'Sign in')</h1>
+                @hasSection('helper')
+                    <p class="auth-helper">@yield('helper')</p>
+                @endif
+
+                @yield('content')
+
+                <div class="auth-card-foot">
+                    <div class="auth-links-row">
+                        <a href="{{ route('privacy.policy') }}">Privacy Policy</a>
+                        <span aria-hidden="true">|</span>
+                        <a href="{{ route('privacy.liability') }}">Liability &amp; Disclaimer</a>
+                    </div>
+                    <div class="auth-brand-inline-meta">
+                        @include('auth.partials._credit')
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
     <script>
         (function () {
             var tokenMeta = document.querySelector('meta[name="csrf-token"]');
-            var tokenInput = document.getElementById('csrf-token-input');
             var refreshIntervalMs = Math.max(60000, {{ (int) config('session.lifetime') * 60 * 1000 }} / 2);
 
+            function tokenInput() {
+                return document.getElementById('csrf-token-input')
+                    || document.querySelector('input[name="_token"]');
+            }
+
             function updateCsrfToken(token) {
-                if (tokenInput) {
-                    tokenInput.value = token;
+                var input = tokenInput();
+                if (input) {
+                    input.value = token;
                 }
                 if (tokenMeta) {
                     tokenMeta.setAttribute('content', token);
