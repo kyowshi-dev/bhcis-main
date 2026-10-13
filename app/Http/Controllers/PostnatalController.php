@@ -10,6 +10,7 @@ use App\Models\Patient;
 use App\Models\PostnatalRecord;
 use App\Models\Pregnancy;
 use App\Models\Zone;
+use App\Services\ConsultationQueryService;
 use App\Services\MaternalIntakeService;
 use App\Services\MaternalQueryService;
 use App\Services\PostnatalService;
@@ -50,6 +51,7 @@ class PostnatalController extends Controller
                 ->where('status', Pregnancy::STATUS_ACTIVE)
                 ->orderByDesc('lmp')
                 ->get(),
+            'previousVitals' => ConsultationQueryService::previousVitalsFor($patient),
         ]);
     }
 

@@ -164,14 +164,14 @@
                                         @endif
                                     @endforeach
                                 </select>
-                                @error('slot') <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p> @enderror
+                                @error('slot') <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label for="pp_date" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Visit date <span style="color: var(--danger);">*</span></label>
                                 <input id="pp_date" type="date" name="date" value="{{ old('date', now()->toDateString()) }}" max="{{ now()->toDateString() }}"
                                        class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
                                        style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
-                                @error('date') <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p> @enderror
+                                @error('date') <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p> @enderror
                             </div>
 
                             @include('maternal.partials.consultation-intake', ['fieldPrefix' => 'pp_'])
@@ -257,7 +257,7 @@
                         <option value="{{ $value }}" @selected(old('pregnancy_outcome') === $value)>{{ $label }}</option>
                     @endforeach
                 </select>
-                @error('pregnancy_outcome') <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p> @enderror
+                @error('pregnancy_outcome') <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p> @enderror
             </div>
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">

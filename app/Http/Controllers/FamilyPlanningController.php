@@ -9,6 +9,7 @@ use App\Http\Requests\UpdateFamilyPlanningClientRequest;
 use App\Models\FamilyPlanningClient;
 use App\Models\Patient;
 use App\Models\Zone;
+use App\Services\ConsultationQueryService;
 use App\Services\FamilyPlanningService;
 use App\Services\MaternalIntakeService;
 use App\Services\MaternalQueryService;
@@ -51,6 +52,7 @@ class FamilyPlanningController extends Controller
                 ->orderByDesc('id')
                 ->get(),
             'visitHistory' => $client?->visits()->orderByDesc('visit_date')->get() ?? collect(),
+            'previousVitals' => ConsultationQueryService::previousVitalsFor($patient),
         ]);
     }
 

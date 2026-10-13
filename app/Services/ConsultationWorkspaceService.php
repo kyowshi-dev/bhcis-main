@@ -35,8 +35,6 @@ final class ConsultationWorkspaceService
             'allVitals' => $allVitals,
             'diagnoses' => self::diagnosesFor($consultation),
             'prescriptions' => self::prescriptionsFor($consultation),
-            'diagnosisOptions' => DB::table('diagnosis_lookup')->orderBy('diagnosis_name')->get(),
-            'medicineOptions' => DB::table('medicines_lookup')->whereNull('deleted_at')->orderBy('name')->get(),
             'linkedPrenatalVisits' => self::linkedPrenatalVisits($consultation),
             'linkedPostnatal' => self::linkedPostnatal($consultation),
             'linkedFpVisits' => self::linkedFpVisits($consultation),

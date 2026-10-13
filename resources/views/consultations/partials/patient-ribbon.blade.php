@@ -4,7 +4,7 @@
     $vitalsCount = $allVitals?->count() ?? 0;
 @endphp
 
-<section class="sticky top-0 z-40 rounded-2xl border px-4 py-4" style="background: var(--bg-surface-elevated); border-color: var(--border); box-shadow: var(--shadow-sm);">
+<section class="rounded-2xl border px-4 py-4" style="background: var(--bg-surface-elevated); border-color: var(--border); box-shadow: var(--shadow-sm);">
     <div class="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:items-stretch">
         <div class="rounded-2xl border bg-surface p-4" style="border-color: var(--border);">
             <p class="text-xs font-semibold uppercase tracking-wide text-[var(--ink)]">Patient Info
@@ -39,15 +39,9 @@
         </div>
 
         <div class="rounded-2xl border bg-surface p-4" style="border-color: var(--border);">
-            <div class="flex items-center justify-between gap-2">
-                <p class="text-xs font-semibold uppercase tracking-wide text-[var(--ink)]">Vitals
-                    <span class="block text-[10px] font-normal normal-case tracking-normal text-[var(--ink-subtle)]">Mga Talya</span>
-                </p>
-                <button type="button" @click="$dispatch('open-vitals-modal')" class="inline-flex items-center gap-1 rounded-full bg-teal-soft px-2 py-1 text-[11px] font-semibold text-[var(--primary)] hover:bg-black/5" title="Re-Take Vitals" aria-label="Re-Take Vitals">
-                    <i class="fa-solid fa-pencil text-[10px]"></i>
-                    <span>Re-take</span>
-                </button>
-            </div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-[var(--ink)]">Vitals
+                <span class="block text-[10px] font-normal normal-case tracking-normal text-[var(--ink-subtle)]">Mga Talya</span>
+            </p>
             <div class="mt-3 grid grid-cols-2 gap-3">
                 <div>
                     <p class="text-sm font-semibold" style="color: {{ $bpAlert ? 'var(--danger)' : 'var(--ink)' }};">
@@ -66,7 +60,7 @@
                     </p>
                 </div>
             </div>
-            <button type="button" @click="$dispatch('open-vitals-modal')" class="mt-3 rounded-full px-2.5 py-1 text-[11px] font-semibold text-white hover:opacity-90" style="background: var(--primary);">
+            <button type="button" onclick="document.getElementById('vitals')?.scrollIntoView({ block: 'start' })" class="mt-3 rounded-full px-2.5 py-1 text-[11px] font-semibold text-white hover:opacity-90" style="background: var(--primary);" title="Jump to vitals history">
                 {{ $vitalsCount }} version{{ $vitalsCount !== 1 ? 's' : '' }}
             </button>
         </div>

@@ -317,14 +317,14 @@
                     <x-field name="fundic_height_cm">
                         <x-slot:label>Fundic height (cm)</x-slot:label>
                         <x-slot:control>
-                            <input id="fundic_height_cm" type="number" step="0.1" min="0" max="99.9" name="fundic_height_cm" value="{{ old('fundic_height_cm') }}"
+                            <input id="fundic_height_cm" type="number" step="0.1" min="0" max="99.9" name="fundic_height_cm" value="{{ old('fundic_height_cm', $latestVisit?->fundic_height_cm ?? '') }}"
                                    class="w-full rounded-lg border border-border px-3 py-2.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent-blue">
                         </x-slot:control>
                     </x-field>
                     <x-field name="fetal_heart_tone_bpm">
                         <x-slot:label>Fetal heart tone (bpm)</x-slot:label>
                         <x-slot:control>
-                            <input id="fetal_heart_tone_bpm" type="number" min="60" max="220" name="fetal_heart_tone_bpm" value="{{ old('fetal_heart_tone_bpm') }}"
+                            <input id="fetal_heart_tone_bpm" type="number" min="60" max="220" name="fetal_heart_tone_bpm" value="{{ old('fetal_heart_tone_bpm', $latestVisit?->fetal_heart_tone_bpm ?? '') }}"
                                    class="w-full rounded-lg border border-border px-3 py-2.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent-blue">
                         </x-slot:control>
                     </x-field>
@@ -394,7 +394,7 @@
                     <input id="reg_{{ $field }}" type="number" min="0" max="25" name="{{ $field }}" value="{{ old($field) }}" required
                            class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
                            style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
-                    @error($field) <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p> @enderror
+                    @error($field) <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p> @enderror
                 </div>
             @endforeach
         </div>
@@ -404,7 +404,7 @@
                 <input id="lmp" type="date" name="lmp" max="{{ now()->toDateString() }}" value="{{ old('lmp') }}" x-model="lmp" @change="onLmpChange" required
                        class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
                        style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
-                @error('lmp') <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p> @enderror
+                @error('lmp') <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p> @enderror
             </div>
             <div>
                 <label for="edc" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">EDC <span class="text-xs font-normal" style="color: var(--ink-subtle);">(auto: LMP + 280d, editable)</span></label>
@@ -412,7 +412,7 @@
                        class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
                        style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
                 <p class="mt-1 text-xs" style="color: var(--ink-subtle);" x-text="edcHint"></p>
-                @error('edc') <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p> @enderror
+                @error('edc') <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p> @enderror
             </div>
         </div>
         <div class="grid grid-cols-2 gap-3">
@@ -423,7 +423,7 @@
                     <option value="negative" @selected(old('syphilis_result', 'negative') === 'negative')>Negative</option>
                     <option value="positive" @selected(old('syphilis_result') === 'positive')>Positive</option>
                 </select>
-                @error('syphilis_result') <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p> @enderror
+                @error('syphilis_result') <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p> @enderror
             </div>
             <div>
                 <label for="penicillin" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Penicillin <span style="color: var(--danger);">*</span></label>
@@ -432,7 +432,7 @@
                     <option value="no" @selected(old('penicillin', 'no') === 'no')>No</option>
                     <option value="yes" @selected(old('penicillin') === 'yes')>Yes</option>
                 </select>
-                @error('penicillin') <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p> @enderror
+                @error('penicillin') <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p> @enderror
             </div>
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -441,7 +441,7 @@
                 <input id="tt_date" type="date" name="tt_date" max="{{ now()->toDateString() }}" value="{{ old('tt_date') }}"
                        class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
                        style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
-                @error('tt_date') <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p> @enderror
+                @error('tt_date') <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p> @enderror
             </div>
             <div>
                 <label for="iron_taken" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Iron taken</label>
@@ -487,7 +487,7 @@
                     <option value="delivered" @selected(old('status', $active->status) === 'delivered')>Delivered</option>
                     <option value="closed" @selected(old('status', $active->status) === 'closed')>Closed</option>
                 </select>
-                @error('status') <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p> @enderror
+                @error('status') <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p> @enderror
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 @foreach ([['gravidity', 'Gravidity'], ['parity', 'Parity'], ['term', 'Term'], ['preterm', 'Preterm'], ['livebirth', 'Live births'], ['abortion', 'Abortions']] as [$field, $label])
@@ -496,7 +496,7 @@
                         <input id="upd_{{ $field }}" type="number" min="0" max="25" name="{{ $field }}" value="{{ old($field, $active->{$field}) }}" required
                                class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
                                style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
-                        @error($field) <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p> @enderror
+                        @error($field) <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p> @enderror
                     </div>
                 @endforeach
             </div>
@@ -506,14 +506,14 @@
                     <input id="upd_lmp" type="date" name="lmp" max="{{ now()->toDateString() }}" value="{{ old('lmp', $active->lmp?->format('Y-m-d')) }}" required
                            class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
                            style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
-                    @error('lmp') <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p> @enderror
+                    @error('lmp') <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label for="upd_edc" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">EDC</label>
                     <input id="upd_edc" type="date" name="edc" value="{{ old('edc', $active->edc?->format('Y-m-d')) }}"
                            class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
                            style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
-                    @error('edc') <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p> @enderror
+                    @error('edc') <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p> @enderror
                 </div>
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -606,7 +606,7 @@
                 <option value="no" @selected(old('menopause', $profile?->menopause ?? 'no') === 'no')>No</option>
                 <option value="yes" @selected(old('menopause', $profile?->menopause ?? 'no') === 'yes')>Yes</option>
             </select>
-            @error('menopause') <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p> @enderror
+            @error('menopause') <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p> @enderror
         </div>
         <div class="flex justify-end gap-2 pt-1">
             <button type="button" @click="$dispatch('close')" class="rounded-lg border px-4 py-2 text-sm font-semibold transition hover:bg-black/[0.03]"

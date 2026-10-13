@@ -12,6 +12,7 @@ use App\Models\Patient;
 use App\Models\Pregnancy;
 use App\Models\PrenatalVisit;
 use App\Models\Zone;
+use App\Services\ConsultationQueryService;
 use App\Services\MaternalIntakeService;
 use App\Services\MaternalProfileService;
 use App\Services\MaternalQueryService;
@@ -52,6 +53,7 @@ class PrenatalController extends Controller
             'patient' => $patient->load(['household.zone', 'maternalProfile']),
             'pregnancies' => $this->query->pregnanciesForPatient($patient),
             'profile' => $patient->maternalProfile,
+            'previousVitals' => ConsultationQueryService::previousVitalsFor($patient),
         ]);
     }
 

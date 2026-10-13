@@ -231,6 +231,11 @@ final class ConsultationService
         return true;
     }
 
+    public static function hasPrescription(int $consultationId): bool
+    {
+        return DB::table('prescriptions')->where('consultation_id', $consultationId)->exists();
+    }
+
     public static function deleteDiagnosis(Consultation $consultation, int $diagnosisId): bool
     {
         $exists = DB::table('diagnosis_records')

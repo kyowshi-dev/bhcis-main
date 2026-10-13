@@ -1,5 +1,6 @@
 @php
     $adminErrors = $errors->hasAny(['vaccine_id', 'dose_number', 'date_given', 'temp_recorded', 'child_weight_kg', 'child_height_cm', 'override_reason', 'notes', 'doses']);
+    $previousMeasurements ??= null;
     $reopenOutOfWindow = $adminErrors && ($errors->has('override_reason') || old('override_reason') !== null);
     $reopenBatchDoses = [];
     if ($adminErrors && is_array(old('doses'))) {
@@ -90,7 +91,7 @@
                                    class="w-full rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
                                    style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
                             @error('date_given')
-                                <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p>
+                                <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p>
                             @enderror
                         </div>
 
@@ -100,11 +101,11 @@
                                 <i class="fa-regular fa-circle-question text-[0.85rem]" role="img" aria-label="Optional. Record before administering injectable vaccines." title="Optional. Record before administering injectable vaccines." style="color: var(--ink-subtle);"></i>
                             </label>
                             <input id="administer_temp" name="temp_recorded" type="number" step="0.1" min="30" max="45"
-                                   value="{{ old('temp_recorded') }}" placeholder="e.g. 36.5"
+                                   value="{{ old('temp_recorded', $previousMeasurements->temp_recorded ?? '') }}" placeholder="e.g. 36.5"
                                    class="w-full rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
                                    style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
                             @error('temp_recorded')
-                                <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p>
+                                <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p>
                             @enderror
                         </div>
 
@@ -114,11 +115,11 @@
                                     Weight (kg) <span x-show="isChild" style="color: var(--danger);">*</span>
                                 </label>
                                 <input id="administer_weight" name="child_weight_kg" type="number" step="0.01" min="0" max="100"
-                                       value="{{ old('child_weight_kg') }}" placeholder="e.g. 6.5" :required="isChild"
+                                       value="{{ old('child_weight_kg', $previousMeasurements->child_weight_kg ?? '') }}" placeholder="e.g. 6.5" :required="isChild"
                                        class="w-full rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
                                        style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
                                 @error('child_weight_kg')
-                                    <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p>
+                                    <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p>
                                 @enderror
                             </div>
 
@@ -127,11 +128,11 @@
                                     Height (cm) <span x-show="isChild" style="color: var(--danger);">*</span>
                                 </label>
                                 <input id="administer_height" name="child_height_cm" type="number" step="0.1" min="20" max="200"
-                                       value="{{ old('child_height_cm') }}" placeholder="e.g. 65" :required="isChild"
+                                       value="{{ old('child_height_cm', $previousMeasurements->child_height_cm ?? '') }}" placeholder="e.g. 65" :required="isChild"
                                        class="w-full rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
                                        style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
                                 @error('child_height_cm')
-                                    <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p>
+                                    <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p>
                                 @enderror
                             </div>
                         </div>
@@ -146,7 +147,7 @@
                                       style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);"
                                       placeholder="e.g. Catch-up per physician advice">{{ old('override_reason') }}</textarea>
                             @error('override_reason')
-                                <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p>
+                                <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p>
                             @enderror
                         </div>
 
@@ -157,7 +158,7 @@
                                       style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);"
                                       placeholder="Batch number, site, remarks (optional)">{{ old('notes') }}</textarea>
                             @error('notes')
-                                <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p>
+                                <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p>
                             @enderror
                         </div>
 
