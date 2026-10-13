@@ -219,6 +219,11 @@ class Patient extends Model
         return $this->hasMany(PostnatalRecord::class);
     }
 
+    public function death(): HasOne
+    {
+        return $this->hasOne(Death::class);
+    }
+
     public function immunizationStatusEvents(): HasMany
     {
         return $this->hasMany(ImmunizationStatusEvent::class, 'patient_id');
