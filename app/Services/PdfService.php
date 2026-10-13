@@ -10,7 +10,7 @@ class PdfService
     /**
      * Generate PDF for FHSIS Morbidity Report
      */
-    public function generateMorbidityReport(Collection $rows, int $totalCases, string $reportDate, int $month, int $year, string $sexLabel, string $zoneLabel, string $ageGroupLabel): \Barryvdh\DomPDF\PDF
+    public function generateMorbidityReport(Collection $rows, int $totalCases, string $reportDate, int $month, int $year, string $sexLabel, string $zoneLabel, string $ageGroupLabel, array $matrix = [], array $leadingCauses = []): \Barryvdh\DomPDF\PDF
     {
         return Pdf::loadView('pdfs.morbidity_report', [
             'rows' => $rows,
@@ -21,6 +21,8 @@ class PdfService
             'sexLabel' => $sexLabel,
             'zoneLabel' => $zoneLabel,
             'ageGroupLabel' => $ageGroupLabel,
+            'matrix' => $matrix,
+            'leadingCauses' => $leadingCauses,
         ]);
     }
 

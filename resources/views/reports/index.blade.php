@@ -6,7 +6,7 @@
 <div class="space-y-5 lg:space-y-6">
     <div>
         <h1 class="font-display font-semibold text-2xl lg:text-3xl" style="color: var(--ink);">Reports</h1>
-        <p class="text-sm mt-1" style="color: var(--ink-muted);">View or Generate DOH Field Health Service Information System Official report formats for RHU.</p>
+        <p class="text-sm mt-1" style="color: var(--ink-muted);">View or generate FHSIS-style reports formatted to support RHU submission.</p>
     </div>
 
     <form method="GET" action="{{ route('reports.index') }}" id="reportPeriodForm" class="rounded-xl border p-4 max-w-md" style="background: var(--bg-surface); border-color: var(--border);">
@@ -32,7 +32,7 @@
         <a href="{{ route('reports.morbidity', ['month' => $month, 'year' => $year]) }}"
            class="block p-5 lg:p-6 rounded-xl border transition-all duration-200 hover:shadow-md" style="background: var(--bg-surface); border-color: var(--border);">
             <h3 class="font-display font-semibold text-base mb-1" style="color: var(--ink);">Morbidity report</h3>
-            <p class="text-sm" style="color: var(--ink-muted);">Leading causes of morbidity by diagnosis (ICD). FHSIS standard format.</p>
+            <p class="text-sm" style="color: var(--ink-muted);">FHSIS-style leading causes of morbidity (ICD code, diagnosis name, case count).</p>
         </a>
 
         <a href="{{ route('reports.mch-epi-fp') }}"

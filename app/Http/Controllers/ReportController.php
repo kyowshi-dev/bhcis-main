@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Services\MchEpiFpReportService;
 use App\Services\MorbidityReportService;
 use App\Services\PdfService;
+use App\Services\ReportExportService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportController extends Controller
 {
@@ -26,7 +28,7 @@ class ReportController extends Controller
 
     /**
      * FHSIS-style Morbidity Report: Leading causes (by diagnosis) for the given month/year.
-     * Aligns with DOH FHSIS morbidity reporting (ICD code, diagnosis name, case count).
+     * FHSIS-style leading causes (ICD code, diagnosis name, case count).
      */
     public function morbidity(Request $request)
     {
@@ -37,6 +39,8 @@ class ReportController extends Controller
         $ageGroup = $request->input('age_group', 'all');
 
         $report = MorbidityReportService::query($month, $year, $sex, $zone, $ageGroup, auth()->user());
+        $matrix = MorbidityReportService::matrix($month, $year, $sex, $zone, $ageGroup, auth()->user());
+        $leadingCauses = MorbidityReportService::leadingCauses($month, $year, $sex, $zone, auth()->user());
 
         return view('reports.morbidity', [
             'rows' => $report['rows'],
@@ -48,6 +52,8 @@ class ReportController extends Controller
             'zones' => MorbidityReportService::zones(auth()->user()),
             'selectedZone' => $zone,
             'age_group' => $ageGroup,
+            'matrix' => $matrix,
+            'leadingCauses' => $leadingCauses,
         ]);
     }
 
@@ -63,6 +69,8 @@ class ReportController extends Controller
         $ageGroup = $request->input('age_group', 'all');
 
         $report = MorbidityReportService::query($month, $year, $sex, $zone, $ageGroup, auth()->user());
+        $matrix = MorbidityReportService::matrix($month, $year, $sex, $zone, $ageGroup, auth()->user());
+        $leadingCauses = MorbidityReportService::leadingCauses($month, $year, $sex, $zone, auth()->user());
 
         $pdf = $pdfService->generateMorbidityReport(
             $report['rows'],
@@ -72,7 +80,9 @@ class ReportController extends Controller
             $year,
             MorbidityReportService::sexLabel($sex),
             MorbidityReportService::zoneLabel($zone),
-            MorbidityReportService::ageGroupLabel($ageGroup)
+            MorbidityReportService::ageGroupLabel($ageGroup),
+            $matrix,
+            $leadingCauses
         );
 
         return $pdf->download("Morbidity_Report_Sta_Ana_{$month}_{$year}.pdf");
@@ -152,5 +162,48 @@ class ReportController extends Controller
         }
 
         return $params;
+    }
+
+    /**
+     * Export FHSIS Morbidity Report as CSV (aggregate summaries only).
+     */
+    public function exportMorbidityCsv(Request $request, ReportExportService $exportService): StreamedResponse
+    {
+        $month = $request->input('month', now()->month);
+        $year = $request->input('year', now()->year);
+        $sex = $request->input('sex', 'All');
+        $zone = $request->input('zone', null);
+        $ageGroup = $request->input('age_group', 'all');
+
+        $report = MorbidityReportService::query($month, $year, $sex, $zone, $ageGroup, auth()->user());
+
+        return $exportService->exportMorbidityCsv(
+            $report['rows'],
+            $report['totalCases'],
+            $report['reportDate'],
+            $month,
+            $year,
+            MorbidityReportService::sexLabel($sex),
+            MorbidityReportService::zoneLabel($zone),
+            MorbidityReportService::ageGroupLabel($ageGroup)
+        );
+    }
+
+    /**
+     * Export Merged MCH/EPI/FP Report as CSV (aggregate summaries only).
+     */
+    public function exportMchEpiFpCsv(Request $request, ReportExportService $exportService): StreamedResponse
+    {
+        $filters = MchEpiFpReportService::normalizeFilters($request->only([
+            'from', 'to', 'zone', 'program', 'search',
+        ]));
+
+        $report = MchEpiFpReportService::query($filters, auth()->user(), false);
+
+        return $exportService->exportMchEpiFpCsv(
+            $report,
+            MchEpiFpReportService::zoneLabel($filters['zone']),
+            MchEpiFpReportService::programLabel($filters['program'])
+        );
     }
 }
