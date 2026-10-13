@@ -137,9 +137,10 @@
                             $views = $row['views'];
                             $rowKey = $row['key'];
                             $isGroupedRow = $row['group'] !== null && count($views) > 1;
-                            $rowLabel = $isGroupedRow
-                                ? ($views[0]['item']->vaccine->group_label ?? $views[0]['item']->vaccine->vaccine_name)
-                                : $views[0]['item']->vaccine->vaccine_name;
+                            $firstItem = $views[0]['item'] ?? null;
+                            $rowLabel = ($isGroupedRow
+                                ? ($firstItem?->vaccine?->group_label ?? $firstItem?->vaccine?->vaccine_name)
+                                : $firstItem?->vaccine?->vaccine_name) ?? '';
                         @endphp
                         <tr class="transition-colors hover:bg-black/[0.02]">
                             <td class="px-3 py-3 align-top">
