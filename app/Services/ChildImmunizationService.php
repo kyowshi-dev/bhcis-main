@@ -436,7 +436,8 @@ class ChildImmunizationService
         if ($householdId === null) {
             $household = Household::create([
                 'zone_id' => $data['zone_id'],
-                'family_name_head' => $data['family_name_head'],
+                'head_first_name' => ucwords(strtolower(trim($data['head_first_name']))),
+                'head_last_name' => ucwords(strtolower(trim($data['head_last_name']))),
                 'contact_number' => $data['contact_number'] ?? null,
             ]);
             $householdId = $household->id;

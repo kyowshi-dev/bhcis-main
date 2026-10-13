@@ -12,8 +12,9 @@ class HouseholdHelper
      */
     public static function getMemberCount($householdId): int
     {
-        return DB::table('patients')
+        return DB::table('household_members')
             ->where('household_id', $householdId)
+            ->whereNull('deleted_at')
             ->count();
     }
 
@@ -38,8 +39,9 @@ class HouseholdHelper
             return 0;
         }
 
-        return DB::table('patients')
+        return DB::table('household_members')
             ->whereIn('household_id', $ids)
+            ->whereNull('deleted_at')
             ->count();
     }
 
@@ -70,16 +72,30 @@ class HouseholdHelper
         $infantThreshold = $now->copy()->subYear(); // 1 year ago = infants
         $seniorThreshold = $now->copy()->subYears(65); // 65 years ago = seniors
 
-        // Count infants (0-1 year old)
-        $infants = DB::table('patients')
+        // Count infants (0-1 year old) - by DOB or age fallback
+        $infants = DB::table('household_members')
             ->whereIn('household_id', $ids)
-            ->where('date_of_birth', '>', $infantThreshold)
+            ->whereNull('deleted_at')
+            ->where(function ($query) use ($infantThreshold) {
+                $query->where('date_of_birth', '>', $infantThreshold)
+                    ->orWhere(function ($q) {
+                        $q->whereNotNull('age')
+                            ->where('age', '<=', 1);
+                    });
+            })
             ->count();
 
-        // Count seniors (65+)
-        $seniors = DB::table('patients')
+        // Count seniors (65+) - by DOB or age fallback
+        $seniors = DB::table('household_members')
             ->whereIn('household_id', $ids)
-            ->where('date_of_birth', '<=', $seniorThreshold)
+            ->whereNull('deleted_at')
+            ->where(function ($query) use ($seniorThreshold) {
+                $query->where('date_of_birth', '<=', $seniorThreshold)
+                    ->orWhere(function ($q) {
+                        $q->whereNotNull('age')
+                            ->where('age', '>=', 65);
+                    });
+            })
             ->count();
 
         return [
@@ -98,10 +114,18 @@ class HouseholdHelper
         $infantThreshold = $now->copy()->subYear();
         $seniorThreshold = $now->copy()->subYears(65);
 
-        return DB::table('patients')
+        return DB::table('household_members')
+            ->whereNull('deleted_at')
             ->where(function ($query) use ($infantThreshold, $seniorThreshold) {
                 $query->where('date_of_birth', '>', $infantThreshold)
-                    ->orWhere('date_of_birth', '<=', $seniorThreshold);
+                    ->orWhere('date_of_birth', '<=', $seniorThreshold)
+                    ->orWhere(function ($q) {
+                        $q->whereNotNull('age')
+                            ->where(function ($q2) {
+                                $q2->where('age', '<=', 1)
+                                    ->orWhere('age', '>=', 65);
+                            });
+                    });
             })
             ->select('household_id')
             ->distinct()
@@ -123,8 +147,9 @@ class HouseholdHelper
             return [];
         }
 
-        $memberCounts = DB::table('patients')
+        $memberCounts = DB::table('household_members')
             ->whereIn('household_id', $householdIds)
+            ->whereNull('deleted_at')
             ->groupBy('household_id')
             ->select('household_id', DB::raw('count(*) as member_count'))
             ->pluck('member_count', 'household_id');

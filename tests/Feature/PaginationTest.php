@@ -13,13 +13,17 @@ class PaginationTest extends TestCase
 {
     use AssignsRolesAndPermissions, RefreshDatabase;
 
+    private int $zoneSequence = 0;
+
     private function createPatient(int $suffix = 0): Patient
     {
-        $zone = Zone::query()->create(['zone_number' => (string) mt_rand(1, 9999)]);
+        $this->zoneSequence++;
+
+        $zone = Zone::query()->create(['zone_number' => (string) $this->zoneSequence]);
 
         $householdId = DB::table('households')->insertGetId([
             'zone_id' => $zone->id,
-            'family_name_head' => 'Dela Cruz',
+            'head_last_name' => 'Dela Cruz',
         ]);
 
         $unique = $suffix > 0 ? (string) $suffix : '';
@@ -145,7 +149,7 @@ class PaginationTest extends TestCase
         $zone = Zone::query()->create(['zone_number' => '1']);
         DB::table('households')->insertGetId([
             'zone_id' => $zone->id,
-            'family_name_head' => 'Dela Cruz',
+            'head_last_name' => 'Dela Cruz',
             'created_at' => now(),
             'updated_at' => now(),
         ]);

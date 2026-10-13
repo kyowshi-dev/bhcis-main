@@ -208,7 +208,10 @@ class MaternalQueryService
 
                 if (! empty($filters['search'])) {
                     $search = '%'.addcslashes((string) $filters['search'], '%_').'%';
-                    $hq->where('family_name_head', 'like', $search);
+                    $hq->where(function (Builder $hqName) use ($search) {
+                        $hqName->where('head_first_name', 'like', $search)
+                            ->orWhere('head_last_name', 'like', $search);
+                    });
                 }
             });
 

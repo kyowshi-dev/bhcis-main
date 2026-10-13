@@ -28,7 +28,7 @@
                 </div>
                 <div>
                     <h2 class="text-sm font-extrabold" style="color: var(--ink);">{{ fullName($patient->last_name, $patient->first_name, $patient->middle_name) }}</h2>
-                    <p class="text-xs" style="color: var(--ink-muted);">Code: {{ $patient->patient_code }} | Household: {{ $patient->household?->family_name_head ?? 'N/A' }}</p>
+                    <p class="text-xs" style="color: var(--ink-muted);">Code: {{ $patient->patient_code }} | Household: {{ $patient->household?->display_name ?? 'N/A' }}</p>
                 </div>
             </div>
         </div>
@@ -49,19 +49,19 @@
                         <label class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">First Name <span class="text-danger">*</span></label>
                         <input type="text" name="first_name" value="{{ old('first_name', $patient->first_name) }}" required
                                class="w-full px-3 lg:px-4 py-2 rounded-xl border @error('first_name') border-danger bg-danger-soft @else border-border @enderror focus:ring-accent-blue focus:border-accent-blue text-sm">
-                        @error('first_name') <p class="text-danger text-xs mt-1">{{ $message }}</p> @enderror
+                        @error('first_name') <p class="text-danger text-xs mt-1" data-auto-dismiss>{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">Middle Name</label>
                         <input type="text" name="middle_name" value="{{ old('middle_name', $patient->middle_name) }}"
                                class="w-full px-3 lg:px-4 py-2 rounded-xl border @error('middle_name') border-danger bg-danger-soft @else border-border @enderror focus:ring-accent-blue focus:border-accent-blue text-sm">
-                        @error('middle_name') <p class="text-danger text-xs mt-1">{{ $message }}</p> @enderror
+                        @error('middle_name') <p class="text-danger text-xs mt-1" data-auto-dismiss>{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">Last Name <span class="text-danger">*</span></label>
                         <input type="text" name="last_name" value="{{ old('last_name', $patient->last_name) }}" required
                                class="w-full px-3 lg:px-4 py-2 rounded-xl border @error('last_name') border-danger bg-danger-soft @else border-border @enderror focus:ring-accent-blue focus:border-accent-blue text-sm">
-                        @error('last_name') <p class="text-danger text-xs mt-1">{{ $message }}</p> @enderror
+                        @error('last_name') <p class="text-danger text-xs mt-1" data-auto-dismiss>{{ $message }}</p> @enderror
                     </div>
                 </div>
 
@@ -73,13 +73,13 @@
                             <option value="Male" {{ old('sex', $patient->sex) === 'Male' ? 'selected' : '' }}>Male</option>
                             <option value="Female" {{ old('sex', $patient->sex) === 'Female' ? 'selected' : '' }}>Female</option>
                         </select>
-                        @error('sex') <p class="text-danger text-xs mt-1">{{ $message }}</p> @enderror
+                        @error('sex') <p class="text-danger text-xs mt-1" data-auto-dismiss>{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">Birthdate <span class="text-danger">*</span></label>
                         <input type="date" name="date_of_birth" value="{{ old('date_of_birth', $patient->date_of_birth->format('Y-m-d') ) }}" required
                                class="w-full px-3 lg:px-4 py-2 rounded-xl border @error('date_of_birth') border-danger bg-danger-soft @else border-border @enderror focus:ring-accent-blue focus:border-accent-blue text-sm">
-                        @error('date_of_birth') <p class="text-danger text-xs mt-1">{{ $message }}</p> @enderror
+                        @error('date_of_birth') <p class="text-danger text-xs mt-1" data-auto-dismiss>{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">Civil Status</label>
@@ -148,7 +148,7 @@
                                 <span>No</span>
                             </label>
                         </div>
-                        @error('is_philhealth_member') <p class="text-danger text-xs mt-1">{{ $message }}</p> @enderror
+                        @error('is_philhealth_member') <p class="text-danger text-xs mt-1" data-auto-dismiss>{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label class="block text-xs uppercase tracking-wide font-semibold text-ink-muted mb-1">PCB Member? <span class="text-danger">*</span></label>
@@ -162,7 +162,7 @@
                                 <span>No</span>
                             </label>
                         </div>
-                        @error('is_pcb_member') <p class="text-danger text-xs mt-1">{{ $message }}</p> @enderror
+                        @error('is_pcb_member') <p class="text-danger text-xs mt-1" data-auto-dismiss>{{ $message }}</p> @enderror
                     </div>
                 </div>
             </div>

@@ -138,6 +138,10 @@ class SearchController extends Controller
                 'id' => $patient->id,
                 'text' => trim((string) $patient->last_name).', '.trim((string) $patient->first_name), // What shows in the dropdown
                 'subtext' => $ptCode.' | '.trim((string) $patient->sex).($age !== null ? ' | '.$age.' y/o' : '').' | '.$patient->date_of_birth, // Extra info
+                'first_name' => trim((string) $patient->first_name),
+                'last_name' => trim((string) $patient->last_name),
+                'sex' => trim((string) $patient->sex),
+                'date_of_birth' => $patient->date_of_birth,
                 'has_active_pregnancy' => in_array($patient->id, $activePregnancyIds, true),
             ];
         })->all();
@@ -322,9 +326,9 @@ class SearchController extends Controller
     }
 
     /**
-     * Search for Households (by Family Name Head / Zone / Contact)
+     * Search for Households (by head name / Zone / Contact)
      *
-     * Strict substring pass first; fuzzy re-rank on the family name head
+     * Strict substring pass first; fuzzy re-rank on the head's full name
      * fills the list when the strict pass comes up short.
      *
      * Not zone-scoped: patient enrollment may attach a patient to any
@@ -343,14 +347,16 @@ class SearchController extends Controller
         $households = DB::table('households')
             ->join('zones', 'households.zone_id', '=', 'zones.id')
             ->where(function ($qb) use ($query) {
-                $qb->where('households.family_name_head', 'LIKE', "%{$query}%")
+                $qb->where('households.head_first_name', 'LIKE', "%{$query}%")
+                    ->orWhere('households.head_last_name', 'LIKE', "%{$query}%")
                     ->orWhere('zones.zone_number', 'LIKE', "%{$query}%")
                     ->orWhere('households.contact_number', 'LIKE', "%{$query}%");
             })
             ->distinct()
-            ->select('households.id', 'households.family_name_head', 'zones.zone_number', 'households.contact_number')
+            ->select('households.id', 'households.head_first_name', 'households.head_middle_name', 'households.head_last_name', 'households.head_suffix', 'zones.zone_number', 'households.contact_number')
             ->orderBy('zones.zone_number')
-            ->orderBy('households.family_name_head')
+            ->orderBy('households.head_last_name')
+            ->orderBy('households.head_first_name')
             ->limit($limit)
             ->get();
 
@@ -360,17 +366,17 @@ class SearchController extends Controller
             if ($firstChar !== '') {
                 $candidates = DB::table('households')
                     ->join('zones', 'households.zone_id', '=', 'zones.id')
-                    ->where('households.family_name_head', 'LIKE', "{$firstChar}%")
+                    ->where('households.head_last_name', 'LIKE', "{$firstChar}%")
                     ->whereNotIn('households.id', $households->pluck('id'))
                     ->distinct()
-                    ->select('households.id', 'households.family_name_head', 'zones.zone_number', 'households.contact_number')
+                    ->select('households.id', 'households.head_first_name', 'households.head_middle_name', 'households.head_last_name', 'households.head_suffix', 'zones.zone_number', 'households.contact_number')
                     ->limit(300)
                     ->get();
 
                 $fuzzy = app(FuzzySearchService::class)->rank(
                     $candidates,
                     $query,
-                    fn ($h): string => (string) $h->family_name_head,
+                    fn ($h): string => fullName($h->head_last_name, $h->head_first_name, $h->head_middle_name, $h->head_suffix),
                     $limit - $households->count()
                 );
 
@@ -380,11 +386,12 @@ class SearchController extends Controller
 
         $results = $households->take($limit)->map(function ($h) {
             $contact = $h->contact_number ? trim((string) $h->contact_number) : null;
+            $headName = fullName($h->head_last_name, $h->head_first_name, $h->head_middle_name, $h->head_suffix);
 
             return [
                 'id' => $h->id,
-                'text' => (string) $h->family_name_head,
-                'subtext' => 'Zone '.$h->zone_number.' | Household #'.$h->id.($contact ? ' | '.$contact : ''),
+                'text' => $headName,
+                'subtext' => 'Head: '.$headName.' | Zone '.$h->zone_number.' | Household #'.$h->id.($contact ? ' | '.$contact : ''),
             ];
         });
 

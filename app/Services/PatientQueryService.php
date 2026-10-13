@@ -15,7 +15,10 @@ final class PatientQueryService
             ->join('households', 'patients.household_id', '=', 'households.id')
             ->select(
                 'patients.*',
-                'households.family_name_head',
+                'households.head_first_name',
+                'households.head_middle_name',
+                'households.head_last_name',
+                'households.head_suffix',
                 'households.zone_id',
                 'households.contact_number'
             )

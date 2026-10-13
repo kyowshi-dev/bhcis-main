@@ -24,7 +24,7 @@ class RenderShowTest extends TestCase
     {
         $user = $this->createUserWithPermissions(['patients', 'consultations']);
         DB::table('zones')->insert(['id' => 1, 'zone_number' => '1']);
-        $householdId = DB::table('households')->insertGetId(['zone_id' => 1, 'family_name_head' => 'T', 'created_at' => now(), 'updated_at' => now()]);
+        $householdId = DB::table('households')->insertGetId(['zone_id' => 1, 'head_last_name' => 'T', 'created_at' => now(), 'updated_at' => now()]);
         $patientId = DB::table('patients')->insertGetId([
             'household_id' => $householdId, 'first_name' => 'J', 'last_name' => 'D', 'sex' => 'Female',
             'date_of_birth' => '1990-01-01', 'civil_status' => 'Single', 'employment_status' => 'E',

@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BatchEntryController;
 use App\Http\Controllers\ConsultationController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DeathController;
 use App\Http\Controllers\FamilyPlanningController;
 use App\Http\Controllers\HouseholdController;
 use App\Http\Controllers\ImmunizationController;
@@ -101,6 +102,23 @@ Route::middleware('auth')->group(function () {
         ->middleware('permission:household')
         ->name('households.update-zone');
 
+    // 3d. Household Members (Census)
+    Route::get('/households/{id}', [HouseholdController::class, 'show'])
+        ->middleware('permission:household')
+        ->name('households.show');
+    Route::get('/households/{id}/members', [HouseholdController::class, 'membersJson'])
+        ->middleware('permission:household,patients,consultations', 'throttle:60,1')
+        ->name('households.members');
+    Route::post('/households/{id}/members', [HouseholdController::class, 'storeMember'])
+        ->middleware('permission:household')
+        ->name('households.members.store');
+    Route::put('/households/{id}/members/{memberId}', [HouseholdController::class, 'updateMember'])
+        ->middleware('permission:household')
+        ->name('households.members.update');
+    Route::delete('/households/{id}/members/{memberId}', [HouseholdController::class, 'destroyMember'])
+        ->middleware('permission:household')
+        ->name('households.members.destroy');
+
     // 3a. Patients
     Route::get('/patients', [PatientController::class, 'index'])
         ->middleware('permission:patients')
@@ -130,7 +148,27 @@ Route::middleware('auth')->group(function () {
         ->middleware('permission:patients_destroy')
         ->name('patients.forceDestroy');
 
-    // 3e. BATCH DATA ENTRY (Nurse/Encoder - complement to paper workflow)
+    // 3e. Death Records
+    Route::get('/patients/{patient}/deaths/create', [DeathController::class, 'create'])
+        ->middleware('permission:patients')
+        ->name('deaths.create');
+    Route::post('/patients/{patient}/deaths', [DeathController::class, 'store'])
+        ->middleware('permission:patients')
+        ->name('deaths.store');
+    Route::get('/deaths/{death}', [DeathController::class, 'show'])
+        ->middleware('permission:patients')
+        ->name('deaths.show');
+    Route::get('/deaths/{death}/edit', [DeathController::class, 'edit'])
+        ->middleware('permission:patients')
+        ->name('deaths.edit');
+    Route::put('/deaths/{death}', [DeathController::class, 'update'])
+        ->middleware('permission:patients')
+        ->name('deaths.update');
+    Route::delete('/deaths/{death}', [DeathController::class, 'destroy'])
+        ->middleware('permission:patients')
+        ->name('deaths.destroy');
+
+    // 3f. BATCH DATA ENTRY (Nurse/Encoder - complement to paper workflow)
     Route::get('/batch-entry', [BatchEntryController::class, 'index'])
         ->middleware('permission:nurse_batch_entry')
         ->name('batch-entry.index');
@@ -156,13 +194,13 @@ Route::middleware('auth')->group(function () {
         ->middleware('permission:consultations')
         ->name('consultations.index');
     Route::get('/referrals', [ReferralController::class, 'index'])
-        ->middleware('permission:consultations')
+        ->middleware('permission:referrals')
         ->name('referrals.index');
     Route::get('/referrals/{id}/print', [ReferralController::class, 'print'])
         ->middleware('permission:print_handouts')
         ->name('referrals.print');
     Route::patch('/referrals/{id}/status', [ReferralController::class, 'updateStatus'])
-        ->middleware('permission:consultations')
+        ->middleware('permission:referrals')
         ->name('referrals.update-status');
 
     // Triage / New Admission
@@ -358,12 +396,18 @@ Route::middleware('auth')->group(function () {
     Route::get('/reports/morbidity/download', [ReportController::class, 'downloadMorbidityPdf'])
         ->middleware('permission:reports')
         ->name('reports.morbidity.download');
+    Route::get('/reports/morbidity/export.csv', [ReportController::class, 'exportMorbidityCsv'])
+        ->middleware('permission:reports')
+        ->name('reports.morbidity.export.csv');
     Route::get('/reports/mch-epi-fp', [ReportController::class, 'mchEpiFp'])
         ->middleware('permission:reports')
         ->name('reports.mch-epi-fp');
     Route::get('/reports/mch-epi-fp/download', [ReportController::class, 'downloadMchEpiFpPdf'])
         ->middleware('permission:reports')
         ->name('reports.mch-epi-fp.download');
+    Route::get('/reports/mch-epi-fp/export.csv', [ReportController::class, 'exportMchEpiFpCsv'])
+        ->middleware('permission:reports')
+        ->name('reports.mch-epi-fp.export.csv');
 
     // Legacy redirects: standalone maternal / immunization / family planning
     // reports were merged into reports.mch-epi-fp.
@@ -485,6 +529,9 @@ Route::middleware('auth')->group(function () {
 
     // 12. SETTINGS
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
+    Route::post('/settings', [SettingsController::class, 'update'])
+        ->middleware('permission:users')
+        ->name('settings.update');
     Route::get('/settings/account', [SettingsController::class, 'account'])->name('settings.account');
     Route::post('/settings/account', [SettingsController::class, 'updateAccount'])->name('settings.account.update');
     Route::get('/settings/backups', [SettingsController::class, 'backups'])

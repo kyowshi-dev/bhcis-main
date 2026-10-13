@@ -152,7 +152,7 @@ class ReferralFlowTest extends TestCase
         DB::table('zones')->insert(['id' => 1, 'zone_number' => '1']);
         $householdId = DB::table('households')->insertGetId([
             'zone_id' => 1,
-            'family_name_head' => 'Test',
+            'head_last_name' => 'Test',
             'created_at' => now(),
             'updated_at' => now(),
         ]);

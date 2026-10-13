@@ -59,7 +59,9 @@ class PatientSeeder extends Seeder
             $householdCreatedAt = now()->subDays(rand(0, 89));
             $householdId = DB::table('households')->insertGetId([
                 'zone_id' => $zoneId,
-                'family_name_head' => $lastName,
+                'head_first_name' => $firstNamesMale[array_rand($firstNamesMale)],
+                'head_middle_name' => $lastNames[array_rand($lastNames)],
+                'head_last_name' => $lastName,
                 'contact_number' => '09'.rand(100000000, 999999999),
                 'created_at' => $householdCreatedAt,
                 'updated_at' => $householdCreatedAt,

@@ -130,7 +130,7 @@ class NotificationServiceTest extends TestCase
 
         $householdId = DB::table('households')->insertGetId([
             'zone_id' => $zoneId,
-            'family_name_head' => 'Test',
+            'head_last_name' => 'Test',
             'created_at' => now(),
             'updated_at' => now(),
         ]);

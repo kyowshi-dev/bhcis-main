@@ -54,7 +54,7 @@ class InfantEnrollmentTest extends TestCase
         $this->zone($zoneId);
 
         return Patient::create([
-            'household_id' => Household::create(['zone_id' => $zoneId, 'family_name_head' => 'Reyes'])->id,
+            'household_id' => Household::create(['zone_id' => $zoneId, 'head_last_name' => 'Reyes'])->id,
             'first_name' => 'Maria',
             'middle_name' => 'Santos',
             'last_name' => 'Reyes',
@@ -87,7 +87,7 @@ class InfantEnrollmentTest extends TestCase
     {
         $this->actingAs($this->authorizedUser());
         $this->zone(1);
-        $household = Household::create(['zone_id' => 1, 'family_name_head' => 'Dela Cruz']);
+        $household = Household::create(['zone_id' => 1, 'head_last_name' => 'Dela Cruz']);
 
         $this->post(route('immunizations.enroll-infant'), $this->infantPayload([
             'household_id' => $household->id,
@@ -107,7 +107,7 @@ class InfantEnrollmentTest extends TestCase
     {
         $this->actingAs($this->authorizedUser());
         $this->zone(1);
-        $household = Household::create(['zone_id' => 1, 'family_name_head' => 'Dela Cruz']);
+        $household = Household::create(['zone_id' => 1, 'head_last_name' => 'Dela Cruz']);
 
         $this->post(route('immunizations.enroll-infant'), $this->infantPayload([
             'household_id' => $household->id,
@@ -132,10 +132,11 @@ class InfantEnrollmentTest extends TestCase
         $this->post(route('immunizations.enroll-infant'), $this->infantPayload([
             'create_household' => 1,
             'zone_id' => 2,
-            'family_name_head' => 'Santos',
+            'head_first_name' => 'Maria',
+            'head_last_name' => 'Santos',
         ]))->assertRedirect();
 
-        $this->assertDatabaseHas('households', ['zone_id' => 2, 'family_name_head' => 'Santos']);
+        $this->assertDatabaseHas('households', ['zone_id' => 2, 'head_first_name' => 'Maria', 'head_last_name' => 'Santos']);
         $this->assertDatabaseHas('patients', [
             'first_name' => 'Baby',
             'last_name' => 'Dela Cruz',
@@ -148,7 +149,7 @@ class InfantEnrollmentTest extends TestCase
     {
         $this->actingAs($this->authorizedUser());
         $this->zone(1);
-        $household = Household::create(['zone_id' => 1, 'family_name_head' => 'Dela Cruz']);
+        $household = Household::create(['zone_id' => 1, 'head_last_name' => 'Dela Cruz']);
 
         $response = $this->post(route('immunizations.enroll-infant'), $this->infantPayload([
             'household_id' => $household->id,
@@ -173,7 +174,7 @@ class InfantEnrollmentTest extends TestCase
     {
         $this->actingAs($this->authorizedUser());
         $this->zone(1);
-        $household = Household::create(['zone_id' => 1, 'family_name_head' => 'Dela Cruz']);
+        $household = Household::create(['zone_id' => 1, 'head_last_name' => 'Dela Cruz']);
 
         $this->post(route('immunizations.enroll-infant'), $this->infantPayload(['household_id' => $household->id]))
             ->assertRedirect();
@@ -188,14 +189,14 @@ class InfantEnrollmentTest extends TestCase
     {
         $this->actingAs($this->authorizedUser());
         $this->zone(1);
-        Household::create(['zone_id' => 1, 'family_name_head' => 'Dela Cruz']);
-        Household::create(['zone_id' => 1, 'family_name_head' => 'Santos']);
+        Household::create(['zone_id' => 1, 'head_last_name' => 'Dela Cruz']);
+        Household::create(['zone_id' => 1, 'head_last_name' => 'Santos']);
 
         $response = $this->get(route('immunizations.household-match', ['surname' => 'Dela']))
             ->assertOk()
             ->assertJsonCount(1);
 
-        $this->assertSame('Dela Cruz', $response->json('0.family_name_head'));
+        $this->assertSame('Dela Cruz', $response->json('0.display_name'));
         $this->assertArrayHasKey('patients_count', $response->json('0'));
     }
 
@@ -204,8 +205,8 @@ class InfantEnrollmentTest extends TestCase
         $this->actingAs($this->authorizedUser());
         $this->zone(1);
         $this->zone(2);
-        Household::create(['zone_id' => 1, 'family_name_head' => 'Dela Cruz']);
-        Household::create(['zone_id' => 2, 'family_name_head' => 'Dela Cruz']);
+        Household::create(['zone_id' => 1, 'head_last_name' => 'Dela Cruz']);
+        Household::create(['zone_id' => 2, 'head_last_name' => 'Dela Cruz']);
 
         $this->get(route('immunizations.household-match', ['surname' => 'Dela', 'zone_id' => 2]))
             ->assertOk()
@@ -225,7 +226,7 @@ class InfantEnrollmentTest extends TestCase
     {
         $this->actingAs($this->authorizedUser());
         $this->zone(1);
-        $household = Household::create(['zone_id' => 1, 'family_name_head' => 'Dela Cruz']);
+        $household = Household::create(['zone_id' => 1, 'head_last_name' => 'Dela Cruz']);
 
         $this->post(route('immunizations.enroll-infant'), $this->infantPayload([
             'household_id' => $household->id,
@@ -239,7 +240,7 @@ class InfantEnrollmentTest extends TestCase
     {
         $this->actingAs($this->authorizedUser());
         $this->zone(1);
-        $household = Household::create(['zone_id' => 1, 'family_name_head' => 'Dela Cruz']);
+        $household = Household::create(['zone_id' => 1, 'head_last_name' => 'Dela Cruz']);
 
         $this->post(route('immunizations.enroll-infant'), $this->infantPayload([
             'household_id' => $household->id,
@@ -253,7 +254,7 @@ class InfantEnrollmentTest extends TestCase
     {
         $this->actingAs($this->authorizedUser());
         $this->zone(1);
-        $household = Household::create(['zone_id' => 1, 'family_name_head' => 'Dela Cruz']);
+        $household = Household::create(['zone_id' => 1, 'head_last_name' => 'Dela Cruz']);
 
         $this->post(route('immunizations.enroll-infant'), $this->infantPayload([
             'household_id' => $household->id,
@@ -270,7 +271,7 @@ class InfantEnrollmentTest extends TestCase
     {
         $this->actingAs($this->authorizedUser());
         $this->zone(1);
-        $household = Household::create(['zone_id' => 1, 'family_name_head' => 'Dela Cruz']);
+        $household = Household::create(['zone_id' => 1, 'head_last_name' => 'Dela Cruz']);
         $mother = $this->motherPatient(1);
 
         $this->post(route('immunizations.enroll-infant'), $this->infantPayload([
@@ -290,7 +291,7 @@ class InfantEnrollmentTest extends TestCase
     {
         $this->actingAs($this->authorizedUser());
         $this->zone(1);
-        $household = Household::create(['zone_id' => 1, 'family_name_head' => 'Dela Cruz']);
+        $household = Household::create(['zone_id' => 1, 'head_last_name' => 'Dela Cruz']);
         $mother = $this->motherPatient(1);
 
         $this->post(route('immunizations.enroll-infant'), $this->infantPayload([
@@ -309,7 +310,7 @@ class InfantEnrollmentTest extends TestCase
     {
         $this->actingAs($this->authorizedUser());
         $this->zone(1);
-        $household = Household::create(['zone_id' => 1, 'family_name_head' => 'Dela Cruz']);
+        $household = Household::create(['zone_id' => 1, 'head_last_name' => 'Dela Cruz']);
 
         $male = Patient::create([
             'household_id' => $household->id,
@@ -340,7 +341,7 @@ class InfantEnrollmentTest extends TestCase
         $mother = $this->motherPatient(1);
 
         $male = Patient::create([
-            'household_id' => Household::create(['zone_id' => 1, 'family_name_head' => 'Reyes'])->id,
+            'household_id' => Household::create(['zone_id' => 1, 'head_last_name' => 'Reyes'])->id,
             'first_name' => 'Mario',
             'last_name' => 'Reyes',
             'sex' => 'Male',

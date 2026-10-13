@@ -27,7 +27,8 @@ class PostnatalRecordSeeder extends Seeder
             $zoneId = DB::table('zones')->value('id');
             $householdId = DB::table('households')->insertGetId([
                 'zone_id' => $zoneId,
-                'family_name_head' => 'Buenaventura',
+                'head_first_name' => 'Marco',
+                'head_last_name' => 'Buenaventura',
                 'contact_number' => '09171234567',
                 'created_at' => $now,
                 'updated_at' => $now,

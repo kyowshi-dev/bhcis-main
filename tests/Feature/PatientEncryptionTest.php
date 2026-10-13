@@ -18,7 +18,7 @@ class PatientEncryptionTest extends TestCase
 
         $householdId = DB::table('households')->insertGetId([
             'zone_id' => $zone->id,
-            'family_name_head' => 'Dela Cruz',
+            'head_last_name' => 'Dela Cruz',
         ]);
 
         return Patient::query()->create([

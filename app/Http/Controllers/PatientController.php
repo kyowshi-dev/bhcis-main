@@ -42,6 +42,7 @@ class PatientController extends Controller
         $this->authorize('create', Patient::class);
 
         $selectedHouseholdId = $request->old('household_id') ?? $request->input('household_id');
+        $selectedMemberId = $request->old('household_member_id') ?? $request->input('member_id');
 
         $transientHousehold = PatientService::ensureTransientHousehold();
 
@@ -55,8 +56,9 @@ class PatientController extends Controller
 
         return view('patients.create', [
             'selectedHouseholdId' => $selectedHouseholdId,
+            'selectedMemberId' => $selectedMemberId,
             'transientHouseholdId' => $transientHousehold->id,
-            'transientHouseholdLabel' => $transientHousehold->family_name_head,
+            'transientHouseholdLabel' => $transientHousehold->display_name,
             'selectedHousehold' => $selectedHousehold,
             'zones' => $zonesQuery->get(),
         ]);

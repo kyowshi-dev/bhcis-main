@@ -31,7 +31,7 @@ class ChildImmunizationServiceTest extends TestCase
 
         return Household::create([
             'zone_id' => 1,
-            'family_name_head' => 'Dela Cruz',
+            'head_last_name' => 'Dela Cruz',
         ]);
     }
 

@@ -43,7 +43,7 @@ class MaternalPostnatalTest extends TestCase
     private function mother(): Patient
     {
         return Patient::create([
-            'household_id' => Household::create(['zone_id' => 1, 'family_name_head' => 'Garcia'])->id,
+            'household_id' => Household::create(['zone_id' => 1, 'head_last_name' => 'Garcia'])->id,
             'first_name' => 'Rosa',
             'last_name' => 'Garcia',
             'sex' => 'Female',

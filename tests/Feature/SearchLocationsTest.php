@@ -119,7 +119,8 @@ class SearchLocationsTest extends TestCase
             ->post(route('patients.store'), [
                 'create_new_household' => 1,
                 'new_household_zone_id' => 1,
-                'new_household_family_name_head' => 'Dela Cruz',
+                'new_household_head_first_name' => 'Juan',
+                'new_household_head_last_name' => 'Dela Cruz',
                 'first_name' => 'Juan',
                 'last_name' => 'Dela Cruz',
                 'sex' => 'Male',

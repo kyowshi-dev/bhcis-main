@@ -112,7 +112,7 @@ function recentEntries() {
                 patient_code: p.patient_code,
                 sex: p.sex,
                 birthdate_formatted: p.date_of_birth ? new Date(p.date_of_birth).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '',
-                household: p.household?.family_name_head || 'N/A',
+                household: p.household?.display_name || 'N/A',
                 civil_status: p.civil_status || '',
             };
         },

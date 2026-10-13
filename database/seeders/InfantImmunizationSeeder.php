@@ -96,6 +96,7 @@ class InfantImmunizationSeeder extends Seeder
             ->keyBy(fn ($schedule) => $schedule->vaccine_id.'-'.$schedule->dose_number);
 
         $middleNames = ['Santiago', 'Dela Cruz', 'Gutierrez', 'Marquez', 'Castillo', 'Ocampo', 'Villanueva', 'Salazar'];
+        $headFirstNames = ['Rogelio', 'Ernesto', 'Nestor', 'Ricardo', 'Benjamin', 'Arturo', 'Rolando', 'Marvin'];
 
         foreach ($infants as $infant) {
             $zoneId = array_rand($zones);
@@ -103,7 +104,8 @@ class InfantImmunizationSeeder extends Seeder
 
             $householdId = DB::table('households')->insertGetId([
                 'zone_id' => $zoneId,
-                'family_name_head' => $infant['last_name'],
+                'head_first_name' => $headFirstNames[array_rand($headFirstNames)],
+                'head_last_name' => $infant['last_name'],
                 'contact_number' => '09'.rand(100000000, 999999999),
                 'created_at' => $now,
                 'updated_at' => $now,

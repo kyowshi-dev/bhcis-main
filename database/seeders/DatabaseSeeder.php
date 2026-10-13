@@ -148,6 +148,10 @@ class DatabaseSeeder extends Seeder
         // 11. Sample postnatal record (with prior prenatal record)
         $this->call(PostnatalRecordSeeder::class);
 
+        // 11a. HOUSEHOLD MEMBERS - backfill from every seeded patient so
+        // household member lists, resident counts, and population stats are populated.
+        $this->call(HouseholdMemberSeeder::class);
+
         // 12. Sample audit logs
         $this->call(AuditLogSeeder::class);
     }

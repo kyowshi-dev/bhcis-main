@@ -37,7 +37,7 @@ class TargetClientListRegisterTest extends TestCase
     private function mother(string $lastName = 'Test'): Patient
     {
         return Patient::create([
-            'household_id' => Household::create(['zone_id' => 1, 'family_name_head' => $lastName])->id,
+            'household_id' => Household::create(['zone_id' => 1, 'head_last_name' => $lastName])->id,
             'first_name' => 'Rosa',
             'last_name' => $lastName,
             'sex' => 'Female',

@@ -274,7 +274,10 @@ DROP TABLE IF EXISTS `households`;
 CREATE TABLE `households` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `zone_id` bigint(20) unsigned NOT NULL,
-  `family_name_head` varchar(255) NOT NULL,
+  `head_first_name` varchar(255) DEFAULT NULL,
+  `head_middle_name` varchar(255) DEFAULT NULL,
+  `head_last_name` varchar(255) NOT NULL,
+  `head_suffix` varchar(255) DEFAULT NULL,
   `contact_number` varchar(255) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,

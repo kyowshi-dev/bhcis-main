@@ -16,7 +16,8 @@ class StoreBatchHouseholdRequest extends FormRequest
     {
         return [
             'zone_id' => ['required', 'integer', 'exists:zones,id'],
-            'family_name_head' => ['required', 'string', 'max:255', new NameCharacters],
+            'head_first_name' => ['required', 'string', 'max:255', new NameCharacters],
+            'head_last_name' => ['required', 'string', 'max:255', new NameCharacters],
             'contact_number' => ['nullable', 'string', 'max:32', 'regex:/^[0-9+\-\s()]*$/'],
         ];
     }
@@ -26,8 +27,10 @@ class StoreBatchHouseholdRequest extends FormRequest
         return [
             'zone_id.required' => 'Zone is required.',
             'zone_id.exists' => 'Selected zone does not exist.',
-            'family_name_head.required' => 'Family name (head) is required.',
-            'family_name_head.name_characters' => 'Family name cannot contain numbers or special symbols.',
+            'head_first_name.required' => 'Head first name is required.',
+            'head_first_name.name_characters' => 'Head name cannot contain numbers or special symbols.',
+            'head_last_name.required' => 'Head last name (family name) is required.',
+            'head_last_name.name_characters' => 'Head name cannot contain numbers or special symbols.',
             'contact_number.regex' => 'Contact number contains invalid characters.',
         ];
     }
@@ -36,7 +39,8 @@ class StoreBatchHouseholdRequest extends FormRequest
     {
         $this->merge([
             'zone_id' => $this->input('zone_id') ? (int) $this->input('zone_id') : null,
-            'family_name_head' => trim($this->input('family_name_head') ?? ''),
+            'head_first_name' => trim($this->input('head_first_name') ?? ''),
+            'head_last_name' => trim($this->input('head_last_name') ?? ''),
             'contact_number' => trim($this->input('contact_number') ?? ''),
         ]);
     }

@@ -28,7 +28,7 @@ class EloquentModelsTest extends TestCase
     {
         return DB::table('households')->insertGetId([
             'zone_id' => $zoneId,
-            'family_name_head' => 'Dela Cruz',
+            'head_last_name' => 'Dela Cruz',
             'contact_number' => '09171234567',
             'created_at' => now(),
             'updated_at' => now(),
