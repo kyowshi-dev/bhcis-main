@@ -26,7 +26,7 @@
                        style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);"
                        autocomplete="current-password">
                 @error('current_password')
-                    <p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>
+                    <p class="mt-1 text-xs" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p>
                 @enderror
             </div>
             <div>
@@ -36,7 +36,7 @@
                        style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);"
                        autocomplete="new-password">
                 @error('password')
-                    <p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>
+                    <p class="mt-1 text-xs" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p>
                 @enderror
             </div>
             <div>

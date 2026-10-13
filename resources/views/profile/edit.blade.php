@@ -22,7 +22,7 @@
     </x-page-header>
 
     @if ($errors->any())
-        <div class="mb-6 p-4 rounded-lg" style="background: var(--danger-soft); border: 1px solid var(--danger);">
+        <div class="mb-6 p-4 rounded-lg" style="background: var(--danger-soft); border: 1px solid var(--danger);" data-auto-dismiss data-auto-dismiss-delay="10000">
             <h3 class="font-semibold text-sm mb-2" style="color: var(--danger);">Please fix the following errors:</h3>
             <ul class="space-y-1">
                 @foreach ($errors->all() as $error)

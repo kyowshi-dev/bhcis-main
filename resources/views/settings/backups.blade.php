@@ -23,7 +23,7 @@
                 <div class="w-full">
                     <label for="current_password_export" class="block text-xs font-medium mb-1" style="color: var(--ink-muted);">Confirm your password</label>
                     <input type="password" id="current_password_export" name="current_password" autocomplete="current-password" required class="w-full rounded-lg border py-2 px-3 text-sm focus:outline-none focus:ring-2 transition" style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);">
-                    @error('current_password')<p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>@enderror
+                    @error('current_password')<p class="mt-1 text-xs" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p>@enderror
                 </div>
                 <button type="submit" class="submit-btn px-4 py-2.5 rounded-xl text-white text-sm font-semibold transition duration-200 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed" style="background: var(--accent);">
                     Download database export
@@ -41,13 +41,13 @@
                     <div>
                         <label for="backup_file" class="block text-xs font-medium mb-1" style="color: var(--ink-muted);">Backup File</label>
                         <input type="file" id="backup_file" name="backup_file" accept=".sql,.sqlite,.db" required class="w-full rounded-lg border py-2 px-3 text-sm focus:outline-none focus:ring-2 transition file:mr-4 file:py-2 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-semibold file:bg-teal-soft file:text-ink hover:file:bg-teal-soft" style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);">
-                        @error('backup_file')<p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>@enderror
+                        @error('backup_file')<p class="mt-1 text-xs" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p>@enderror
                     </div>
 
                     <div>
                         <label for="current_password_import" class="block text-xs font-medium mb-1" style="color: var(--ink-muted);">Confirm your password</label>
                         <input type="password" id="current_password_import" name="current_password" autocomplete="current-password" required class="w-full rounded-lg border py-2 px-3 text-sm focus:outline-none focus:ring-2 transition" style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);">
-                        @error('current_password')<p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>@enderror
+                        @error('current_password')<p class="mt-1 text-xs" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p>@enderror
                     </div>
 
                     <div class="bg-amber-soft border border-amber/30 rounded-lg p-3">
