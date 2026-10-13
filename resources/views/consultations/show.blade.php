@@ -3,231 +3,172 @@
 @section('title', 'Consultation')
 
 @section('content')
-<div class="space-y-5 lg:space-y-6 animate-in opacity-0 pb-24" x-data="{ showRetakeVitals: {{ session('vitals_form') === 'retake' ? 'true' : 'false' }} }">
+@php
+    $clinicalReviewOpen = in_array($consultation->status, [\App\Enums\ConsultationStatus::DoctorReview->value, \App\Enums\ConsultationStatus::InProgress->value], true);
+    $isFemalePatient = strtolower((string) ($patient->sex ?? '')) === 'female';
+@endphp
+
+<div class="min-h-screen bg-[var(--bg)]"
+     x-data="{ showRetakeVitals: {{ session('vitals_form') === 'retake' ? 'true' : 'false' }} }"
+     x-init="if (showRetakeVitals) $dispatch('open-vitals-modal')"
+     x-on:open-retake-vitals.window="showRetakeVitals = true; $dispatch('open-vitals-modal')">
     <x-flash />
 
-    <div class="rounded-xl border bg-[var(--bg-surface)] p-4 lg:p-5" style="border-color: var(--border); box-shadow: var(--shadow-sm);">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-            <h1 class="font-display text-2xl font-semibold lg:text-3xl" style="color: var(--ink);">Consultation Details</h1>
-            <div class="text-right text-xs lg:text-sm" style="color: var(--ink-muted);">
-                Consultation #{{ $consultation->id }}<br>
-                {{ \Carbon\Carbon::parse($consultation->created_at)->format(\App\Helpers\DateFormat::DATETIME_AMPM) }}
-            </div>
+    @include('consultations.partials.show-header', [
+        'consultation' => $consultation,
+        'patient' => $patient,
+        'canAcknowledgeIntake' => $canAcknowledgeIntake ?? false,
+    ])
+
+    <div class="mx-auto max-w-7xl px-4 pb-28 lg:px-6 lg:pb-6" x-data="consultationApp()">
+        @include('consultations.partials.patient-ribbon', [
+            'patient' => $patient,
+            'consultation' => $consultation,
+            'latestVitals' => $latestVitals,
+            'allVitals' => $allVitals,
+            'canEditComplaint' => ! in_array($consultation->status, \App\Enums\ConsultationStatus::terminalValues(), true),
+            'clinicalReviewOpen' => $clinicalReviewOpen,
+        ])
+
+        <div class="mt-4 lg:mt-6 grid lg:grid-cols-12 gap-4">
+            <main class="lg:col-span-7 space-y-4" id="mainContent">
+                <section id="clinical" class="rounded-xl border bg-[var(--bg-surface)]" style="border-color: var(--border);">
+                    <div class="border-b px-4 py-3" style="border-color: var(--border);">
+                        <div class="flex items-center justify-between">
+                            <h2 class="font-semibold text-base" style="color: var(--ink);">Clinical Review</h2>
+                            <span class="text-xs px-2 py-0.5 rounded-full" :class="clinicalReviewOpen ? 'bg-teal-soft text-[var(--primary)]' : 'bg-amber-soft text-[var(--amber)]'" x-text="clinicalReviewOpen ? 'Open for entry' : 'Awaiting nurse validation'"></span>
+                        </div>
+                    </div>
+                    <div class="p-4 space-y-4">
+                        @include('consultations.partials.show-diagnoses', [
+                            'diagnoses' => $diagnoses,
+                            'canAddDiagnosis' => $canAddDiagnosis ?? false,
+                            'clinicalReviewOpen' => $clinicalReviewOpen,
+                        ])
+                        @include('consultations.partials.show-prescriptions', [
+                            'prescriptions' => $prescriptions,
+                            'canAddPrescription' => $canAddPrescription ?? false,
+                            'clinicalReviewOpen' => $clinicalReviewOpen,
+                        ])
+                    </div>
+                </section>
+
+                @if ($isFemalePatient)
+                <section id="maternal" class="rounded-xl border bg-[var(--bg-surface)]" style="border-color: var(--border);" x-data="{ open: true }">
+                    <div class="border-b px-4 py-3 flex items-center justify-between cursor-pointer" style="border-color: var(--border);" @click="open = !open" role="button" tabindex="0" @keydown.enter.prevent="open = !open" :aria-expanded="open.toString()">
+                        <h2 class="font-semibold text-base" style="color: var(--ink);">Maternal Transactions</h2>
+                        <i class="fa-solid text-[var(--ink-muted)] transition-transform" :class="open ? 'fa-chevron-down' : 'fa-chevron-right'" style="font-size: 12px;" aria-hidden="true"></i>
+                    </div>
+                    <div x-show="open" x-transition class="p-4 space-y-4">
+                        @include('consultations.partials.show-maternal', [
+                            'linkedPrenatalVisits' => $linkedPrenatalVisits,
+                            'linkedPostnatal' => $linkedPostnatal,
+                            'linkedFpVisits' => $linkedFpVisits,
+                            'patient' => $patient,
+                        ])
+                    </div>
+                </section>
+                @endif
+            </main>
+
+            <aside class="lg:col-span-5 space-y-4 lg:sticky lg:top-24 lg:self-start lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto" id="sidebarContent">
+                <section id="vitals" class="rounded-xl border bg-[var(--bg-surface)]" style="border-color: var(--border);">
+                    @include('consultations.partials.show-vitals', [
+                        'latestVitals' => $latestVitals,
+                        'allVitals' => $allVitals,
+                        'clinicalReviewOpen' => $clinicalReviewOpen,
+                        'consultation' => $consultation,
+                    ])
+                </section>
+
+                <section id="actions" class="rounded-xl border bg-[var(--bg-surface)]" style="border-color: var(--border);">
+                    @include('consultations.partials.show-actions', [
+                        'consultation' => $consultation,
+                        'clinicalReviewOpen' => $clinicalReviewOpen,
+                        'canReferExternally' => $canReferExternally ?? false,
+                        'diagnoses' => $diagnoses,
+                        'prescriptions' => $prescriptions,
+                    ])
+                </section>
+            </aside>
         </div>
-        <div class="mt-2 flex flex-wrap items-center gap-3">
-            <span class="inline-flex items-center justify-center rounded-full px-2.5 py-1 text-xs font-semibold" style="{{ $consultation->status_style }}">{{ $consultation->status_label }}</span>
-            @if ($consultation->purpose_of_visit)
-                <span class="inline-flex items-center justify-center rounded-full px-2.5 py-1 text-xs font-semibold" style="background: var(--teal-soft); color: var(--primary);">{{ $consultation->purpose_of_visit }}</span>
-            @endif
-            @if ($consultation->escalated_at)
-                <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold" style="background: var(--amber-soft); color: var(--amber);">
-                    <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> Flagged for physician review
-                </span>
-            @endif
-            <a href="{{ route('patients.show', $patient->id) }}" class="text-xs font-medium text-[var(--primary)] hover:underline lg:text-sm">Back to patient</a>
-            <a href="{{ route('consultations.index') }}" class="text-xs font-medium text-[var(--primary)] hover:underline lg:text-sm">History</a>
-            @if (in_array($consultation->status, \App\Enums\ConsultationStatus::terminalValues(), true) && auth()->user()->canPrintHandout())
-                <a href="{{ route('consultations.handout', $consultation->id) }}" target="_blank" rel="noopener"
-                   class="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90"
-                   style="background: var(--primary);">
-                    <i class="fa-solid fa-print" aria-hidden="true"></i> Print handout
-                </a>
-            @endif
-        </div>
-        @if ($consultation->status === \App\Enums\ConsultationStatus::NurseReview->value && ($canAcknowledgeIntake ?? false))
-            <div class="mt-3 rounded-xl border px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
-                 style="background: var(--accent-soft); border-color: var(--border);">
-                <div>
-                    <p class="text-sm font-semibold" style="color: var(--ink);">Awaiting Nurse Review</p>
-                    <p class="text-xs mt-0.5" style="color: var(--ink-muted);">Please check the patient's vitals and triage details before sending them to the doctor.</p>
+
+        @if (($clinicalReviewOpen || ($consultation->status === \App\Enums\ConsultationStatus::NurseReview->value && $canReferExternally)) && ! in_array($consultation->status, \App\Enums\ConsultationStatus::terminalValues(), true))
+            <div class="fixed bottom-0 left-0 right-0 z-40 border-t bg-surface/95 px-4 py-3 backdrop-blur lg:hidden" style="border-color: var(--border);">
+                <div class="mx-auto flex max-w-5xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <p class="text-xs" style="color: var(--ink-muted);">
+                        @if ($clinicalReviewOpen)
+                            Add a diagnosis, then complete this visit.
+                        @else
+                            Nurse review is in progress. Refer the patient to a higher facility if needed.
+                        @endif
+                    </p>
+                    <div class="flex flex-wrap items-center gap-2 justify-end">
+                        @if ($canReferExternally)
+                            <button type="button" onclick="openConsultationOutwardReferralWizard()" class="rounded-xl border px-4 py-2 text-sm font-semibold transition hover:bg-teal-soft" style="border-color: var(--primary); color: var(--primary);">
+                                <i class="fa-solid fa-hospital mr-1" aria-hidden="true"></i> Refer
+                            </button>
+                        @endif
+                        @if ($clinicalReviewOpen)
+                            <button type="submit" form="finalizeForm" class="rounded-xl bg-[var(--primary)] px-5 py-2 text-sm font-semibold text-white transition hover:opacity-90" :disabled="diagnosisCount === 0" :class="{ 'opacity-50 cursor-not-allowed': diagnosisCount === 0 }">
+                                Complete
+                            </button>
+                        @endif
+                    </div>
                 </div>
-                <form action="{{ route('consultations.acknowledge-intake', $consultation->id) }}" method="POST">
-                    @csrf
-                    <button type="submit" class="rounded-xl px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90" style="background: var(--accent);">
-                        Review and send to doctor
-                    </button>
-                </form>
-            </div>
-        @elseif ($consultation->status === \App\Enums\ConsultationStatus::NurseReview->value)
-            <div class="mt-3 rounded-xl border px-4 py-3" style="background: var(--teal-soft); border-color: var(--border);">
-                <p class="text-sm font-semibold" style="color: var(--ink);">Awaiting nurse intake validation</p>
-                <p class="text-xs mt-0.5" style="color: var(--ink-muted);">Clinical review opens after nurse acknowledgment and doctor queue routing.</p>
             </div>
         @endif
     </div>
 
-    @include('consultations.partials.patient-ribbon', [
-        'patient' => $patient,
-        'consultation' => $consultation,
-        'latestVitals' => $latestVitals,
-        'allVitals' => $allVitals,
-        'canEditComplaint' => ! in_array($consultation->status, \App\Enums\ConsultationStatus::terminalValues(), true),
-    ])
-
-    @php
-        $clinicalReviewOpen = in_array($consultation->status, [\App\Enums\ConsultationStatus::DoctorReview->value, \App\Enums\ConsultationStatus::InProgress->value], true);
-    @endphp
-
-    @php
-        $consultationPatientName = fullName($patient->last_name ?? null, $patient->first_name ?? null, $patient->middle_name ?? null, $patient->suffix ?? null);
-        $consultationPatientMetaParts = [];
-        if (! empty($patient->age)) {
-            $consultationPatientMetaParts[] = $patient->age . ' y/o';
-        }
-        if (! empty($patient->sex)) {
-            $consultationPatientMetaParts[] = ucfirst($patient->sex);
-        }
-        $consultationPatientMeta = implode(' · ', $consultationPatientMetaParts);
-        $consultationVitalsSummary = $latestVitals?->summary ?? '';
-    @endphp
-    <div id="consultationReferralContext"
-         data-patient-name="{{ e($consultationPatientName ?: '-') }}"
-         data-patient-meta="{{ e($consultationPatientMeta ?: '-') }}"
-         data-vitals="{{ e($consultationVitalsSummary ?: '-') }}"
-         data-referral-context-url="{{ route('consultations.referral-context', $consultation->id) }}"
-         class="hidden"></div>
-
-    <div x-show="showVitalsModal" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" style="display: none;" class="fixed inset-0 z-[100] overflow-y-auto bg-black/40 p-4">
-        <div class="mx-auto my-4 w-full max-w-5xl rounded-2xl border bg-surface shadow-xl" style="border-color: var(--border);">
+    {{-- Re-take vitals modal: opens through the open-vitals-modal event (handled on the layout body) --}}
+    <div x-show="showVitalsModal" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" style="display: none;" class="fixed inset-0 z-[100] overflow-y-auto bg-black/40 p-4" x-on:keydown.escape.window="showVitalsModal = false" role="dialog" aria-modal="true" aria-label="Re-take vitals">
+        <div class="mx-auto my-4 w-full max-w-2xl rounded-2xl border bg-surface shadow-xl" style="border-color: var(--border);">
             <div class="flex items-center justify-between gap-3 border-b px-4 py-3" style="border-color: var(--border);">
                 <div>
-                    <h3 class="font-display text-lg font-semibold" style="color: var(--ink);">Vitals history</h3>
-                    <p class="text-xs" style="color: var(--ink-muted);">Latest reading and prior versions</p>
+                    <h3 class="font-display text-lg font-semibold" style="color: var(--ink);">Re-take vitals</h3>
+                    <p class="text-xs" style="color: var(--ink-muted);">Saves as a new version - earlier readings stay in history.</p>
                 </div>
                 <button type="button" @click="showVitalsModal = false" class="rounded-lg px-3 py-1.5 text-xs font-semibold text-[var(--ink-muted)] hover:bg-black/5">Close</button>
             </div>
 
             <div class="max-h-[75vh] overflow-auto p-4">
-                <div class="mb-3 rounded-lg bg-teal-soft px-3 py-2 text-xs" style="color: var(--ink-muted);">
-                    Latest Reading: BP {{ $latestVitals?->bp_systolic ?? '-' }}/{{ $latestVitals?->bp_diastolic ?? '-' }} ·
-                    Temp {{ $latestVitals?->temperature_c ?? '-' }}°C ·
-                    Wt {{ $latestVitals?->weight_kg ?? '-' }}kg ·
-                    Ht {{ $latestVitals?->height_cm ?? '-' }}cm
-                </div>
-
-                <table class="w-full text-xs">
-                    <thead>
-                        <tr class="bg-teal-soft" style="color: var(--ink-muted);">
-                            <th class="px-2 py-2 text-left">Captured</th>
-                            <th class="px-2 py-2 text-left">Phase</th>
-                            <th class="px-2 py-2 text-left">BP</th>
-                            <th class="px-2 py-2 text-left">Temp</th>
-                            <th class="px-2 py-2 text-left">By</th>
-                            <th class="px-2 py-2 text-left">Notes</th>
-                            <th class="px-2 py-2 text-left">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($allVitals as $vitalVersion)
-                            <tr class="border-b" style="border-color: var(--border); color: var(--ink);">
-                                <td class="px-2 py-2">{{ \Carbon\Carbon::parse($vitalVersion->created_at)->format('M j g:i A') }}</td>
-                                <td class="px-2 py-2 uppercase">{{ $vitalVersion->phase ?? 'triage' }}</td>
-                                <td class="px-2 py-2">{{ $vitalVersion->bp_systolic ?? '-' }}/{{ $vitalVersion->bp_diastolic ?? '-' }}</td>
-                                <td class="px-2 py-2">{{ $vitalVersion->temperature_c ?? '-' }}°C</td>
-                                <td class="px-2 py-2">{{ fullName($vitalVersion->captured_by_last_name ?? null, $vitalVersion->captured_by_first_name ?? null) ?: 'N/A' }}</td>
-                                <td class="px-2 py-2" style="color: var(--ink-muted);">{{ $vitalVersion->notes ?? '-' }}</td>
-                                <td class="px-2 py-2">
-                                    <div class="flex items-center gap-2">
-                                        <button type="button"
-                                            @click="$dispatch('open-edit-vital', { id: {{ $vitalVersion->id }} })"
-                                            class="text-[11px] font-semibold text-[var(--primary)] hover:underline">Edit</button>
-                                        <form action="{{ route('consultations.vitals.delete', ['consultation' => $consultation->id, 'vitalId' => $vitalVersion->id]) }}" method="POST" onsubmit="return confirmVitalsDelete(this);">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="text-[11px] font-semibold text-[var(--danger)] hover:underline disabled:cursor-not-allowed disabled:opacity-50" @if (($vitalVersion->phase ?? null) === 'triage' || $allVitals->count() <= 1) disabled @endif>Delete</button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="border-t px-4 py-4" style="border-color: var(--border);">
                 @if ($clinicalReviewOpen)
-                    <button type="button" @click="showRetakeVitals = !showRetakeVitals" :aria-expanded="showRetakeVitals.toString()" aria-controls="retakeVitalsForm"
-                            class="inline-flex items-center gap-2 rounded-lg bg-[var(--primary)] px-4 py-3 text-xs font-semibold text-white transition hover:opacity-90">
-                        <i class="fa-solid fa-heart-pulse" aria-hidden="true"></i>
-                        <span x-show="!showRetakeVitals">Re-take vitals</span>
-                        <span x-show="showRetakeVitals" style="display: none;">Hide re-take form</span>
-                    </button>
-
                     <form id="retakeVitalsForm" x-show="showRetakeVitals" x-transition style="display: none;"
                           action="{{ route('consultations.vitals.retake', $consultation->id) }}" method="POST"
-                          class="mt-3 space-y-4 rounded-xl border p-4" style="border-color: var(--border); background: var(--bg-surface);">
+                          class="space-y-4">
                         @csrf
-                        <div class="flex flex-wrap items-start justify-between gap-2">
-                            <div>
-                                <p class="text-sm font-semibold" style="color: var(--ink);">Record a new vitals version</p>
-                                <p class="text-xs mt-0.5" style="color: var(--ink-muted);">Enter at least one reading - earlier versions stay in history.</p>
-                            </div>
-                            <p class="text-xs rounded-lg bg-teal-soft px-2 py-1" style="color: var(--ink-muted);">
-                                Latest: BP {{ $latestVitals?->bp_systolic ?? '-' }}/{{ $latestVitals?->bp_diastolic ?? '-' }} ·
-                                {{ $latestVitals?->temperature_c ?? '-' }}°C ·
-                                {{ $latestVitals?->weight_kg ?? '-' }}kg ·
-                                {{ $latestVitals?->height_cm ?? '-' }}cm
-                            </p>
+                        <div>
+                            <p class="text-sm font-semibold" style="color: var(--ink);">Record a new vitals version</p>
+                            <p class="text-xs mt-0.5" style="color: var(--ink-muted);">Enter at least one reading - earlier versions stay in history.</p>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-3 lg:grid-cols-5">
-                            <div>
-                                <label for="retake_bp_systolic" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Systolic (mmHg)</label>
-                                <input id="retake_bp_systolic" type="number" name="bp_systolic" value="{{ old('bp_systolic') }}" min="0" max="300" step="1" inputmode="numeric" placeholder="SYS"
-                                       class="w-full rounded-lg border px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" style="border-color: var(--border); color: var(--ink);">
-                                @error('bp_systolic')
-                                    <p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>
-                                @enderror
-                            </div>
-                            <div>
-                                <label for="retake_bp_diastolic" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Diastolic (mmHg)</label>
-                                <input id="retake_bp_diastolic" type="number" name="bp_diastolic" value="{{ old('bp_diastolic') }}" min="0" max="200" step="1" inputmode="numeric" placeholder="DIA"
-                                       class="w-full rounded-lg border px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" style="border-color: var(--border); color: var(--ink);">
-                                @error('bp_diastolic')
-                                    <p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>
-                                @enderror
-                            </div>
-                            <div>
-                                <label for="retake_temperature" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Temperature (°C)</label>
-                                <input id="retake_temperature" type="number" name="temperature" value="{{ old('temperature') }}" min="30" max="45" step="0.1" inputmode="decimal" placeholder="36.5"
-                                       class="w-full rounded-lg border px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" style="border-color: var(--border); color: var(--ink);">
-                                @error('temperature')
-                                    <p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>
-                                @enderror
-                            </div>
-                            <div>
-                                <label for="retake_weight" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Weight (kg)</label>
-                                <input id="retake_weight" type="number" name="weight" value="{{ old('weight') }}" min="0" max="500" step="0.1" inputmode="decimal" placeholder="60"
-                                       class="w-full rounded-lg border px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" style="border-color: var(--border); color: var(--ink);">
-                                @error('weight')
-                                    <p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>
-                                @enderror
-                            </div>
-                            <div>
-                                <label for="retake_height" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Height (cm)</label>
-                                <input id="retake_height" type="number" name="height" value="{{ old('height') }}" min="0" max="300" step="0.1" inputmode="decimal" placeholder="165"
-                                       class="w-full rounded-lg border px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" style="border-color: var(--border); color: var(--ink);">
-                                @error('height')
-                                    <p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>
-                                @enderror
-                            </div>
-                        </div>
+                        @include('consultations.partials.vitals-fields', [
+                            'fieldPrefix' => 'retake_',
+                            'required' => false,
+                            'values' => [
+                                'bp_systolic' => old('bp_systolic', $latestVitals?->rawDisplay('bp_systolic') ?? ''),
+                                'bp_diastolic' => old('bp_diastolic', $latestVitals?->rawDisplay('bp_diastolic') ?? ''),
+                                'weight' => old('weight', $latestVitals?->rawDisplay('weight_kg') ?? ''),
+                                'height' => old('height', $latestVitals?->rawDisplay('height_cm') ?? ''),
+                                'temperature' => old('temperature', $latestVitals?->rawDisplay('temperature_c') ?? ''),
+                            ],
+                        ])
 
                         <div>
                             <label for="retake_notes" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Notes <span class="font-normal">(optional)</span></label>
                             <textarea id="retake_notes" name="notes" rows="2" placeholder="e.g. Re-checked after 5 minutes of rest"
-                                      class="w-full rounded-lg border px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" style="border-color: var(--border); color: var(--ink);">{{ old('notes') }}</textarea>
+                                      class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2" style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);">{{ old('notes') }}</textarea>
                             @error('notes')
                                 <p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>
                             @enderror
                         </div>
 
                         <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                            <button type="button" @click="showRetakeVitals = false"
-                                    class="rounded-lg border px-4 py-3 text-sm font-semibold transition hover:bg-black/[0.03]"
+                            <button type="button" @click="showVitalsModal = false"
+                                    class="rounded-lg border px-4 py-2 text-sm font-semibold transition hover:bg-black/[0.03]"
                                     style="border-color: var(--border); color: var(--ink-muted);">Cancel</button>
                             <button type="submit"
-                                    class="rounded-lg bg-[var(--primary)] px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90">Save new vitals version</button>
+                                    class="rounded-lg bg-[var(--primary)] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90">Save new vitals version</button>
                         </div>
                     </form>
                 @else
@@ -237,726 +178,69 @@
         </div>
     </div>
 
-    <main class="space-y-4">
-        <section class="rounded-xl border bg-[var(--bg-surface)] p-4 lg:p-5" style="border-color: var(--border);">
-            <div class="flex items-center justify-between gap-2">
-                <h3 class="font-display font-semibold text-lg" style="color: var(--ink);">Medical Diagnosis</h3>
-                @if(isset($diagnoses) && $diagnoses->count() > 0)
-                    <span class="text-xs px-2 py-1 rounded-full bg-[var(--primary)] text-white">{{ $diagnoses->count() }} saved</span>
-                @endif
-            </div>
+    @include('consultations.partials.show-modals', [
+        'consultation' => $consultation,
+        'patient' => $patient,
+        'latestVitals' => $latestVitals,
+    ])
 
-            @if(isset($diagnoses) && $diagnoses->count() > 0)
-                <div class="mt-3 space-y-2">
-                    @foreach($diagnoses as $d)
-                        <div class="rounded-lg border p-2 text-sm flex items-center justify-between gap-2" style="border-color: var(--border);">
-                            <div>
-                                @if ($d->diagnosis_code)
-                                    <span class="font-semibold" style="color: var(--ink);">{{ $d->diagnosis_code }}</span>
-                                    <span style="color: var(--ink-muted);">- {{ $d->diagnosis_name }}</span>
-                                @else
-                                    <span class="font-semibold" style="color: var(--ink);">{{ $d->diagnosis_name }}</span>
-                                @endif
-                                @if ($d->is_custom)
-                                    <span class="ml-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide" style="background: var(--border); color: var(--ink-muted);">Custom</span>
-                                @endif
-                                @if ($d->remarks)
-                                    <p class="text-xs mt-1" style="color: var(--ink-muted);">{{ $d->remarks }}</p>
-                                @endif
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            @else
-                <p class="mt-3 text-sm" style="color: var(--ink-muted);">No diagnosis entries yet for this consultation.</p>
-            @endif
-
-            @if ($clinicalReviewOpen && ($canAddDiagnosis ?? false))
-            <form action="{{ route('consultations.diagnosis', $consultation->id) }}" method="POST" x-data="diagnosisSearch()" @set-diagnosis-query.window="setQuery($event.detail.query)" class="space-y-4 mt-4 pt-4 border-t" style="border-color: var(--border);">
-                @csrf
-                <div class="relative">
-                    <div class="flex items-center justify-between gap-2 mb-1">
-                        <label class="block text-xs font-medium" style="color: var(--ink-muted);">Search ICD-10 / Disease name</label>
-                    </div>
-                    <div>
-                        <input type="text" x-model="query" @input.debounce.300ms="search()" placeholder="e.g. Dengue, Hypertension..." class="w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition" style="border-color: var(--border); color: var(--ink);" autocomplete="off">
-                        <input type="hidden" name="diagnosis_id" :value="selectedId">
-                        <div x-show="results.length > 0" class="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border bg-surface" style="display:none; border-color: var(--border);">
-                            <ul>
-                                <template x-for="item in results" :key="item.id">
-                                    <li @click="select(item)" class="px-3 py-2 cursor-pointer text-sm border-b hover:bg-black/5" style="border-color: var(--border); color: var(--ink);" x-text="item.text"></li>
-                                </template>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium mb-1" style="color: var(--ink-muted);">Remarks</label>
-                    <textarea name="remarks" rows="2" class="w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition" style="border-color: var(--border); color: var(--ink);"></textarea>
-                </div>
-                <div class="flex justify-end">
-                    <button type="submit" :disabled="!canSubmitDiagnosis" class="rounded-xl bg-[var(--primary)] px-5 py-2 text-sm font-semibold text-white disabled:opacity-50">Add diagnosis</button>
-                </div>
-            </form>
-            @else
-            @if ($clinicalReviewOpen && !($canAddDiagnosis ?? false))
-                <p class="mt-4 pt-4 border-t text-sm" style="border-color: var(--border); color: var(--ink-muted);">Only doctors can add diagnoses.</p>
-            @else
-                <p class="mt-4 pt-4 border-t text-sm" style="border-color: var(--border); color: var(--ink-muted);">Diagnosis entry opens after nurse validation routes this case to the doctor queue.</p>
-            @endif
-            @endif
-        </section>
-
-        <section class="rounded-xl border bg-[var(--bg-surface)] p-4 lg:p-5" style="border-color: var(--border);">
-            <div class="flex items-center justify-between gap-2">
-                <h3 class="font-display font-semibold text-lg" style="color: var(--ink);">Prescription (Rx)</h3>
-                @if(isset($prescriptions) && $prescriptions->count() > 0)
-                    <span class="text-xs px-2 py-1 rounded-full bg-[var(--primary)] text-white">{{ $prescriptions->count() }} saved</span>
-                @endif
-            </div>
-
-            @if(isset($prescriptions) && $prescriptions->count() > 0)
-                <div class="mt-3 overflow-auto border rounded-lg" style="border-color: var(--border);">
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="bg-teal-soft" style="color: var(--ink-muted);">
-                                <th class="text-left px-3 py-2">Medicine</th>
-                                <th class="text-left px-3 py-2">Dose / Route</th>
-                                <th class="text-left px-3 py-2">Frequency</th>
-                                <th class="text-left px-3 py-2">Duration</th>
-                                <th class="text-left px-3 py-2">Qty</th>
-                                <th class="text-left px-3 py-2">Instructions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($prescriptions as $rx)
-                                <tr class="border-b" style="border-color: var(--border); color: var(--ink);">
-                                    <td class="px-3 py-2">
-                                        {{ $rx->medicine_name }}
-                                        @if ($rx->is_custom)
-                                            <span class="ml-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide" style="background: var(--border); color: var(--ink-muted);">Custom</span>
-                                        @endif
-                                    </td>
-                                    <td class="px-3 py-2">
-                                        <span class="font-medium">{{ $rx->dosage }}</span>
-                                        @if ($rx->route)
-                                            <span class="ml-1 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase" style="background: var(--teal-soft); color: var(--primary);">{{ $rx->route }}</span>
-                                        @endif
-                                    </td>
-                                    <td class="px-3 py-2">{{ $rx->frequency ?? '-' }}</td>
-                                    <td class="px-3 py-2">{{ $rx->duration ?? '-' }}</td>
-                                    <td class="px-3 py-2">{{ $rx->quantity ?? '-' }}</td>
-                                    <td class="px-3 py-2" style="color: var(--ink-muted);">{{ $rx->instructions ?? '-' }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            @else
-                <p class="mt-3 text-sm" style="color: var(--ink-muted);">No prescription entries yet for this consultation.</p>
-            @endif
-
-            @if ($clinicalReviewOpen && ($canAddPrescription ?? false))
-            <form action="{{ route('consultations.prescription', $consultation->id) }}" method="POST" x-data="medicineSearch(@js([
-                'dosage' => old('dosage'),
-                'route' => old('route'),
-                'frequency' => old('frequency'),
-                'duration' => old('duration'),
-                'quantity' => old('quantity'),
-                'instructions' => old('instructions'),
-            ]))" class="space-y-4 mt-4 pt-4 border-t" style="border-color: var(--border);">
-                @csrf
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between gap-2 mb-1">
-                        <label class="block text-xs font-medium" style="color: var(--ink-muted);">Medicine search <span class="text-[var(--danger)]">*</span></label>
-                    </div>
-                    <div class="relative" @click.away="results = []">
-                        <input type="text" x-model="query" @input.debounce.300ms="search()" @keydown.escape="results = []" placeholder="e.g. Paracetamol, Amoxicillin..." class="w-full px-3 py-2 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition" style="border-color: var(--border); color: var(--ink);" autocomplete="off" aria-autocomplete="list" aria-expanded="false" :aria-expanded="results.length > 0">
-                        <input type="hidden" name="medicine_id" :value="selectedId">
-
-                        <div x-show="results.length > 0" class="absolute inset-x-0 top-full z-10 mt-1 rounded-2xl border bg-surface shadow-sm max-h-56 overflow-y-auto" style="display:none; border-color: var(--border);">
-                            <ul>
-                                <template x-for="item in results" :key="item.id">
-                                    <li @click="select(item)" class="px-3 py-2 text-sm cursor-pointer border-b last:border-b-0 hover:bg-black/5" style="border-color: var(--border); color: var(--ink);">
-                                        <span x-text="item.text"></span>
-                                        <span x-show="item.form" class="ml-1 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide" style="background: var(--teal-soft); color: var(--primary);" x-text="item.form"></span>
-                                    </li>
-                                </template>
-                            </ul>
-                        </div>
-                        <div x-show="query.length >= 2 && results.length === 0 && !searching && !selectedId" class="absolute inset-x-0 top-full z-10 mt-1 rounded-2xl border bg-surface px-3 py-2 text-sm text-[var(--ink-subtle)]" style="display:none; border-color: var(--border);">
-                            No medicines found. Try a different search term.
-                        </div>
-                        <div x-show="searching" class="absolute inset-x-0 top-full z-10 mt-1 rounded-2xl border border-[var(--primary-soft)] bg-surface px-3 py-2 text-sm text-[var(--primary)]" style="display:none; border-color: var(--border);">
-                            Searching medicines...
-                        </div>
-                    </div>
-
-                    <div x-show="selectedText" class="flex items-center justify-between gap-3 rounded-2xl border border-[var(--primary-soft)] bg-teal-soft px-3 py-2 text-sm" style="display:none;">
-                        <span class="font-medium text-[var(--primary)]">Selected medicine: <span x-text="selectedText"></span></span>
-                        <button type="button" @click="clearSelection()" class="text-xs font-semibold text-[var(--primary)] hover:underline">Clear</button>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    <div class="space-y-2">
-                        <label for="rx_dosage" class="block text-xs font-medium" style="color: var(--ink-muted);">Dosage <span class="text-[var(--danger)]">*</span></label>
-                        <input id="rx_dosage" type="text" name="dosage" x-model="dosage" placeholder="e.g. 1 tab or 500 mg" class="w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition" style="border-color: var(--border); color: var(--ink);" required>
-                        <div class="flex flex-wrap gap-1.5">
-                            <template x-for="unit in dosageUnits" :key="unit">
-                                <button type="button" @click="setDosage(unit)" class="px-2.5 py-1 rounded-full text-xs bg-teal-soft text-[var(--primary)] transition hover:opacity-80" x-text="unit"></button>
-                            </template>
-                        </div>
-                    </div>
-
-                    <div class="space-y-2">
-                        <label for="rx_route" class="block text-xs font-medium" style="color: var(--ink-muted);">Route <span class="text-[var(--danger)]">*</span></label>
-                        <select id="rx_route" name="route" x-model="route" class="w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition" style="border-color: var(--border); color: var(--ink);" required>
-                            <option value="">Select route</option>
-                            <option value="PO">PO (by mouth)</option>
-                            <option value="IV">IV (intravenous)</option>
-                            <option value="IM">IM (intramuscular)</option>
-                            <option value="SC">SC (subcutaneous)</option>
-                            <option value="Topical">Topical</option>
-                            <option value="Inhalation">Inhalation</option>
-                            <option value="Ophthalmic">Ophthalmic (eye)</option>
-                            <option value="Otic">Otic (ear)</option>
-                            <option value="Rectal">Rectal</option>
-                            <option value="Vaginal">Vaginal</option>
-                            <option value="Sublingual">Sublingual</option>
-                            <option value="Other">Other</option>
-                        </select>
-                        <div class="flex flex-wrap gap-1.5">
-                            <template x-for="r in ['PO', 'IV', 'IM', 'Topical', 'Inhalation']" :key="r">
-                                <button type="button" @click="route = r" class="px-2.5 py-1 rounded-full text-xs transition hover:opacity-80" :class="route === r ? 'bg-[var(--primary)] text-white' : 'bg-teal-soft text-[var(--primary)]'" x-text="r"></button>
-                            </template>
-                        </div>
-                    </div>
-
-                    <div class="space-y-2">
-                        <label for="rx_frequency" class="block text-xs font-medium" style="color: var(--ink-muted);">Frequency <span class="text-[var(--danger)]">*</span></label>
-                        <input id="rx_frequency" type="text" name="frequency" x-model="frequency" placeholder="e.g. TID (3 times daily)" class="w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition" style="border-color: var(--border); color: var(--ink);" required>
-                        <div class="flex flex-wrap gap-1.5">
-                            <template x-for="f in frequencyOptions" :key="f">
-                                <button type="button" @click="setFrequency(f)" class="px-2.5 py-1 rounded-full text-xs bg-teal-soft text-[var(--primary)] transition hover:opacity-80" x-text="f"></button>
-                            </template>
-                        </div>
-                    </div>
-
-                    <div class="space-y-2">
-                        <label for="rx_duration" class="block text-xs font-medium" style="color: var(--ink-muted);">Duration <span class="text-[var(--danger)]">*</span></label>
-                        <input id="rx_duration" type="text" name="duration" x-model="duration" placeholder="e.g. 7 days" class="w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition" style="border-color: var(--border); color: var(--ink);" required>
-                        <div class="flex flex-wrap gap-1.5">
-                            <template x-for="d in durationOptions" :key="d">
-                                <button type="button" @click="setDuration(d)" class="px-2.5 py-1 rounded-full text-xs bg-teal-soft text-[var(--primary)] transition hover:opacity-80" x-text="d"></button>
-                            </template>
-                        </div>
-                    </div>
-
-                    <div class="space-y-2">
-                        <label for="rx_quantity" class="block text-xs font-medium" style="color: var(--ink-muted);">Quantity <span class="text-[var(--danger)]">*</span></label>
-                        <div class="flex items-center gap-2">
-                            <input id="rx_quantity" type="number" name="quantity" x-model.number="quantity" min="1" class="w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition" style="border-color: var(--border); color: var(--ink);" required>
-                            <button type="button" x-show="suggestedQuantity" @click="fillQuantity()" class="shrink-0 px-2.5 py-2 rounded-lg text-xs font-semibold border transition hover:opacity-80" style="display:none; border-color: var(--primary); color: var(--primary); background: var(--teal-soft);">
-                                Suggested: <span x-text="suggestedQuantity"></span>
-                            </button>
-                        </div>
-                        <p class="text-[11px]" style="color: var(--ink-subtle);">Computed from dose, frequency and duration.</p>
-                    </div>
-
-                    <div class="space-y-2">
-                        <label for="rx_instructions" class="block text-xs font-medium" style="color: var(--ink-muted);">Instructions</label>
-                        <input id="rx_instructions" type="text" name="instructions" x-model="instructions" placeholder="e.g. Take after meals" class="w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition" style="border-color: var(--border); color: var(--ink);">
-                        <div class="flex flex-wrap gap-1.5">
-                            <template x-for="i in instructionOptions" :key="i">
-                                <button type="button" @click="setInstructions(i)" class="px-2.5 py-1 rounded-full text-xs bg-teal-soft text-[var(--primary)] transition hover:opacity-80" x-text="i"></button>
-                            </template>
-                        </div>
-                    </div>
-                </div>
-
-                <div x-show="rxPreview" class="rounded-xl border px-3 py-2 text-sm" style="display:none; border-color: var(--primary); background: var(--teal-soft); color: var(--ink);">
-                    <span class="font-semibold uppercase tracking-wide text-[11px]" style="color: var(--primary);">Rx preview</span>
-                    <p class="mt-0.5 font-medium" x-text="rxPreview"></p>
-                </div>
-
-                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <p class="text-xs text-[var(--ink-subtle)]" x-show="!selectedId" style="display:none;">Please choose a medicine from the results before adding a prescription.</p>
-                    <p class="text-xs text-[var(--ink-subtle)]" x-show="selectedId && !completeSig" style="display:none;">Complete dosage, route, frequency, duration and quantity to enable the add button.</p>
-                    <button type="submit" :disabled="!canSubmitPrescription" class="rounded-xl bg-[var(--primary)] px-5 py-2 text-sm font-semibold text-white disabled:opacity-50">Add prescription</button>
-                </div>
-            </form>
-            @else
-            @if ($clinicalReviewOpen && !($canAddPrescription ?? false))
-                <p class="mt-4 pt-4 border-t text-sm" style="border-color: var(--border); color: var(--ink-muted);">Only doctors and administrators can add prescriptions.</p>
-            @else
-                <p class="mt-4 pt-4 border-t text-sm" style="border-color: var(--border); color: var(--ink-muted);">Prescription entry opens after nurse validation routes this case to the doctor queue.</p>
-            @endif
-            @endif
-        </section>
-
-        @php
-            $isFemalePatient = strtolower((string) ($patient->sex ?? '')) === 'female';
-        @endphp
-        @if ($isFemalePatient)
-        <section class="rounded-xl border bg-[var(--bg-surface)] p-4 lg:p-5" style="border-color: var(--border);">
-            <div class="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                    <h3 class="font-display font-semibold text-lg" style="color: var(--ink);">Maternal Transactions</h3>
-                    <p class="text-xs mt-0.5" style="color: var(--ink-muted);">Prenatal, postpartum, and family planning records linked to this consultation from the maternal module.</p>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                    <a href="{{ route('maternal.prenatal.patient', $patient->id) }}" target="_blank"
-                       class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition hover:bg-black/[0.03]"
-                       style="border-color: var(--border); color: var(--primary);">
-                        <i class="fa-solid fa-baby-carriage" aria-hidden="true"></i> Prenatal
-                    </a>
-                    <a href="{{ route('maternal.postnatal.patient', $patient->id) }}" target="_blank"
-                       class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition hover:bg-black/[0.03]"
-                       style="border-color: var(--border); color: var(--primary);">
-                        <i class="fa-solid fa-child-reaching" aria-hidden="true"></i> Postpartum
-                    </a>
-                    <a href="{{ route('maternal.family-planning.patient', $patient->id) }}" target="_blank"
-                       class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition hover:bg-black/[0.03]"
-                       style="border-color: var(--border); color: var(--primary);">
-                        <i class="fa-solid fa-hand-holding-heart" aria-hidden="true"></i> Family planning
-                    </a>
-                </div>
-            </div>
-
-            @if ($linkedPrenatalVisits->isEmpty() && $linkedPostnatal === null && $linkedFpVisits->isEmpty())
-                <p class="mt-4 text-sm" style="color: var(--ink-muted);">
-                    No maternal records are linked to this consultation yet. Record a maternal visit for this patient and it will be attached to this consultation automatically.
-                </p>
-            @else
-                <div class="mt-4 space-y-4">
-                    @if ($linkedPrenatalVisits->isNotEmpty())
-                        <div>
-                            <p class="text-xs font-semibold uppercase tracking-wide mb-2" style="color: var(--ink-muted);">Prenatal visits
-                                <span class="block text-[10px] font-normal normal-case tracking-normal" style="color: var(--ink-subtle);">Prenatal na Pagbisita</span>
-                            </p>
-                            <div class="space-y-2">
-                                @foreach ($linkedPrenatalVisits as $pv)
-                                    <div class="flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm" style="border-color: var(--border);">
-                                        <span class="font-medium" style="color: var(--ink);">{{ \Carbon\Carbon::parse($pv->visit_date)->format('M d, Y') }}</span>
-                                        <span class="text-xs" style="color: var(--ink-muted);">
-                                            FH {{ $pv->fundic_height_cm ?? '-' }} cm · FHT {{ $pv->fetal_heart_tone_bpm ?? '-' }} bpm
-                                        </span>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    @endif
-
-                    @if ($linkedPostnatal !== null)
-                        <div>
-                            <p class="text-xs font-semibold uppercase tracking-wide mb-2" style="color: var(--ink-muted);">Postpartum record
-                                <span class="block text-[10px] font-normal normal-case tracking-normal" style="color: var(--ink-subtle);">Postpartum na Rekord</span>
-                            </p>
-                            <div class="flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm" style="border-color: var(--border);">
-                                <span class="font-medium" style="color: var(--ink);">
-                                    {{ \App\Models\PostnatalRecord::OUTCOMES[$linkedPostnatal->pregnancy_outcome] ?? $linkedPostnatal->pregnancy_outcome }}
-                                    · {{ \Carbon\Carbon::parse($linkedPostnatal->delivery_date)->format('M d, Y') }}
-                                </span>
-                                <span class="text-xs" style="color: var(--ink-muted);">
-                                    {{ $linkedPostnatal->postpartum_24h_date ? '24h ✓' : '' }}
-                                    {{ $linkedPostnatal->postpartum_7d_date ? '7d ✓' : '' }}
-                                    {{ $linkedPostnatal->postpartum_14d_date ? '14d ✓' : '' }}
-                                    {{ $linkedPostnatal->postpartum_28d_date ? '28d ✓' : '' }}
-                                </span>
-                            </div>
-                        </div>
-                    @endif
-
-                    @if ($linkedFpVisits->isNotEmpty())
-                        <div>
-                            <p class="text-xs font-semibold uppercase tracking-wide mb-2" style="color: var(--ink-muted);">Family planning visits
-                                <span class="block text-[10px] font-normal normal-case tracking-normal" style="color: var(--ink-subtle);">Family Planning na Pagbisita</span>
-                            </p>
-                            <div class="space-y-2">
-                                @foreach ($linkedFpVisits as $fp)
-                                    <div class="flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm" style="border-color: var(--border);">
-                                        <span class="font-medium" style="color: var(--ink);">{{ \Carbon\Carbon::parse($fp->visit_date)->format('M d, Y') }}</span>
-                                        <span class="text-xs" style="color: var(--ink-muted);">{{ $fp->method }}</span>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    @endif
-                </div>
-            @endif
-        </section>
-        @endif
-
-        @if ($clinicalReviewOpen)
-            <form id="finalizeForm" action="{{ route('consultations.finalize', $consultation->id) }}" method="POST">
-                @csrf
-                <input id="outward_refer_to_higher_facility" type="hidden" name="refer_to_higher_facility" value="0">
-                <input id="outward_hidden_referred_to" type="hidden" name="referred_to" value="">
-                <input id="outward_hidden_referral_reason_details" type="hidden" name="referral_reason_details" value="">
-                <input id="outward_hidden_pertinent_history" type="hidden" name="pertinent_history" value="">
-                <input id="outward_hidden_actions_taken" type="hidden" name="actions_taken" value="">
-                <div id="outward_hidden_referral_reasons"></div>
-
-                @if (! $canReferExternally)
-                    <p class="text-xs" style="color: var(--ink-muted);">Only Nurse and Doctor roles can trigger external referral.</p>
-                @endif
-            </form>
-        @elseif ($consultation->status === \App\Enums\ConsultationStatus::NurseReview->value && $canReferExternally)
-            <form id="consultationShowReferralForm" action="{{ route('consultations.refer', $consultation->id) }}" method="POST" class="hidden">
-                @csrf
-                <input id="outward_refer_to_higher_facility" type="hidden" name="refer_to_higher_facility" value="1">
-                <input id="outward_hidden_referred_to" type="hidden" name="referred_to" value="">
-                <input id="outward_hidden_referral_reason_details" type="hidden" name="referral_reason_details" value="">
-                <input id="outward_hidden_pertinent_history" type="hidden" name="pertinent_history" value="">
-                <input id="outward_hidden_actions_taken" type="hidden" name="actions_taken" value="">
-                <div id="outward_hidden_referral_reasons"></div>
-            </form>
-        @endif
-    </main>
-
-    @if (($clinicalReviewOpen || ($consultation->status === \App\Enums\ConsultationStatus::NurseReview->value && $canReferExternally)) && ! in_array($consultation->status, \App\Enums\ConsultationStatus::terminalValues(), true))
-        <div class="fixed bottom-0 left-0 right-0 z-40 border-t bg-surface/95 px-4 py-3 backdrop-blur" style="border-color: var(--border);">
-            <div class="mx-auto flex max-w-5xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p class="text-xs" style="color: var(--ink-muted);">
-                    @if ($clinicalReviewOpen && ($diagnoses->count() ?? 0) > 0 && ($prescriptions->count() ?? 0) > 0)
-                        Diagnosis and prescription recorded. Finalize to close this visit, or add more entries above.
-                    @elseif ($clinicalReviewOpen)
-                        Add at least one diagnosis before finalizing. Prescription is optional but recommended when medicines are given.
-                    @else
-                        Nurse review is in progress. Refer the patient to a higher facility if needed.
-                    @endif
-                </p>
-                <div class="flex flex-wrap items-center gap-2 justify-end">
-                    @if ($canReferExternally)
-                        <button type="button" onclick="openConsultationOutwardReferralWizard()" class="rounded-xl border border-[var(--primary)] px-4 py-2 text-sm font-semibold text-[var(--primary)] transition hover:bg-teal-soft">
-                            Refer to higher facility
-                        </button>
-                    @endif
-                    @if ($clinicalReviewOpen)
-                        <button type="submit" form="finalizeForm" class="rounded-xl bg-[var(--primary)] px-5 py-2 text-sm font-semibold text-white">
-                            Complete consultation
-                        </button>
-                    @endif
-                </div>
-            </div>
-        </div>
-    @endif
-</div>
-
-@push('page-modals')
-    <x-modal name="edit-complaint-modal" title="Edit chief complaint"
-             x-on:open-edit-complaint.window="open = true" x-on:close.window="open = false">
-        <form action="{{ route('consultations.complaint.update', $consultation->id) }}" method="POST" class="space-y-3">
-            @csrf
-            @method('PUT')
-            <div>
-                <label for="complaint-text-edit" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Chief complaint</label>
-                <textarea id="complaint-text-edit" name="complaint_text" rows="4"
-                          class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
-                          style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);"
-                          placeholder="e.g. Fever 3 days, cough">{{ $consultation->complaint_text }}</textarea>
-            </div>
-            <div class="flex justify-end gap-2 pt-1">
-                <button type="button" @click="$dispatch('close')" class="rounded-lg border px-4 py-2 text-sm font-semibold transition hover:bg-black/[0.03]"
-                        style="border-color: var(--border); color: var(--ink-muted);">Cancel</button>
-                <button type="submit" class="rounded-lg px-4 py-2 text-sm font-semibold text-white transition hover:shadow-md" style="background: var(--primary);">Save</button>
-            </div>
-        </form>
-    </x-modal>
-
-    <x-modal name="edit-vital-modal" title="Edit vitals"
-             x-effect="if (open) { document.body.classList.add('overflow-hidden'); $nextTick(function () { var panel = $refs.panel; if (panel) { var focusable = panel.querySelector('[data-autofocus], input, select, textarea, button'); if (focusable) { focusable.focus(); } } }); } else { document.body.classList.remove('overflow-hidden'); }"
-             x-on:open-edit-vital.window="open = true; const d = $event.detail; if (d) { editVitalId = d.id; editBpSystolic = d.bp_systolic ?? ''; editBpDiastolic = d.bp_diastolic ?? ''; editTemperature = d.temperature ?? ''; editWeight = d.weight ?? ''; editHeight = d.height ?? ''; editNotes = d.notes || ''; }"
-             x-on:close.window="open = false"
-             x-data="{
-                open: {{ session('vitals_form') === 'edit' ? 'true' : 'false' }},
-                editVitalId: {{ \Illuminate\Support\Js::from(((int) old('vital_id')) ?: null) }},
-                editBpSystolic: {{ \Illuminate\Support\Js::from(old('bp_systolic', '')) }},
-                editBpDiastolic: {{ \Illuminate\Support\Js::from(old('bp_diastolic', '')) }},
-                editTemperature: {{ \Illuminate\Support\Js::from(old('temperature', '')) }},
-                editWeight: {{ \Illuminate\Support\Js::from(old('weight', '')) }},
-                editHeight: {{ \Illuminate\Support\Js::from(old('height', '')) }},
-                editNotes: {{ \Illuminate\Support\Js::from(old('notes', '')) }}
-             }">
-        <form :action="'{{ route('consultations.vitals.update', ['consultation' => $consultation->id, 'vitalId' => '__ID__']) }}'.replace('__ID__', editVitalId)" method="POST" class="space-y-3">
-            @csrf
-            @method('PUT')
-            <input type="hidden" name="vital_id" :value="editVitalId">
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label for="edit_bp_systolic" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Systolic (mmHg)</label>
-                    <input id="edit_bp_systolic" type="number" name="bp_systolic" x-model="editBpSystolic" min="0" max="300" step="1" inputmode="numeric" placeholder="SYS"
-                           class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2" style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);">
-                    @error('bp_systolic')
-                        <p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>
-                    @enderror
-                </div>
-                <div>
-                    <label for="edit_bp_diastolic" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Diastolic (mmHg)</label>
-                    <input id="edit_bp_diastolic" type="number" name="bp_diastolic" x-model="editBpDiastolic" min="0" max="200" step="1" inputmode="numeric" placeholder="DIA"
-                           class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2" style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);">
-                    @error('bp_diastolic')
-                        <p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>
-                    @enderror
-                </div>
-                <div>
-                    <label for="edit_temperature" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Temperature (°C)</label>
-                    <input id="edit_temperature" type="number" name="temperature" x-model="editTemperature" min="30" max="45" step="0.1" inputmode="decimal" placeholder="36.5"
-                           class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2" style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);">
-                    @error('temperature')
-                        <p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>
-                    @enderror
-                </div>
-                <div>
-                    <label for="edit_weight" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Weight (kg)</label>
-                    <input id="edit_weight" type="number" name="weight" x-model="editWeight" min="0" max="500" step="0.1" inputmode="decimal" placeholder="60"
-                           class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2" style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);">
-                    @error('weight')
-                        <p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>
-                    @enderror
-                </div>
-                <div class="col-span-2">
-                    <label for="edit_height" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Height (cm)</label>
-                    <input id="edit_height" type="number" name="height" x-model="editHeight" min="0" max="300" step="0.1" inputmode="decimal" placeholder="165"
-                           class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2" style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);">
-                    @error('height')
-                        <p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>
-                    @enderror
-                </div>
-            </div>
-            <div>
-                <label for="edit_notes" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Notes</label>
-                <textarea id="edit_notes" name="notes" x-model="editNotes" rows="2" placeholder="Notes"
-                          class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2" style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);"></textarea>
-                @error('notes')
-                    <p class="mt-1 text-xs" style="color: var(--danger);">{{ $message }}</p>
-                @enderror
-            </div>
-            <div class="flex justify-end gap-2 pt-1">
-                <button type="button" @click="$dispatch('close')" class="rounded-lg border px-4 py-2 text-sm font-semibold transition hover:bg-black/[0.03]"
-                        style="border-color: var(--border); color: var(--ink-muted);">Cancel</button>
-                <button type="submit" class="rounded-lg px-4 py-2 text-sm font-semibold text-white transition hover:shadow-md" style="background: var(--primary);">Update</button>
-            </div>
-        </form>
-    </x-modal>
-
-    <div id="outwardReferralShowModal" x-show="$store.modals.outward" x-transition.opacity.duration.200ms role="dialog" aria-modal="true" class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display: none;">
-        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeConsultationOutwardReferralWizard()"></div>
-        <div id="outwardReferralShowPanel" x-show="$store.modals.outward" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl bg-surface focus:outline-none" tabindex="-1">
-            <div class="flex items-center justify-between gap-3 border-b px-5 py-4" style="border-color: var(--border);">
-                <div>
-                    <h2 class="font-display text-lg font-semibold" style="color: var(--ink);">Outward Referral</h2>
-                    <p class="text-xs" style="color: var(--ink-muted);">Refer patient to a higher-level facility</p>
-                </div>
-                <button type="button" onclick="closeConsultationOutwardReferralWizard()" class="shrink-0 rounded-full p-2 text-ink-muted transition hover:bg-black/5" aria-label="Close referral wizard">
-                    <i class="fa-solid fa-times" aria-hidden="true"></i>
-                </button>
-            </div>
-            <div class="p-5">
-                @php
-                    $destinationFacilities = [
-                        'Tagoloan Rural Health Unit (RHU)',
-                        'Tagoloan District Hospital',
-                        'Provincial Hospital',
-                        'Tagoloan Polymedic Clinic',
-                        'Northern Mindanao Medical Center (NMMC)',
-                        'Cagayan de Oro Medical Center',
-                        'Other facility (specify in notes)',
-                    ];
-
-                    $referralReasonOptions = [
-                        'specialized_evaluation' => 'Need for specialized medical evaluation / physician',
-                        'lack_diagnostics' => 'Lack of diagnostic equipment / laboratory tests',
-                        'lack_medicines' => 'Lack of available medicines / vaccines',
-                        'emergency_trauma' => 'Emergency / trauma stabilization required',
-                    ];
-                @endphp
-                @include('referrals.partials.outreferrals', [
-                    'destinationFacilities' => $destinationFacilities,
-                    'referralReasonOptions' => $referralReasonOptions,
-                    'patient' => $patient,
-                ])
-             </div>
-        </div>
-    </div>
-@endpush
-
+    @push('scripts')
 <script>
-    function diagnosisSearch() {
-        return {
-            query: '',
-            results: [],
-            selectedId: null,
-            searching: false,
-            get canSubmitDiagnosis() {
-                return Boolean(this.selectedId);
-            },
-            async search() {
-                if (this.query.length < 2) {
-                    this.results = [];
-                    return;
+function consultationApp() {
+    return {
+        diagnosisCount: {{ $diagnoses->count() }},
+        prescriptionCount: {{ $prescriptions->count() }},
+        clinicalReviewOpen: {{ $clinicalReviewOpen ? 'true' : 'false' }},
+        init() {
+            document.addEventListener('keydown', (e) => {
+                if (e.target.matches('input, textarea, select, [contenteditable="true"]') || e.target.isContentEditable) return;
+                if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+                if (document.body.classList.contains('modal-open') || document.body.classList.contains('overflow-hidden')) return;
+
+                const modals = window.Alpine?.store('modals');
+                if (modals && (modals.diagnosis || modals.prescription || modals.outward || modals.consultation || modals.printReferral)) return;
+
+                const vitalsOverlay = document.querySelector('[x-show="showVitalsModal"]');
+                if (vitalsOverlay && vitalsOverlay.style.display !== 'none') return;
+
+                switch (e.key) {
+                    case 'd': case 'D':
+                        if (this.clinicalReviewOpen && {{ ($canAddDiagnosis ?? false) ? 'true' : 'false' }}) {
+                            e.preventDefault();
+                            window.dispatchEvent(new CustomEvent('open-diagnosis-modal'));
+                        }
+                        break;
+                    case 'p': case 'P':
+                        if (this.clinicalReviewOpen && {{ ($canAddPrescription ?? false) ? 'true' : 'false' }}) {
+                            e.preventDefault();
+                            window.dispatchEvent(new CustomEvent('open-prescription-modal'));
+                        }
+                        break;
+                    case 'v': case 'V':
+                        if (this.clinicalReviewOpen) {
+                            e.preventDefault();
+                            window.dispatchEvent(new CustomEvent('open-retake-vitals'));
+                        }
+                        break;
+                    case 'f': case 'F':
+                        if (this.clinicalReviewOpen && this.diagnosisCount > 0) {
+                            e.preventDefault();
+                            document.getElementById('finalizeBtn')?.click();
+                        }
+                        break;
+                    case 'r': case 'R':
+                        if ({{ ($canReferExternally ?? false) ? 'true' : 'false' }}) {
+                            e.preventDefault();
+                            openConsultationOutwardReferralWizard();
+                        }
+                        break;
                 }
-                this.searching = true;
-                try {
-                    const response = await safeFetch('{{ route('search.diagnoses') }}?query=' + encodeURIComponent(this.query));
-                    this.results = response.ok ? await response.json() : [];
-                } catch (error) {
-                    this.results = [];
-                } finally {
-                    this.searching = false;
-                }
-            },
-            select(item) {
-                this.query = item.text;
-                this.selectedId = item.id;
-                this.results = [];
-            },
-            setQuery(term) {
-                this.query = term;
-                this.selectedId = null;
-                this.search();
-            },
-        };
-    }
-    function medicineSearch(initial = {}) {
-        return {
-            query: '',
-            results: [],
-            selectedId: null,
-            selectedText: '',
-            selectedForm: '',
-            searching: false,
-            dosage: initial.dosage || '',
-            route: initial.route || '',
-            frequency: initial.frequency || '',
-            duration: initial.duration || '',
-            quantity: initial.quantity || null,
-            instructions: initial.instructions || '',
-            frequencyOptions: ['OD (once daily)', 'BID (2x daily)', 'TID (3x daily)', 'QID (4x daily)', 'Every 4 hours', 'Every 6 hours', 'Every 8 hours', 'PRN (as needed)', 'At bedtime'],
-            durationOptions: ['1 day', '3 days', '5 days', '7 days', '10 days', '14 days', '1 month'],
-            instructionOptions: ['Before meals', 'After meals', 'With food', 'On empty stomach', 'At bedtime'],
-            get canSubmitPrescription() {
-                return Boolean(this.selectedId) && this.completeSig;
-            },
-            get completeSig() {
-                return Boolean(this.dosage && this.route && this.frequency && this.duration && this.quantity && Number(this.quantity) >= 1);
-            },
-            get dosageUnits() {
-                const form = (this.selectedForm || '').toLowerCase();
-                if (form.includes('cap')) return ['1 cap', '2 caps'];
-                if (form.includes('syr') || form.includes('susp') || form.includes('drop') || form.includes('elix')) return ['5 mL', '10 mL'];
-                if (form.includes('amp') || form.includes('vial') || form.includes('inj')) return ['1 amp', '1 vial'];
-                if (form.includes('sachet') || form.includes('powder') || form.includes('granule')) return ['1 sachet'];
-                if (form.includes('cream') || form.includes('oint') || form.includes('lotion') || form.includes('gel')) return ['Apply thinly', 'Apply generously'];
-                if (form.includes('spray') || form.includes('inhal')) return ['1 puff', '2 puffs'];
-                return ['1 tab', '2 tabs'];
-            },
-            get rxPreview() {
-                if (!this.selectedText) return '';
-                const parts = [this.dosage, this.route, this.frequency, this.duration ? 'x ' + this.duration : ''].filter(Boolean);
-                let line = this.selectedText + ' \u2014 ' + parts.join(' ');
-                if (this.instructions) line += '. ' + this.instructions;
-                if (this.quantity) line += ' (Qty ' + this.quantity + ')';
-                return line;
-            },
-            get suggestedQuantity() {
-                const units = this.parseDosageUnits();
-                const times = this.parseFrequencyTimes();
-                const days = this.parseDurationDays();
-                if (!units || !times || !days) return null;
-                return units * times * days;
-            },
-            async search() {
-                if (this.selectedText && this.query !== this.selectedText) {
-                    this.selectedId = null;
-                    this.selectedText = '';
-                    this.selectedForm = '';
-                }
-                if (this.query.length < 2) {
-                    this.results = [];
-                    return;
-                }
-                this.searching = true;
-                try {
-                    const response = await safeFetch('{{ route('search.medicines') }}?query=' + encodeURIComponent(this.query));
-                    this.results = response.ok ? await response.json() : [];
-                } catch (error) {
-                    this.results = [];
-                } finally {
-                    this.searching = false;
-                }
-            },
-            select(item) {
-                this.query = item.text;
-                this.selectedId = item.id;
-                this.selectedText = item.text;
-                this.selectedForm = item.form || '';
-                this.results = [];
-            },
-            clearSelection() {
-                this.selectedId = null;
-                this.selectedText = '';
-                this.selectedForm = '';
-                this.query = '';
-                this.results = [];
-            },
-            setDosage(value) {
-                this.dosage = value;
-            },
-            setFrequency(value) {
-                this.frequency = value;
-            },
-            setDuration(value) {
-                this.duration = value;
-            },
-            setInstructions(value) {
-                this.instructions = value;
-            },
-            fillQuantity() {
-                if (this.suggestedQuantity) {
-                    this.quantity = this.suggestedQuantity;
-                }
-            },
-            parseDosageUnits() {
-                const match = this.dosage.trim().match(/^(\d+(?:\.\d+)?)\s*(tab|tabs|tablet|tablets|cap|caps|capsule|capsules|mL|ml|sachet|puff|drop|drops|amp|vial)/i);
-                return match ? parseFloat(match[1]) : null;
-            },
-            parseFrequencyTimes() {
-                const f = this.frequency.toLowerCase();
-                if (f.includes('every 4')) return 6;
-                if (f.includes('every 6')) return 4;
-                if (f.includes('every 8')) return 3;
-                if (f.includes('qid') || f.includes('4x') || f.includes('4 times')) return 4;
-                if (f.includes('tid') || f.includes('3x') || f.includes('3 times')) return 3;
-                if (f.includes('bid') || f.includes('2x') || f.includes('2 times')) return 2;
-                if (f.includes('od') || f.includes('once daily') || f.includes('daily') || f.includes('bedtime') || f.includes('nocte')) return 1;
-                return null;
-            },
-            parseDurationDays() {
-                const match = this.duration.trim().match(/^(\d+)\s*(day|days)/i);
-                if (match) return parseInt(match[1], 10);
-                if (/^1\s*month/i.test(this.duration)) return 30;
-                if (/^2\s*month/i.test(this.duration)) return 60;
-                return null;
-            },
-        };
-    }
-    function confirmVitalsDelete(form) {
-        Swal.fire({
-            title: 'Delete this vitals version?',
-            text: 'This cannot be undone.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: 'var(--danger)',
-            confirmButtonText: 'Delete',
-            cancelButtonText: 'Cancel',
-        }).then(function(result) {
-            if (result.isConfirmed) {
-                form.submit();
-            }
-        });
-        return false;
-    }
+            });
+        }
+    };
+}
 </script>
+    @endpush
+</div>
 @endsection

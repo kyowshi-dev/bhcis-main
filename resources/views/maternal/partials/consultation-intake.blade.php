@@ -1,4 +1,5 @@
 <div class="space-y-5">
+    @php($previousVitals ??= null)
     <div class="space-y-4">
         <h3 class="font-semibold pb-2 border-b border-border text-sm lg:text-base text-ink">Visit details</h3>
 
@@ -41,51 +42,16 @@
     <div class="space-y-4">
         <h3 class="font-semibold pb-2 border-b border-border text-sm lg:text-base text-ink">Vitals</h3>
 
-        <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3 lg:gap-4">
-            <x-field name="bp_systolic" :id="$fieldPrefix.'bp_systolic'" required>
-                <x-slot:label>Systolic (mmHg)</x-slot:label>
-                <x-slot:control>
-                    <input type="number" name="bp_systolic" id="{{ $fieldPrefix }}bp_systolic" value="{{ old('bp_systolic') }}"
-                           min="0" max="300" placeholder="120" required
-                           class="w-full rounded-lg border border-border px-3 py-2.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent-blue">
-                </x-slot:control>
-            </x-field>
-
-            <x-field name="bp_diastolic" :id="$fieldPrefix.'bp_diastolic'" required>
-                <x-slot:label>Diastolic (mmHg)</x-slot:label>
-                <x-slot:control>
-                    <input type="number" name="bp_diastolic" id="{{ $fieldPrefix }}bp_diastolic" value="{{ old('bp_diastolic') }}"
-                           min="0" max="200" placeholder="80" required
-                           class="w-full rounded-lg border border-border px-3 py-2.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent-blue">
-                </x-slot:control>
-            </x-field>
-
-            <x-field name="weight" :id="$fieldPrefix.'weight'" required>
-                <x-slot:label>Weight (kg)</x-slot:label>
-                <x-slot:control>
-                    <input type="number" step="0.1" name="weight" id="{{ $fieldPrefix }}weight" value="{{ old('weight') }}"
-                           min="0" max="500" placeholder="-" required
-                           class="w-full rounded-lg border border-border px-3 py-2.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent-blue">
-                </x-slot:control>
-            </x-field>
-
-            <x-field name="height" :id="$fieldPrefix.'height'" required>
-                <x-slot:label>Height (cm)</x-slot:label>
-                <x-slot:control>
-                    <input type="number" step="0.1" name="height" id="{{ $fieldPrefix }}height" value="{{ old('height') }}"
-                           min="0" max="300" placeholder="-" required
-                           class="w-full rounded-lg border border-border px-3 py-2.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent-blue">
-                </x-slot:control>
-            </x-field>
-
-            <x-field name="temperature" :id="$fieldPrefix.'temperature'" required>
-                <x-slot:label>Temperature (&deg;C)</x-slot:label>
-                <x-slot:control>
-                    <input type="number" step="0.1" name="temperature" id="{{ $fieldPrefix }}temperature" value="{{ old('temperature') }}"
-                           min="30" max="45" placeholder="36.5" required
-                           class="w-full rounded-lg border border-border px-3 py-2.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent-blue">
-                </x-slot:control>
-            </x-field>
-        </div>
+        @include('consultations.partials.vitals-fields', [
+            'fieldPrefix' => $fieldPrefix,
+            'required' => true,
+            'values' => [
+                'bp_systolic' => old('bp_systolic', $previousVitals->bp_systolic ?? ''),
+                'bp_diastolic' => old('bp_diastolic', $previousVitals->bp_diastolic ?? ''),
+                'weight' => old('weight', $previousVitals->weight_kg ?? ''),
+                'height' => old('height', $previousVitals->height_cm ?? ''),
+                'temperature' => old('temperature', $previousVitals->temperature_c ?? ''),
+            ],
+        ])
     </div>
 </div>

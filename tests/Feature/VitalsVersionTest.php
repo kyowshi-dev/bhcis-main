@@ -161,6 +161,45 @@ class VitalsVersionTest extends TestCase
         $response->assertDontSee('@js(', false);
     }
 
+    public function test_failed_retake_submission_reopens_the_form_inside_the_vitals_modal(): void
+    {
+        [$bhw, $consultationId] = $this->createConsultation('doctor_review');
+
+        $this->actingAs($bhw)
+            ->from(route('consultations.show', $consultationId))
+            ->post("/consultations/{$consultationId}/vitals/retake", [])
+            ->assertRedirect(route('consultations.show', $consultationId))
+            ->assertSessionHas('vitals_form', 'retake');
+
+        $response = $this->actingAs($bhw)->get(route('consultations.show', $consultationId));
+
+        $response->assertOk();
+        $response->assertSee('showRetakeVitals: true', false);
+        $response->assertSee("x-init=\"if (showRetakeVitals) \$dispatch('open-vitals-modal')\"", false);
+    }
+
+    public function test_show_page_keeps_the_retake_form_and_vitals_modal_closed_by_default(): void
+    {
+        [$bhw, $consultationId] = $this->createConsultation('doctor_review');
+
+        $response = $this->actingAs($bhw)->get(route('consultations.show', $consultationId));
+
+        $response->assertOk();
+        $response->assertSee('showRetakeVitals: false', false);
+        $response->assertDontSee('showVitalsModal: true', false);
+    }
+
+    public function test_ribbon_retake_control_dispatches_the_retake_intent_not_plain_history(): void
+    {
+        [$bhw, $consultationId] = $this->createConsultation('doctor_review');
+
+        $response = $this->actingAs($bhw)->get(route('consultations.show', $consultationId));
+
+        $response->assertOk();
+        $response->assertSee("@click=\"\$dispatch('open-retake-vitals')\"", false);
+        $response->assertSee("x-on:open-retake-vitals.window=\"showRetakeVitals = true; \$dispatch('open-vitals-modal')\"", false);
+    }
+
     /**
      * @return array{0: User, 1: int}
      */
@@ -171,7 +210,7 @@ class VitalsVersionTest extends TestCase
         DB::table('zones')->insertOrIgnore(['id' => 1, 'zone_number' => '1']);
         $householdId = DB::table('households')->insertGetId([
             'zone_id' => 1,
-            'family_name_head' => 'Test',
+            'head_last_name' => 'Test',
             'created_at' => now(),
             'updated_at' => now(),
         ]);

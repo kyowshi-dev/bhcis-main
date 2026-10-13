@@ -95,7 +95,7 @@
                                    x-model="visitDate" @change="visitDate = $event.target.value"
                                    class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
                                    style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
-                            @error('visit_date') <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p> @enderror
+                            @error('visit_date') <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p> @enderror
                         </div>
 
                         @include('maternal.partials.consultation-intake', ['fieldPrefix' => 'fp_'])
@@ -108,14 +108,14 @@
                                     <option value="{{ $option }}" @selected(old('method', $client->method) === $option)>{{ $option }}</option>
                                 @endforeach
                             </select>
-                            @error('method') <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p> @enderror
+                            @error('method') <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label for="schedule_next_visit" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Next follow-up</label>
                             <input id="schedule_next_visit" type="date" name="schedule_next_visit" value="{{ old('schedule_next_visit', $client->schedule_next_visit?->format('Y-m-d')) }}" :min="visitDate"
                                    class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
                                    style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
-                            @error('schedule_next_visit') <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p> @enderror
+                            @error('schedule_next_visit') <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p> @enderror
                         </div>
                         <button type="submit" class="w-full inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition hover:shadow-md"
                                 style="background: var(--primary);">
@@ -214,7 +214,7 @@
                     <option value="{{ $value }}" @selected(old('type_of_client') === $value)>{{ $label }}</option>
                 @endforeach
             </select>
-            @error('type_of_client') <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p> @enderror
+            @error('type_of_client') <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p> @enderror
         </div>
         <div>
             <label for="fp_method" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Method <span style="color: var(--danger);">*</span></label>
@@ -224,21 +224,21 @@
                     <option value="{{ $option }}" @selected(old('method') === $option)>{{ $option }}</option>
                 @endforeach
             </select>
-            @error('method') <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p> @enderror
+            @error('method') <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p> @enderror
         </div>
         <div x-data="{ hidden: {{ old('type_of_client') === 'drop_out' ? 'false' : 'true' }} }" x-ref="reasonWrap" :class="hidden ? 'hidden' : ''">
             <label for="drop_out_reason" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Drop-out reason</label>
             <textarea id="drop_out_reason" name="drop_out_reason" rows="2"
                       class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
                       style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">{{ old('drop_out_reason') }}</textarea>
-            @error('drop_out_reason') <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p> @enderror
+            @error('drop_out_reason') <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p> @enderror
         </div>
         <div>
             <label for="schedule_next_visit" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Next follow-up</label>
             <input id="schedule_next_visit" type="date" name="schedule_next_visit" value="{{ old('schedule_next_visit') }}" min="{{ now()->toDateString() }}"
                    class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
                    style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
-            @error('schedule_next_visit') <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p> @enderror
+            @error('schedule_next_visit') <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p> @enderror
         </div>
         <div class="flex justify-end gap-2 pt-1">
             <button type="button" @click="$dispatch('close')" class="rounded-lg border px-4 py-2 text-sm font-semibold transition hover:bg-black/[0.03]"
@@ -264,7 +264,7 @@
                         <option value="{{ $value }}" @selected($client->type_of_client === $value)>{{ $label }}</option>
                     @endforeach
                 </select>
-                @error('type_of_client') <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p> @enderror
+                @error('type_of_client') <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p> @enderror
             </div>
             <div>
                 <label for="edit_method" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Method <span style="color: var(--danger);">*</span></label>
@@ -274,21 +274,21 @@
                         <option value="{{ $option }}" @selected($client->method === $option)>{{ $option }}</option>
                     @endforeach
                 </select>
-                @error('method') <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p> @enderror
+                @error('method') <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p> @enderror
             </div>
             <div>
                 <label for="edit_drop_out_reason" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Drop-out reason</label>
                 <textarea id="edit_drop_out_reason" name="drop_out_reason" rows="2"
                           class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
                           style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">{{ old('drop_out_reason', $client->drop_out_reason) }}</textarea>
-                @error('drop_out_reason') <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p> @enderror
+                @error('drop_out_reason') <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p> @enderror
             </div>
             <div>
                 <label for="edit_schedule_next_visit" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Next follow-up</label>
                 <input id="edit_schedule_next_visit" type="date" name="schedule_next_visit" value="{{ old('schedule_next_visit', $client->schedule_next_visit?->format('Y-m-d')) }}" min="{{ now()->toDateString() }}"
                        class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
                        style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
-                @error('schedule_next_visit') <p class="mt-1 text-xs font-medium" style="color: var(--danger);">{{ $message }}</p> @enderror
+                @error('schedule_next_visit') <p class="mt-1 text-xs font-medium" style="color: var(--danger);" data-auto-dismiss>{{ $message }}</p> @enderror
             </div>
             <div>
                 <label for="edit_is_active" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Status</label>

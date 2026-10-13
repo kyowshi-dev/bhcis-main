@@ -30,8 +30,11 @@ class ConsultationEditTest extends TestCase
             ->get("/consultations/{$consultationId}/edit")
             ->assertOk()
             ->assertSee('Edit Consultation')
-            ->assertSee('editDiagnosis(')
-            ->assertSee('editPrescription(');
+            ->assertSee('Quick Notes')
+            ->assertSee('Diagnoses and prescriptions are managed on the consultation record.')
+            ->assertDontSee('editDiagnosis(')
+            ->assertDontSee('editPrescription(')
+            ->assertDontSee('Add Prescription');
     }
 
     public function test_edit_page_shows_the_attending_health_worker(): void
@@ -52,7 +55,7 @@ class ConsultationEditTest extends TestCase
         $diagnosisId = $this->createLinkedDiagnosis($consultationId, $lookupId);
 
         $this->actingAs($doctor)
-            ->get("/consultations/{$consultationId}/edit")
+            ->get("/consultations/{$consultationId}")
             ->assertSee('Acute upper respiratory infection');
 
         $this->actingAs($doctor)->putJson("/consultations/{$consultationId}/diagnoses/{$diagnosisId}", [
@@ -66,12 +69,6 @@ class ConsultationEditTest extends TestCase
             'diagnosis_id' => null,
             'custom_diagnosis_name' => 'Acute viral pharyngitis',
         ]);
-
-        $this->actingAs($doctor)
-            ->get("/consultations/{$consultationId}/edit")
-            ->assertOk()
-            ->assertSee('Acute viral pharyngitis')
-            ->assertDontSee('Acute upper respiratory infection');
 
         $this->actingAs($doctor)
             ->get("/consultations/{$consultationId}")
@@ -104,7 +101,7 @@ class ConsultationEditTest extends TestCase
         $prescriptionId = $this->createLinkedPrescription($consultationId, $medicineId);
 
         $this->actingAs($doctor)
-            ->get("/consultations/{$consultationId}/edit")
+            ->get("/consultations/{$consultationId}")
             ->assertSee('Paracetamol 500mg tablet');
 
         $this->actingAs($doctor)->putJson("/consultations/{$consultationId}/prescriptions/{$prescriptionId}", [
@@ -123,12 +120,6 @@ class ConsultationEditTest extends TestCase
             'medicine_id' => null,
             'custom_medicine_name' => 'Biogesic 500mg tablet',
         ]);
-
-        $this->actingAs($doctor)
-            ->get("/consultations/{$consultationId}/edit")
-            ->assertOk()
-            ->assertSee('Biogesic 500mg tablet')
-            ->assertDontSee('Paracetamol 500mg tablet');
 
         $this->actingAs($doctor)
             ->get("/consultations/{$consultationId}")
@@ -195,14 +186,14 @@ class ConsultationEditTest extends TestCase
             ->assertSee('Homemade ORS solution');
     }
 
-    public function test_edit_page_shows_diagnosis_remarks(): void
+    public function test_show_page_shows_diagnosis_remarks(): void
     {
         [$doctor, $consultationId] = $this->createFixture();
         $lookupId = $this->createDiagnosisLookup('A09', 'Infection of unspecified site');
         $diagnosisId = $this->createLinkedDiagnosis($consultationId, $lookupId, 'Severe dehydration');
 
         $this->actingAs($doctor)
-            ->get("/consultations/{$consultationId}/edit")
+            ->get("/consultations/{$consultationId}")
             ->assertOk()
             ->assertSee('Severe dehydration');
     }
@@ -348,31 +339,27 @@ class ConsultationEditTest extends TestCase
         ]);
     }
 
-    public function test_edit_page_hides_prescription_controls_from_non_doctors(): void
+    public function test_show_page_hides_prescription_add_from_non_doctors(): void
     {
         [$bhw, $consultationId] = $this->createFixture('BHW');
         $this->createPrescription($consultationId);
 
         $this->actingAs($bhw)
-            ->get("/consultations/{$consultationId}/edit")
+            ->get("/consultations/{$consultationId}")
             ->assertOk()
-            ->assertDontSee('+ Add Prescription')
-            ->assertDontSee('title="Edit prescription"', false)
-            ->assertDontSee('title="Delete prescription"', false)
-            ->assertSee('Only doctors and administrators can modify prescriptions.');
+            ->assertDontSee('title="P - Add prescription"', false)
+            ->assertDontSee('Add first prescription');
     }
 
-    public function test_edit_page_shows_prescription_controls_to_admin(): void
+    public function test_show_page_shows_prescription_add_to_admin(): void
     {
         [$admin, $consultationId] = $this->createFixture('Administrator');
         $this->createPrescription($consultationId);
 
         $this->actingAs($admin)
-            ->get("/consultations/{$consultationId}/edit")
+            ->get("/consultations/{$consultationId}")
             ->assertOk()
-            ->assertSee('+ Add Prescription')
-            ->assertSee('title="Edit prescription"', false)
-            ->assertSee('title="Delete prescription"', false);
+            ->assertSee('title="P - Add prescription"', false);
     }
 
     public function test_update_notes_from_edit_page(): void
@@ -400,7 +387,7 @@ class ConsultationEditTest extends TestCase
         DB::table('zones')->insert(['id' => 1, 'zone_number' => '1']);
         $householdId = DB::table('households')->insertGetId([
             'zone_id' => 1,
-            'family_name_head' => 'Test',
+            'head_last_name' => 'Test',
             'created_at' => now(),
             'updated_at' => now(),
         ]);

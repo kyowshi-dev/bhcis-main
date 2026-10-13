@@ -286,8 +286,12 @@ class ConsultationController extends Controller
         }
 
         if (! ConsultationService::hasDiagnosis((int) $consultation->id)) {
+            $message = ConsultationService::hasPrescription((int) $consultation->id)
+                ? 'A prescription requires a diagnosis. Add a diagnosis before finalizing the consultation.'
+                : 'Add at least one diagnosis before finalizing the consultation.';
+
             return redirect()->route('consultations.show', $consultation->id)
-                ->withErrors(['diagnosis' => 'Add at least one diagnosis before finalizing consultation.']);
+                ->withErrors(['clinical' => $message]);
         }
 
         try {
