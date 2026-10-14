@@ -137,6 +137,10 @@ Route::middleware('auth')->group(function () {
         ->middleware('permission:patients,consultations')
         ->name('patients.show');
 
+    Route::put('/patients/{id}', [PatientController::class, 'update'])
+        ->middleware('permission:patients')
+        ->name('patients.update');
+
     // 3d. Patient delete / restore
     Route::delete('/patients/{id}', [PatientController::class, 'destroy'])
         ->middleware('permission:patients_destroy')

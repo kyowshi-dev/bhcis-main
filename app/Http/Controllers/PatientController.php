@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ListPatientsRequest;
 use App\Http\Requests\StorePatientWithHouseholdRequest;
+use App\Http\Requests\UpdatePatientRequest;
 use App\Models\Household;
 use App\Models\Patient;
 use App\Models\Zone;
@@ -101,6 +102,19 @@ class PatientController extends Controller
             ->get();
 
         return view('patients.show', compact('patient', 'history'));
+    }
+
+    // 5. Update Patient information from the inline edit form on the profile card
+    public function update(UpdatePatientRequest $request, int $id): RedirectResponse
+    {
+        $patient = Patient::findOrFail($id);
+        $this->authorize('update', $patient);
+
+        $patient->update($request->validated());
+
+        return redirect()
+            ->route('patients.show', $patient->id)
+            ->with('success', 'Patient information updated successfully.');
     }
 
     public function destroy(int $id): RedirectResponse
