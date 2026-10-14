@@ -7,7 +7,19 @@
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
     <div class="md:col-span-1 space-y-4 lg:space-y-6">
-        <div class="bg-surface p-4 lg:p-6 rounded-xl lg:rounded-lg shadow-sm border border-border">
+        <div class="relative bg-surface p-4 lg:p-6 rounded-xl lg:rounded-lg shadow-sm border border-border"
+             x-data="{ editing: {{ $errors->any() ? 'true' : 'false' }} }">
+            @if (auth()->user()?->hasPermission('patients'))
+                <button type="button"
+                        @click="editing = !editing"
+                        :aria-expanded="editing.toString()"
+                        aria-controls="patient-info-panel"
+                        aria-label="Edit patient information"
+                        :class="editing ? 'bg-teal-soft text-primary' : 'text-ink-muted hover:bg-black/5'"
+                        class="absolute top-3 right-3 inline-flex items-center justify-center rounded-lg p-2 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue">
+                    <i class="fa-solid fa-pen" aria-hidden="true"></i>
+                </button>
+            @endif
             <div class="text-center mb-3 lg:mb-4">
                 <div class="w-16 h-16 lg:w-20 lg:h-20 rounded-full flex items-center justify-center text-2xl lg:text-3xl font-bold mx-auto" style="background: var(--teal-soft); color: var(--primary);">
                     {{ $patient->initials }}
@@ -18,43 +30,151 @@
 
             <hr class="my-3 lg:my-4">
 
-            <div class="space-y-2 lg:space-y-3 text-xs lg:text-sm">
-                <div class="flex justify-between">
-                    <span class="text-ink-muted">Age / Sex:</span>
-                    <span class="font-medium">{{ $patient->age }} y/o / {{ $patient->sex }}</span>
+            <div id="patient-info-panel">
+                <div x-show="!editing" class="space-y-2 lg:space-y-3 text-xs lg:text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-ink-muted">Age / Sex:</span>
+                        <span class="font-medium">{{ $patient->age }} y/o / {{ $patient->sex }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-ink-muted">Birthdate:</span>
+                        <span class="font-medium">{{ $patient->date_of_birth?->format('M j, Y') }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-ink-muted">Blood Type:</span>
+                        <span class="font-medium">{{ $patient->blood_type ?? 'N/A' }}</span>
+                    </div>
+                    <div class="flex justify-between items-start">
+                        <span class="text-ink-muted">Mother's Name:</span>
+                        <span class="font-medium text-right">{{ ucwords($patient->mother_name) }}</span>
+                    </div>
+                    <div class="flex justify-between items-start">
+                        <span class="text-ink-muted">Spouse's Name:</span>
+                        <span class="font-medium text-right">{{ ucwords($patient->spouse_name) }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-ink-muted">Relationship:</span>
+                        <span class="font-medium">{{ $patient->family_relationship }}</span>
+                    </div>
+                    <div class="flex justify-between items-start">
+                        <span class="text-ink-muted">Residential Address:</span>
+                        <span class="font-medium text-right">{{ $patient->residential_address }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-ink-muted">Zone:</span>
+                        <span class="font-medium">Zone {{ $patient->zone_id }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-ink-muted">Civil Status:</span>
+                        <span class="font-medium">{{ $patient->civil_status }}</span>
+                    </div>
                 </div>
-                <div class="flex justify-between">
-                    <span class="text-ink-muted">Birthdate:</span>
-                    <span class="font-medium">{{ $patient->date_of_birth }}</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-ink-muted">Blood Type:</span>
-                    <span class="font-medium">{{ $patient->blood_type ?? 'N/A' }}</span>
-                </div>
-                <div class="flex justify-between items-start">
-                    <span class="text-ink-muted">Mother's Name:</span>
-                    <span class="font-medium text-right">{{ ucwords($patient->mother_name) }}</span>
-                </div>
-                <div class="flex justify-between items-start">
-                    <span class="text-ink-muted">Spouse's Name:</span>
-                    <span class="font-medium text-right">{{ ucwords($patient->spouse_name) }}</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-ink-muted">Relationship:</span>
-                    <span class="font-medium">{{ $patient->family_relationship }}</span>
-                </div>
-                <div class="flex justify-between items-start">
-                    <span class="text-ink-muted">Residential Address:</span>
-                    <span class="font-medium text-right">{{ $patient->residential_address }}</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-ink-muted">Zone:</span>
-                    <span class="font-medium">Zone {{ $patient->zone_id }}</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-ink-muted">Civil Status:</span>
-                    <span class="font-medium">{{ $patient->civil_status }}</span>
-                </div>
+
+                @if (auth()->user()?->hasPermission('patients'))
+                    <form x-show="editing" x-cloak method="POST" action="{{ route('patients.update', $patient->id) }}"
+                          class="space-y-3" aria-label="Edit patient information">
+                    @csrf
+                    @method('PUT')
+                    <div class="grid grid-cols-1 gap-3">
+                        <x-field name="sex" label="Sex" required>
+                            <x-slot:control>
+                                <select name="sex" id="sex" required
+                                        class="w-full rounded-lg border border-border px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent-blue">
+                                    <option value="Male" @selected(old('sex', $patient->sex) === 'Male')>Male</option>
+                                    <option value="Female" @selected(old('sex', $patient->sex) === 'Female')>Female</option>
+                                </select>
+                            </x-slot:control>
+                        </x-field>
+
+                        <x-field name="date_of_birth" label="Birthdate" required>
+                            <x-slot:control>
+                                <input type="date" name="date_of_birth" id="date_of_birth" required
+                                       max="{{ now()->toDateString() }}"
+                                       value="{{ old('date_of_birth', $patient->date_of_birth?->format('Y-m-d')) }}"
+                                       class="w-full rounded-lg border border-border px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent-blue">
+                            </x-slot:control>
+                        </x-field>
+
+                        <x-field name="blood_type" label="Blood Type">
+                            <x-slot:control>
+                                <select name="blood_type" id="blood_type"
+                                        class="w-full rounded-lg border border-border px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent-blue">
+                                    <option value="">Not set</option>
+                                    @foreach (['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'] as $type)
+                                        <option value="{{ $type }}" @selected(old('blood_type', $patient->blood_type) === $type)>{{ $type }}</option>
+                                    @endforeach
+                                </select>
+                            </x-slot:control>
+                        </x-field>
+
+                        <x-field name="civil_status" label="Civil Status" required>
+                            <x-slot:control>
+                                @php
+                                    $civilStatusOptions = ['Single (Walang Asawa)', 'Married (May Asawa)', 'Annulled (Hiwalay)', 'Widow/er (Balo)', 'Separated (Hiwalay)', 'Co-Habitation (Paninirahang magkasama)'];
+                                    $selectedCivilStatus = old('civil_status', $patient->civil_status);
+                                    if (is_string($selectedCivilStatus) && $selectedCivilStatus !== '' && ! in_array($selectedCivilStatus, $civilStatusOptions, true)) {
+                                        $civilStatusOptions[] = $selectedCivilStatus;
+                                    }
+                                @endphp
+                                <select name="civil_status" id="civil_status" required
+                                        class="w-full rounded-lg border border-border px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent-blue">
+                                    @foreach ($civilStatusOptions as $status)
+                                        <option value="{{ $status }}" @selected($selectedCivilStatus === $status)>{{ $status }}</option>
+                                    @endforeach
+                                </select>
+                            </x-slot:control>
+                        </x-field>
+
+                        <x-field name="mother_name" label="Mother's Name">
+                            <x-slot:control>
+                                <input type="text" name="mother_name" id="mother_name" maxlength="255"
+                                       value="{{ old('mother_name', $patient->mother_name) }}"
+                                       class="w-full rounded-lg border border-border px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent-blue">
+                            </x-slot:control>
+                        </x-field>
+
+                        <x-field name="spouse_name" label="Spouse's Name">
+                            <x-slot:control>
+                                <input type="text" name="spouse_name" id="spouse_name" maxlength="255"
+                                       value="{{ old('spouse_name', $patient->spouse_name) }}"
+                                       class="w-full rounded-lg border border-border px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent-blue">
+                            </x-slot:control>
+                        </x-field>
+
+                        <x-field name="family_relationship" label="Relationship">
+                            <x-slot:control>
+                                <select name="family_relationship" id="family_relationship"
+                                        class="w-full rounded-lg border border-border px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent-blue">
+                                    <option value="">Not set</option>
+                                    @foreach (\App\Models\Patient::FAMILY_RELATIONSHIP_OPTIONS as $relationship)
+                                        <option value="{{ $relationship }}" @selected(old('family_relationship', $patient->family_relationship) === $relationship)>{{ $relationship }}</option>
+                                    @endforeach
+                                </select>
+                            </x-slot:control>
+                        </x-field>
+
+                        <x-field name="residential_address" label="Residential Address">
+                            <x-slot:control>
+                                <input type="text" name="residential_address" id="residential_address" maxlength="255"
+                                       value="{{ old('residential_address', $patient->residential_address) }}"
+                                       class="w-full rounded-lg border border-border px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent-blue">
+                            </x-slot:control>
+                        </x-field>
+                    </div>
+
+                    <div class="flex justify-end gap-2 pt-1">
+                        <button type="button" @click="editing = false"
+                                class="rounded-lg border border-border px-4 py-2 text-sm font-semibold text-ink-muted transition hover:bg-black/[0.03]">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                                class="rounded-lg px-4 py-2 text-sm font-semibold text-white transition hover:shadow-md"
+                                style="background: var(--primary);">
+                            <i class="fa-solid fa-save mr-1" aria-hidden="true"></i> Save
+                        </button>
+                    </div>
+                    </form>
+                @endif
             </div>
 
             <div class="mt-4 lg:mt-6 pt-3 lg:pt-4 border-t">
