@@ -110,7 +110,6 @@ The `.env` file is created from `.env.example` during setup. Review these values
 | -------- | -------------- |
 | `DB_PASSWORD` | Set your MySQL root password (empty by default) |
 | `MAIL_USERNAME` / `MAIL_PASSWORD` | Required only if you want OTP email auth. Use a Gmail App Password ([guide](https://myaccount.google.com/apppasswords)). |
-| `BHCIS_ICD_API_*` | Optional. Enable + add WHO API credentials for live ICD-10 lookup. Falls back to local `diagnosis_lookup` table when disabled. |
 | `SESSION_SECURE_COOKIE` | Set to `true` when serving over HTTPS. |
 | `APP_DEBUG` | Keep `false`. Never enable in production. |
 

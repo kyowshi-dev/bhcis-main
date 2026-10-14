@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Tests\Concerns\AssignsRolesAndPermissions;
 use Tests\TestCase;
 
@@ -28,87 +27,7 @@ class SearchDiagnosesTest extends TestCase
         return $this->createUserWithPermissions(['patients', 'consultations']);
     }
 
-    private function enableIcdApi(): void
-    {
-        config()->set('bhcis.icd_api.enabled', true);
-        config()->set('bhcis.icd_api.base_url', 'https://icd.example.com');
-        config()->set('bhcis.icd_api.token_url', 'https://icd.example.com/oauth/token');
-        config()->set('bhcis.icd_api.search_path', '/search');
-    }
-
-    public function test_api_results_are_upserted_and_returned_with_local_ids(): void
-    {
-        $this->enableIcdApi();
-
-        Http::fake([
-            'https://icd.example.com/oauth/token' => Http::response(['access_token' => 'test-token', 'expires_in' => 3600]),
-            'https://icd.example.com/*' => Http::response([
-                'results' => [
-                    ['code' => 'I10', 'title' => 'Essential hypertension'],
-                    ['code' => 'E11', 'title' => 'Type 2 diabetes mellitus'],
-                ],
-            ]),
-        ]);
-
-        $response = $this->actingAs($this->userWithConsultations())
-            ->getJson('/search/diagnoses?query=hyperten');
-
-        $response->assertOk()
-            ->assertJsonCount(2)
-            ->assertJsonStructure([['id', 'text']]);
-
-        $i10 = DB::table('diagnosis_lookup')->where('diagnosis_code', 'I10')->first();
-        $e11 = DB::table('diagnosis_lookup')->where('diagnosis_code', 'E11')->first();
-
-        $this->assertNotNull($i10);
-        $this->assertSame('Essential hypertension', $i10->diagnosis_name);
-        $this->assertNotNull($e11);
-        $this->assertSame('Type 2 diabetes mellitus', $e11->diagnosis_name);
-
-        $response->assertJson([
-            ['id' => (int) $i10->id, 'text' => 'I10 - Essential hypertension'],
-            ['id' => (int) $e11->id, 'text' => 'E11 - Type 2 diabetes mellitus'],
-        ]);
-    }
-
-    public function test_api_results_dedupe_with_existing_local_rows(): void
-    {
-        $this->enableIcdApi();
-
-        $existingId = DB::table('diagnosis_lookup')->insertGetId([
-            'diagnosis_code' => 'I10',
-            'diagnosis_name' => 'Essential hypertension',
-            'category' => 'Cardiovascular',
-        ]);
-
-        Http::fake([
-            'https://icd.example.com/oauth/token' => Http::response(['access_token' => 'test-token', 'expires_in' => 3600]),
-            'https://icd.example.com/*' => Http::response([
-                'results' => [
-                    ['code' => 'I10', 'title' => 'Essential hypertension'],
-                    ['code' => 'E11', 'title' => 'Type 2 diabetes mellitus'],
-                ],
-            ]),
-        ]);
-
-        $response = $this->actingAs($this->userWithConsultations())
-            ->getJson('/search/diagnoses?query=hyperten');
-
-        $response->assertOk()
-            ->assertJsonCount(2)
-            ->assertJsonFragment(['id' => $existingId, 'text' => 'I10 - Essential hypertension']);
-
-        $this->assertSame(
-            $existingId,
-            DB::table('diagnosis_lookup')->where('diagnosis_code', 'I10')->value('id')
-        );
-        $this->assertSame(
-            1,
-            DB::table('diagnosis_lookup')->where('diagnosis_code', 'I10')->count()
-        );
-    }
-
-    public function test_local_fallback_when_api_disabled(): void
+    public function test_diagnoses_are_searched_from_the_local_lookup(): void
     {
         $localId = DB::table('diagnosis_lookup')->insertGetId([
             'diagnosis_code' => 'J06.9',
@@ -122,59 +41,11 @@ class SearchDiagnosesTest extends TestCase
             ->assertJson([['id' => $localId, 'text' => 'J06.9 - Acute upper respiratory infection']]);
     }
 
-    public function test_local_fallback_when_api_returns_empty_results(): void
+    public function test_a_local_diagnosis_can_be_saved(): void
     {
-        $this->enableIcdApi();
-
-        $localId = DB::table('diagnosis_lookup')->insertGetId([
-            'diagnosis_code' => 'J06.9',
-            'diagnosis_name' => 'Acute upper respiratory infection',
-        ]);
-
-        Http::fake([
-            'https://icd.example.com/oauth/token' => Http::response(['access_token' => 'test-token', 'expires_in' => 3600]),
-            'https://icd.example.com/*' => Http::response(['results' => []]),
-        ]);
-
-        $response = $this->actingAs($this->userWithConsultations())
-            ->getJson('/search/diagnoses?query=upper');
-
-        $response->assertOk()
-            ->assertJson([['id' => $localId, 'text' => 'J06.9 - Acute upper respiratory infection']]);
-    }
-
-    public function test_local_fallback_when_api_errors(): void
-    {
-        $this->enableIcdApi();
-
-        $localId = DB::table('diagnosis_lookup')->insertGetId([
-            'diagnosis_code' => 'J06.9',
-            'diagnosis_name' => 'Acute upper respiratory infection',
-        ]);
-
-        Http::fake([
-            'https://icd.example.com/oauth/token' => Http::response(['access_token' => 'test-token', 'expires_in' => 3600]),
-            'https://icd.example.com/*' => Http::response([], 500),
-        ]);
-
-        $response = $this->actingAs($this->userWithConsultations())
-            ->getJson('/search/diagnoses?query=upper');
-
-        $response->assertOk()
-            ->assertJson([['id' => $localId, 'text' => 'J06.9 - Acute upper respiratory infection']]);
-    }
-
-    public function test_api_sourced_diagnosis_can_be_saved(): void
-    {
-        $this->enableIcdApi();
-
-        Http::fake([
-            'https://icd.example.com/oauth/token' => Http::response(['access_token' => 'test-token', 'expires_in' => 3600]),
-            'https://icd.example.com/*' => Http::response([
-                'results' => [
-                    ['code' => 'E11', 'title' => 'Type 2 diabetes mellitus'],
-                ],
-            ]),
+        DB::table('diagnosis_lookup')->insert([
+            'diagnosis_code' => 'E11',
+            'diagnosis_name' => 'Type 2 diabetes mellitus',
         ]);
 
         [$bhw, $patientId] = $this->createClinicalFixture('BHW');
