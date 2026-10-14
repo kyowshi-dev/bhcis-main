@@ -190,6 +190,136 @@ class AuditLoggingTest extends TestCase
             ->count());
     }
 
+    public function test_update_entry_stores_only_changed_fields(): void
+    {
+        $this->actingUser();
+
+        $patient = $this->createPatient($this->actingUser());
+
+        $patient->update(['first_name' => 'Pedro']);
+
+        $log = AuditLog::query()
+            ->where('table_name', 'patients')
+            ->where('record_id', $patient->id)
+            ->where('action', 'updated')
+            ->first();
+
+        $this->assertNotNull($log);
+        $this->assertArrayHasKey('first_name', $log->old_values);
+        $this->assertSame('Juan', $log->old_values['first_name']);
+        $this->assertSame('Pedro', $log->new_values['first_name']);
+        $this->assertArrayNotHasKey('last_name', $log->old_values);
+        $this->assertArrayNotHasKey('date_of_birth', $log->old_values);
+        $this->assertCount(1, $log->old_values);
+    }
+
+    public function test_entries_carry_taxonomy_category_and_severity(): void
+    {
+        $this->actingUser();
+
+        $patient = $this->createPatient($this->actingUser());
+
+        $createLog = AuditLog::query()
+            ->where('table_name', 'patients')
+            ->where('record_id', $patient->id)
+            ->where('action', 'created')
+            ->first();
+
+        $this->assertNotNull($createLog);
+        $this->assertSame('records', $createLog->category);
+        $this->assertSame('info', $createLog->severity);
+
+        $user = User::factory()->create();
+
+        $userLog = AuditLog::query()
+            ->where('table_name', 'users')
+            ->where('record_id', $user->id)
+            ->where('action', 'created')
+            ->first();
+
+        $this->assertNotNull($userLog);
+        $this->assertSame('admin', $userLog->category);
+    }
+
+    public function test_failed_login_entry_is_classified_as_auth_error(): void
+    {
+        $user = User::factory()->create();
+
+        $this->post(route('login.process'), [
+            'username' => $user->username,
+            'password' => 'wrong-password',
+        ]);
+
+        $log = AuditLog::query()
+            ->where('action', 'login_failed')
+            ->latest('created_at')
+            ->first();
+
+        $this->assertNotNull($log);
+        $this->assertSame('auth', $log->category);
+        $this->assertSame('error', $log->severity);
+    }
+
+    public function test_death_store_logs_exactly_one_audit_entry(): void
+    {
+        $user = $this->createUserWithPermissions(['patients']);
+        $this->actingAs($user);
+
+        $zone = Zone::query()->create(['zone_number' => '1']);
+        $householdId = DB::table('households')->insertGetId([
+            'zone_id' => $zone->id,
+            'head_last_name' => 'Cruz',
+        ]);
+        $patient = Patient::query()->create([
+            'household_id' => $householdId,
+            'last_name' => 'Cruz',
+            'first_name' => 'Maria',
+            'middle_name' => null,
+            'suffix' => null,
+            'sex' => 'Male',
+            'date_of_birth' => '1960-01-01',
+            'birth_place' => 'Sta. Ana',
+            'blood_type' => 'O+',
+            'civil_status' => 'Married',
+            'educational_attainment' => 'High school',
+            'employment_status' => 'Employed',
+            'mother_name' => 'Ana',
+            'spouse_name' => null,
+            'family_relationship' => 'Spouse',
+            'residential_address' => 'Zone 1',
+            'is_philhealth_member' => 'n',
+            'status_type' => null,
+            'philhealth_no' => null,
+            'membership_category' => null,
+            'is_pcb_member' => 'n',
+            'has_4ps' => false,
+            'has_nhts' => false,
+        ]);
+
+        $worker = HealthWorker::query()->create([
+            'user_id' => $user->id,
+            'first_name' => 'Nurse',
+            'last_name' => 'Santos',
+            'role' => 'Nurse',
+        ]);
+
+        $this->post(route('deaths.store', $patient), [
+            'date_of_death' => now()->toDateString(),
+            'place_of_death' => 'home',
+            'cause_text' => 'Sepsis',
+            'recorded_by' => $worker->id,
+        ])->assertSessionHas('success');
+
+        $this->assertSame(1, AuditLog::query()
+            ->where('table_name', 'deaths')
+            ->where('action', 'created')
+            ->count());
+        $this->assertSame(0, AuditLog::query()
+            ->where('table_name', 'deaths')
+            ->where('action', 'death_created')
+            ->count());
+    }
+
     public function test_medicine_import_logs_audit_entry_with_counts(): void
     {
         $user = $this->createUserWithPermissions(['medicines']);

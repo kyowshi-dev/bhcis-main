@@ -3,19 +3,29 @@
 namespace App\Services;
 
 use App\Models\AuditLog;
+use App\Support\AuditTaxonomy;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
-/**
- * Read-side queries for the Activity Logs viewer.
- */
 final class ActivityLogQueryService
 {
     /**
      * Paginate audit log entries with filtering.
      *
-     * @param  array{query?: string, user_id?: int|string, action?: string, table_name?: string, date_from?: string, date_to?: string, failures_only?: bool, sort?: string}  $filters
+     * @param  array{
+     *     query?: string,
+     *     user_id?: int|string,
+     *     action?: string,
+     *     table_name?: string,
+     *     category?: string,
+     *     severity?: string,
+     *     date_from?: string,
+     *     date_to?: string,
+     *     failures_only?: bool,
+     *     sort?: string,
+     *     per_page?: int
+     * }  $filters
      */
     public static function paginateIndex(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
@@ -54,12 +64,19 @@ final class ActivityLogQueryService
             $query->where('audit_logs.table_name', (string) $filters['table_name']);
         }
 
-        // Failure-only filter: actions ending with _failed or containing _blocked
+        // Filter by category
+        if (! empty($filters['category'])) {
+            $query->where('audit_logs.category', (string) $filters['category']);
+        }
+
+        // Filter by severity
+        if (! empty($filters['severity'])) {
+            $query->where('audit_logs.severity', (string) $filters['severity']);
+        }
+
+        // Failure-only filter (back-compat): maps to severity=error
         if (! empty($filters['failures_only'])) {
-            $query->where(function ($qb) {
-                $qb->where('audit_logs.action', 'like', '%_failed')
-                    ->orWhere('audit_logs.action', 'like', '%_blocked%');
-            });
+            $query->where('audit_logs.severity', AuditTaxonomy::SEVERITY_ERROR);
         }
 
         // Date range filter (d/m/Y format)
@@ -87,7 +104,50 @@ final class ActivityLogQueryService
                 break;
         }
 
+        // Use validated per_page if provided, otherwise fall back to default
+        $perPage = ! empty($filters['per_page'])
+            ? (int) $filters['per_page']
+            : $perPage;
+
+        // Clamp to allowed options
+        $allowed = pageSizeOptions();
+        if (! in_array($perPage, $allowed, true)) {
+            $perPage = 15;
+        }
+
         return $query->paginate($perPage)->withQueryString();
+    }
+
+    /**
+     * Get summary stats for the filter strip.
+     *
+     * @return array{events_today: int, failures_7d: int, active_users_7d: int}
+     */
+    public static function stats(): array
+    {
+        $todayStart = now()->startOfDay();
+        $sevenDaysAgo = now()->subDays(7);
+
+        $eventsToday = AuditLog::query()
+            ->where('created_at', '>=', $todayStart)
+            ->count();
+
+        $failures7d = AuditLog::query()
+            ->where('created_at', '>=', $sevenDaysAgo)
+            ->where('severity', AuditTaxonomy::SEVERITY_ERROR)
+            ->count();
+
+        $activeUsers7d = AuditLog::query()
+            ->where('created_at', '>=', $sevenDaysAgo)
+            ->whereNotNull('user_id')
+            ->distinct('user_id')
+            ->count('user_id');
+
+        return [
+            'events_today' => $eventsToday,
+            'failures_7d' => $failures7d,
+            'active_users_7d' => $activeUsers7d,
+        ];
     }
 
     /**
@@ -116,5 +176,33 @@ final class ActivityLogQueryService
             ->distinct()
             ->orderBy('table_name')
             ->pluck('table_name');
+    }
+
+    /**
+     * Distinct category values.
+     *
+     * @return Collection<int, string>
+     */
+    public static function distinctCategories(): Collection
+    {
+        return AuditLog::query()
+            ->select('category')
+            ->distinct()
+            ->orderBy('category')
+            ->pluck('category');
+    }
+
+    /**
+     * Distinct severity values.
+     *
+     * @return Collection<int, string>
+     */
+    public static function distinctSeverities(): Collection
+    {
+        return AuditLog::query()
+            ->select('severity')
+            ->distinct()
+            ->orderBy('severity')
+            ->pluck('severity');
     }
 }

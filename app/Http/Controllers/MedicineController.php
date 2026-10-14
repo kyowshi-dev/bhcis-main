@@ -5,17 +5,20 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ImportMedicineRequest;
 use App\Http\Requests\StoreMedicineRequest;
 use App\Http\Requests\UpdateMedicineRequest;
-use App\Models\AuditLog;
 use App\Models\Medicine;
+use App\Services\AuditLogService;
 use App\Services\MedicineImportService;
 use App\Services\MedicineService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class MedicineController extends Controller
 {
+    public function __construct(
+        private readonly AuditLogService $audit,
+    ) {}
+
     public function index(Request $request): View
     {
         $this->authorizePermission('medicines');
@@ -74,16 +77,15 @@ class MedicineController extends Controller
         $result = MedicineImportService::import($request->file('csv_file')->getRealPath());
 
         if ($result['fatal_error'] !== null) {
-            AuditLog::query()->create([
-                'user_id' => Auth::id(),
-                'action' => 'medicines_import_failed',
-                'table_name' => 'medicines_lookup',
-                'record_id' => null,
-                'old_values' => null,
-                'new_values' => ['fatal_error' => $result['fatal_error']],
-                'ip_address' => $request->ip(),
-                'created_at' => now(),
-            ]);
+            $this->audit->log(
+                'medicines_import_failed',
+                'medicines_lookup',
+                $request,
+                null,
+                null,
+                null,
+                ['fatal_error' => $result['fatal_error']]
+            );
 
             return redirect()
                 ->route('medicines.index')
@@ -93,19 +95,18 @@ class MedicineController extends Controller
         $successCount = $result['success_count'];
         $errors = $result['errors'];
 
-        AuditLog::query()->create([
-            'user_id' => Auth::id(),
-            'action' => 'medicines_imported',
-            'table_name' => 'medicines_lookup',
-            'record_id' => null,
-            'old_values' => null,
-            'new_values' => [
+        $this->audit->log(
+            'medicines_imported',
+            'medicines_lookup',
+            $request,
+            null,
+            null,
+            null,
+            [
                 'success_count' => $successCount,
                 'error_count' => count($errors),
-            ],
-            'ip_address' => $request->ip(),
-            'created_at' => now(),
-        ]);
+            ]
+        );
 
         $message = '';
         if ($successCount > 0) {

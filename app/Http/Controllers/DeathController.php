@@ -6,16 +6,11 @@ use App\Http\Requests\StoreDeathRequest;
 use App\Http\Requests\UpdateDeathRequest;
 use App\Models\Death;
 use App\Models\Patient;
-use App\Services\AuditLogService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class DeathController extends Controller
 {
-    public function __construct(
-        private readonly AuditLogService $audit,
-    ) {}
-
     /**
      * Show the form for creating a new death record for a patient.
      */
@@ -35,8 +30,6 @@ class DeathController extends Controller
         $validated['patient_id'] = $patient->id;
 
         $death = Death::create($validated);
-
-        $this->audit->log('death_created', 'deaths', $request, null, $death->id);
 
         return redirect()
             ->route('patients.show', $death->patient_id)
@@ -70,10 +63,7 @@ class DeathController extends Controller
     {
         $validated = $request->validated();
 
-        $oldValues = $death->getOriginal();
         $death->update($validated);
-
-        $this->audit->log('death_updated', 'deaths', $request, null, $death->id, $oldValues);
 
         return redirect()
             ->route('patients.show', $death->patient_id)
@@ -86,10 +76,7 @@ class DeathController extends Controller
     public function destroy(Death $death): RedirectResponse
     {
         $patientId = $death->patient_id;
-        $deathId = $death->id;
         $death->delete();
-
-        $this->audit->log('death_deleted', 'deaths', request(), null, $deathId);
 
         return redirect()
             ->route('patients.show', $patientId)
