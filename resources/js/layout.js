@@ -228,7 +228,17 @@ function openConsultationCreateModal(patientId) {
     if (!content || !patientId) return;
 
     content.innerHTML =
-        '<div class="p-8 text-center text-sm" style="color: var(--ink-muted);"><i class="fa-solid fa-spinner fa-spin mr-2" aria-hidden="true"></i>Loading consultation form…</div>';
+        '<div class="p-6 space-y-4" aria-hidden="true">' +
+            '<div class="h-4 w-40 rounded bg-surface animate-pulse"></div>' +
+            '<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">' +
+                '<div class="h-9 rounded-lg bg-surface animate-pulse"></div>' +
+                '<div class="h-9 rounded-lg bg-surface animate-pulse"></div>' +
+                '<div class="h-9 rounded-lg bg-surface animate-pulse"></div>' +
+                '<div class="h-9 rounded-lg bg-surface animate-pulse"></div>' +
+            '</div>' +
+            '<div class="h-24 rounded-lg bg-surface animate-pulse"></div>' +
+            '<div class="h-9 w-32 rounded-xl bg-surface animate-pulse"></div>' +
+        '</div>';
     if (!showModal("consultationCreateModal", "consultationCreateModalPanel")) {
         content.innerHTML =
             '<div class="p-6 text-center text-sm" style="color: #b91c1c;">Unable to open consultation modal.</div>';

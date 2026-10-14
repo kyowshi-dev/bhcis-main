@@ -54,6 +54,17 @@
             <p class="text-xs mt-1 mb-3" style="color: var(--ink-muted);">Try searching with a different name or ID</p>
             <a href="{{ route('patients.create') }}" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-white transition hover:opacity-90" style="background: var(--primary);"><i class="fa-solid fa-plus" aria-hidden="true"></i> Enrol a new patient</a>
         </div>
+        <div x-show="loading" class="mt-3 rounded-lg border overflow-hidden" style="display: none; border-color: var(--border); background: var(--bg-surface-elevated);">
+            <div class="px-4 py-3 border-b border-border" aria-hidden="true">
+                <div class="h-3.5 w-24 rounded bg-surface animate-pulse"></div>
+            </div>
+            @for ($i = 0; $i < 3; $i++)
+                <div class="px-4 py-3 border-b border-border last:border-0" aria-hidden="true">
+                    <div class="h-3.5 w-40 rounded bg-surface animate-pulse"></div>
+                    <div class="mt-1.5 h-3 w-56 rounded bg-surface animate-pulse"></div>
+                </div>
+            @endfor
+        </div>
     </div>
 
     <div>

@@ -236,7 +236,7 @@
             padding: 0.8rem 1rem;
             font-size: 0.875rem;
             color: var(--ink);
-            background: #ffffff;
+            background: var(--bg-surface-elevated);
             transition: border-color 0.15s ease, box-shadow 0.15s ease;
         }
 
@@ -301,7 +301,7 @@
             font-size: 1.125rem;
             font-weight: 600;
             color: var(--ink);
-            background: #ffffff;
+            background: var(--bg-surface-elevated);
             border: 1px solid var(--border);
             border-radius: 0.75rem;
             transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -372,6 +372,44 @@
 
         .pw-wrap .auth-input {
             padding-right: 3.25rem;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border: none;
+            border-radius: 0.5rem;
+            background: transparent;
+            color: var(--ink-muted);
+            cursor: pointer;
+        }
+
+        .theme-toggle:hover {
+            color: var(--ink);
+        }
+
+        .theme-toggle:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px var(--ring);
+        }
+
+        .theme-toggle .icon-sun {
+            display: none;
+        }
+
+        html.dark .theme-toggle .icon-sun {
+            display: inline-block;
+        }
+
+        html.dark .theme-toggle .icon-moon {
+            display: none;
         }
 
         /* --- Split-screen from lg --- */
@@ -466,6 +504,11 @@
                     <circle cx="30" cy="26" r="4" style="fill: var(--primary)" opacity="0.10" />
                 </svg>
             </div>
+            <button type="button" id="theme-toggle" class="theme-toggle"
+                    aria-pressed="false" aria-label="Switch to dark mode" title="Switch to dark mode">
+                <i class="fa-solid fa-moon icon-moon text-lg" aria-hidden="true"></i>
+                <i class="fa-solid fa-sun icon-sun text-lg" aria-hidden="true"></i>
+            </button>
             <div class="auth-card animate-in opacity-0">
                 <h1 class="auth-heading">@yield('heading', 'Sign in')</h1>
                 @hasSection('helper')
@@ -554,6 +597,30 @@
                     icon.classList.toggle('fa-eye-slash', show);
                     toggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
                 });
+            });
+        })();
+
+        (function () {
+            var btn = document.getElementById('theme-toggle');
+            if (!btn) return;
+
+            function sync() {
+                var dark = document.documentElement.classList.contains('dark');
+                btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+                var label = dark ? 'Switch to light mode' : 'Switch to dark mode';
+                btn.setAttribute('aria-label', label);
+                btn.setAttribute('title', label);
+            }
+
+            sync();
+            btn.addEventListener('click', function () {
+                var dark = !document.documentElement.classList.contains('dark');
+                document.documentElement.classList.toggle('dark', dark);
+                try {
+                    localStorage.setItem('bhcis-theme', dark ? 'dark' : 'light');
+                } catch (e) {}
+                document.cookie = 'bhcis-theme=' + (dark ? 'dark' : 'light') + '; expires=Fri, 31 Dec 2099 23:59:59 GMT; path=/';
+                sync();
             });
         })();
     </script>

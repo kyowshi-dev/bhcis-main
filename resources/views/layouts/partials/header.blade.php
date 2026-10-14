@@ -167,7 +167,7 @@
                         <span class="h-8 w-8 rounded-full flex items-center justify-center text-xs font-semibold bg-white/20 text-white ring-1 ring-white/25" aria-hidden="true">
                             {{ $initials }}
                         </span>
-                    @endif>
+                    @endif
                     <span class="sr-only">{{ ucwords($username) }} - {{ $roleName }}</span>
                     <svg class="w-3.5 h-3.5 text-white/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M6 9l6 6 6-6"></path>
