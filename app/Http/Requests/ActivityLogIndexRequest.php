@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Support\AuditTaxonomy;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ActivityLogIndexRequest extends FormRequest
@@ -18,11 +19,13 @@ class ActivityLogIndexRequest extends FormRequest
             'user_id' => ['nullable', 'integer', 'exists:users,id'],
             'action' => ['nullable', 'string', 'max:100'],
             'table_name' => ['nullable', 'string', 'max:100'],
+            'category' => ['nullable', 'string', 'in:'.implode(',', AuditTaxonomy::categories())],
+            'severity' => ['nullable', 'string', 'in:'.implode(',', AuditTaxonomy::severities())],
             'date_from' => ['nullable', 'string', 'date_format:d/m/Y'],
             'date_to' => ['nullable', 'string', 'date_format:d/m/Y'],
             'failures_only' => ['nullable', 'boolean'],
             'sort' => ['nullable', 'string', 'in:newest,oldest'],
-            'per_page' => ['nullable', 'integer', 'min:5', 'max:100'],
+            'per_page' => ['nullable', 'integer', 'min:5', 'max:500'],
         ];
     }
 }

@@ -2,18 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AuditLog;
 use App\Models\Permission;
 use App\Models\Role;
+use App\Services\AuditLogService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class RoleManagementController extends Controller
 {
+    public function __construct(
+        private readonly AuditLogService $audit,
+    ) {}
+
     public function index(): View
     {
         $this->authorizePermission('users');
@@ -69,22 +72,21 @@ class RoleManagementController extends Controller
             }
         });
 
-        AuditLog::query()->create([
-            'user_id' => Auth::id(),
-            'action' => 'role_updated',
-            'table_name' => 'user_roles',
-            'record_id' => $role->id,
-            'old_values' => [
+        $this->audit->log(
+            'role_updated',
+            'user_roles',
+            $request,
+            null,
+            $role->id,
+            [
                 'role_name' => $oldRoleName,
                 'permission_ids' => $oldPermissions,
             ],
-            'new_values' => [
+            [
                 'role_name' => $role->role_name,
                 'permission_ids' => array_map('intval', $validated['permissions'] ?? []),
-            ],
-            'ip_address' => $request->ip(),
-            'created_at' => now(),
-        ]);
+            ]
+        );
 
         return redirect()
             ->route('roles.index')

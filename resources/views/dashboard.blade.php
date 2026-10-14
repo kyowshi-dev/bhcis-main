@@ -146,28 +146,19 @@
                     @forelse($recentActivity as $log)
                         @php
                             $time = \Carbon\Carbon::parse($log->created_at)->format('M d, Y H:i');
-                            $user = $log->username ?: 'System';
-                            $table = Str::singular(ucfirst(str_replace('_', ' ', $log->table_name)));
-
-                            $badgeClass = match($log->action) {
-                                'created' => 'bg-teal-soft text-primary',
-                                'updated' => 'bg-amber-soft text-amber',
-                                'deleted' => 'bg-danger-soft text-danger',
-                                default   => 'bg-primary-soft text-ink-muted',
-                            };
                         @endphp
 
                         <li class="py-3.5 flex items-center justify-between text-sm transition-colors hover:bg-black/[0.01]">
                             <div class="flex items-center space-x-3">
-                                <x-badge :class="$badgeClass" :icon="$log->action === 'created' ? 'fa-solid fa-plus' : ($log->action === 'deleted' ? 'fa-solid fa-trash' : 'fa-solid fa-pen')" :label="$log->action" />
-                                
+                                <x-audit-badge :log="$log" />
+
                                 <span style="color: var(--ink-muted);">
-                                    <strong class="font-semibold text-[var(--ink)]">{{ $user }}</strong>
-                                    {{ $log->action === 'created' ? 'added a new' : ($log->action === 'deleted' ? 'removed a' : 'updated a') }}
-                                    <span class="font-medium">{{ $table }}</span>
+                                    <strong class="font-semibold text-[var(--ink)]">{{ $log->username ?: 'System' }}</strong>
+                                    {{ in_array($log->action, ['created', 'updated', 'deleted'], true) ? '' : '-' }}
+                                    {{ \App\Support\AuditTaxonomy::describeEvent($log->action, $log->table_name, $log->record_id) }}
                                 </span>
                             </div>
-                            
+
                             <time class="text-xs font-medium shrink-0" style="color: var(--ink-subtle);">
                                 {{ $time }}
                             </time>
