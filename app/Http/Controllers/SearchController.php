@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Helpers\PatientCode;
 use App\Services\FuzzySearchService;
-use App\Services\IcdApiService;
 use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
@@ -158,93 +157,7 @@ class SearchController extends Controller
             return response()->json([]);
         }
 
-        // ICD API is the primary source when enabled: API results are persisted
-        // into diagnosis_lookup so the autocomplete returns local row ids that
-        // AddDiagnosisRequest and the diagnosis_records foreign key accept.
-        // Falls back to the local table when the API is disabled, unreachable,
-        // or returns no results.
-        $icdService = app()->make(IcdApiService::class);
-        if ($icdService->isEnabled()) {
-            $apiResults = $icdService->search($query, 15);
-            if (! empty($apiResults)) {
-                return response()->json($this->mergeApiResults($query, $apiResults));
-            }
-        }
-
         return response()->json($this->localDiagnoses($query));
-    }
-
-    /**
-     * Persist ICD API results into diagnosis_lookup (non-destructive upsert
-     * keyed on diagnosis_code) and return them with local row ids, appending
-     * local matches whose codes the API did not return.
-     *
-     * @param  array<int, array<string, mixed>>  $apiResults
-     * @return array<int, array{id: int, text: string}>
-     */
-    private function mergeApiResults(string $query, array $apiResults): array
-    {
-        $codes = [];
-        $upsertRows = [];
-
-        foreach ($apiResults as $result) {
-            $code = $result['id'] ?? null;
-            $text = $result['text'] ?? '';
-
-            if (! is_string($code) || $code === '' || ! str_starts_with($text, $code.' - ')) {
-                continue;
-            }
-
-            $codes[] = $code;
-            $upsertRows[] = [
-                'diagnosis_code' => $code,
-                'diagnosis_name' => trim(substr($text, strlen($code) + 3)),
-            ];
-        }
-
-        if ($codes === []) {
-            return $this->localDiagnoses($query);
-        }
-
-        DB::table('diagnosis_lookup')->upsert($upsertRows, ['diagnosis_code'], ['diagnosis_name']);
-
-        $localByCode = DB::table('diagnosis_lookup')
-            ->whereIn('diagnosis_code', $codes)
-            ->select('id', 'diagnosis_code', 'diagnosis_name')
-            ->get()
-            ->keyBy('diagnosis_code');
-
-        $results = [];
-        foreach ($codes as $code) {
-            $row = $localByCode->get($code);
-            if ($row === null) {
-                continue;
-            }
-
-            $results[] = [
-                'id' => (int) $row->id,
-                'text' => $row->diagnosis_code.' - '.$row->diagnosis_name,
-            ];
-        }
-
-        $localMatches = DB::table('diagnosis_lookup')
-            ->where(function ($qb) use ($query) {
-                $qb->where('diagnosis_name', 'LIKE', "%{$query}%")
-                    ->orWhere('diagnosis_code', 'LIKE', "{$query}%");
-            })
-            ->whereNotIn('diagnosis_code', $codes)
-            ->select('id', 'diagnosis_code', 'diagnosis_name')
-            ->limit(15)
-            ->get();
-
-        foreach ($localMatches as $d) {
-            $results[] = [
-                'id' => (int) $d->id,
-                'text' => $d->diagnosis_code ? ($d->diagnosis_code.' - '.$d->diagnosis_name) : $d->diagnosis_name,
-            ];
-        }
-
-        return array_slice($results, 0, 15);
     }
 
     /**
