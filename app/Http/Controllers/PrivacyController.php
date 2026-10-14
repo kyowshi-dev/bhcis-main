@@ -27,29 +27,35 @@ class PrivacyController extends Controller
 
     public function policy()
     {
-        $privacy = PrivacySetting::getActive();
-
-        $converter = new CommonMarkConverter([
-            'html_input' => 'allow',
-            'allow_unsafe_links' => false,
-        ]);
-
-        $privacy->privacy_policy_content = $privacy->privacy_policy_content
-            ? (string) $converter->convert($privacy->privacy_policy_content)
-            : null;
-
-        return view('privacy.policy', compact('privacy'));
+        return $this->renderTab('policy');
     }
 
     public function purposes()
     {
-        $privacy = PrivacySetting::getActive();
-
-        return view('privacy.purposes', compact('privacy'));
+        return $this->renderTab('purposes');
     }
 
     public function liability()
     {
-        return view('privacy.liability');
+        return $this->renderTab('liability');
+    }
+
+    private function renderTab(string $activeTab)
+    {
+        $privacy = PrivacySetting::getActive();
+
+        if ($privacy->privacy_policy_content) {
+            $converter = new CommonMarkConverter([
+                'html_input' => 'allow',
+                'allow_unsafe_links' => false,
+            ]);
+
+            $privacy->privacy_policy_content = (string) $converter->convert($privacy->privacy_policy_content);
+        }
+
+        return view('privacy.show', [
+            'privacy' => $privacy,
+            'activeTab' => $activeTab,
+        ]);
     }
 }
