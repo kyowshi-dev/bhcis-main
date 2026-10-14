@@ -146,8 +146,13 @@
         <div x-show="query.length > 1 && results.length === 0 && !loading" x-cloak class="mt-2 text-xs" style="display: none; color: var(--ink-muted);">
             No patient found. <a href="{{ route('patients.create') }}" class="font-semibold" style="color: var(--primary);">Register a new patient</a>.
         </div>
-        <div x-show="loading" x-cloak class="mt-2 text-xs" style="display: none; color: var(--ink-muted);">
-            Searching...
+        <div x-show="loading" x-cloak class="mt-2 rounded-lg border overflow-hidden" style="display: none; border-color: var(--border); background: var(--bg-surface-elevated);">
+            @for ($i = 0; $i < 3; $i++)
+                <div class="px-4 py-2.5 border-b border-border last:border-0" aria-hidden="true">
+                    <div class="h-3.5 w-40 rounded bg-surface animate-pulse"></div>
+                    <div class="mt-1.5 h-3 w-56 rounded bg-surface animate-pulse"></div>
+                </div>
+            @endfor
         </div>
     </div>
 

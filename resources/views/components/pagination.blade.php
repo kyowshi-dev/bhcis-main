@@ -32,7 +32,7 @@
         </div>
         @if ($paginator->hasPages())
             <div class="order-1 sm:order-2 flex justify-center sm:justify-end min-h-[2.25rem] items-center">
-                {{ $paginator->onEachSide(1)->links() }}
+                {{ $paginator->onEachSide(1)->links('pagination.buttons') }}
             </div>
         @endif
     </div>

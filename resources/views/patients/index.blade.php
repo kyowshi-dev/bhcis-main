@@ -67,8 +67,16 @@
             <p class="text-sm font-medium mt-2" style="color: var(--ink);">No results found</p>
             <p class="text-xs mt-1" style="color: var(--ink-muted);">Try a different search term or patient ID</p>
         </div>
-        <div x-show="loading" class="mt-3 rounded-lg border p-4 text-center" style="display: none; border-color: var(--border); background: var(--bg-surface);">
-            <p class="text-sm" style="color: var(--ink-muted);">Searching...</p>
+        <div x-show="loading" class="mt-3 rounded-lg border overflow-hidden" style="display: none; border-color: var(--border); background: var(--bg-surface-elevated);">
+            <div class="px-4 py-3 border-b border-border" aria-hidden="true">
+                <div class="h-3.5 w-24 rounded bg-surface animate-pulse"></div>
+            </div>
+            @for ($i = 0; $i < 3; $i++)
+                <div class="px-4 py-3 border-b border-border last:border-0" aria-hidden="true">
+                    <div class="h-3.5 w-40 rounded bg-surface animate-pulse"></div>
+                    <div class="mt-1.5 h-3 w-56 rounded bg-surface animate-pulse"></div>
+                </div>
+            @endfor
         </div>
     </div>
 

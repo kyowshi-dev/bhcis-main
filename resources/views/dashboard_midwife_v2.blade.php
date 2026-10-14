@@ -82,7 +82,17 @@
                 </a>
             @endif
         </div>
-        <p x-show="loading" x-transition class="mt-3 text-xs" style="color: var(--ink-muted);" role="status">Searching…</p>
+        <div x-show="loading" x-transition class="mt-3 rounded-lg border overflow-hidden" style="display: none; border-color: var(--border); background: var(--bg-surface-elevated);">
+            <div class="px-4 py-3 border-b border-border" aria-hidden="true">
+                <div class="h-3.5 w-24 rounded bg-surface animate-pulse"></div>
+            </div>
+            @for ($i = 0; $i < 3; $i++)
+                <div class="px-4 py-3 border-b border-border last:border-0" aria-hidden="true">
+                    <div class="h-3.5 w-40 rounded bg-surface animate-pulse"></div>
+                    <div class="mt-1.5 h-3 w-56 rounded bg-surface animate-pulse"></div>
+                </div>
+            @endfor
+        </div>
         <div x-show="results.length > 0" x-transition class="mt-3 rounded-lg border overflow-hidden" style="display: none; border-color: var(--border); background: var(--bg-surface-elevated); box-shadow: var(--shadow-md);">
             <ul>
                 <template x-for="patient in results" :key="patient.id">
