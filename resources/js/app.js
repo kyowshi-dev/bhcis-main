@@ -117,6 +117,73 @@ window.administerVaccine = () => ({
     },
 });
 
+// Public privacy page: segmented tabs (Policy / Purposes / Liability).
+// Vanilla JS on purpose - layouts.public has no Alpine (Livewire ships it only
+// in the app shell, and CDN Alpine is reserved for standalone print documents).
+// Hash is kept in sync so #policy/#purposes/#liability deep links survive refresh.
+(function initPrivacyTabs() {
+    const ORDER = ['policy', 'purposes', 'liability'];
+    const HASH_RE = /^#(policy|purposes|liability)$/;
+
+    document.querySelectorAll('[data-privacy-tabs]').forEach((root) => {
+        const tablist = root.querySelector('[role="tablist"]');
+        const tabs = Array.from(root.querySelectorAll('[role="tab"][data-tab]'));
+        const panels = Array.from(root.querySelectorAll('[role="tabpanel"][data-panel]'));
+        if (!tablist || !tabs.length) return;
+
+        const activate = (key, { focus = false, updateHash = true } = {}) => {
+            if (!ORDER.includes(key)) return;
+            root.dataset.activeTab = key;
+
+            tabs.forEach((tab) => {
+                const selected = tab.dataset.tab === key;
+                tab.setAttribute('aria-selected', selected ? 'true' : 'false');
+                tab.tabIndex = selected ? 0 : -1;
+                tab.classList.toggle('bg-teal-soft', selected);
+                tab.classList.toggle('text-primary', selected);
+                tab.classList.toggle('text-ink-muted', !selected);
+                tab.classList.toggle('hover:bg-black/[0.03]', !selected);
+                if (selected && focus) tab.focus();
+            });
+
+            panels.forEach((panel) => {
+                panel.hidden = panel.dataset.panel !== key;
+            });
+
+            if (updateHash && window.history?.replaceState) {
+                window.history.replaceState(null, '', '#' + key);
+            }
+        };
+
+        tabs.forEach((tab) => {
+            tab.addEventListener('click', () => activate(tab.dataset.tab, { focus: true }));
+        });
+
+        tablist.addEventListener('keydown', (event) => {
+            const index = ORDER.indexOf(root.dataset.activeTab);
+            if (index === -1) return;
+
+            let next = null;
+            if (event.key === 'ArrowRight') next = ORDER[(index + 1) % ORDER.length];
+            else if (event.key === 'ArrowLeft') next = ORDER[(index - 1 + ORDER.length) % ORDER.length];
+            else if (event.key === 'Home') next = ORDER[0];
+            else if (event.key === 'End') next = ORDER[ORDER.length - 1];
+
+            if (next) {
+                event.preventDefault();
+                activate(next, { focus: true });
+            }
+        });
+
+        const syncFromHash = () => {
+            const match = window.location.hash.match(HASH_RE);
+            if (match) activate(match[1], { updateHash: false });
+        };
+        window.addEventListener('hashchange', syncFromHash);
+        syncFromHash();
+    });
+})();
+
 document.addEventListener('alpine:init', () => {
     if (!window.Alpine) {
         return;

@@ -84,6 +84,7 @@ class PrivacyComplianceTest extends TestCase
         $response = $this->get(route('privacy.policy'));
 
         $response->assertStatus(200);
+        $response->assertSee('data-active-tab="policy"', false);
     }
 
     public function test_public_purposes_page_is_accessible(): void
@@ -91,6 +92,17 @@ class PrivacyComplianceTest extends TestCase
         $response = $this->get(route('privacy.purposes'));
 
         $response->assertStatus(200);
+        $response->assertSee('data-active-tab="purposes"', false);
+    }
+
+    public function test_public_liability_page_is_accessible(): void
+    {
+        $response = $this->get(route('privacy.liability'));
+
+        $response->assertStatus(200);
+        $response->assertSee('data-active-tab="liability"', false);
+        $response->assertSee('Limitation of Liability');
+        $response->assertSee('Academic Project Notice');
     }
 
     // --- Soft Deletes ---
