@@ -14,13 +14,16 @@
             <x-btn href="{{ route('medicines.edit', $medicine->id) }}" variant="outlined" icon="fa-solid fa-pen">
                 Edit
             </x-btn>
-            <form action="{{ route('medicines.destroy', $medicine->id) }}" method="POST" class="inline confirm-delete-form" data-message="Archive this medicine? It will be hidden from the active list and can be restored anytime.">
-                @csrf
-                @method('DELETE')
+            <x-destructive-form
+                action="{{ route('medicines.destroy', $medicine->id) }}"
+                message="Archive this medicine? It will be hidden from the active list and can be restored anytime."
+                confirmText="Archive"
+                class="inline"
+            >
                 <x-btn type="submit" variant="destructive">
                     Archive
                 </x-btn>
-            </form>
+            </x-destructive-form>
         </div>
     </div>
 
@@ -56,20 +59,4 @@
         </x-card>
     </div>
 </div>
-<script>
-document.querySelectorAll('.confirm-delete-form').forEach(form => {
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        Swal.fire({
-            title: form.dataset.message || 'Are you sure?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: 'var(--danger)',
-            cancelButtonColor: 'var(--ink-muted)',
-            confirmButtonText: 'Delete',
-            cancelButtonText: 'Cancel',
-        }).then(result => { if (result.isConfirmed) form.submit(); });
-    });
-});
-</script>
 @endsection

@@ -9,11 +9,10 @@
     $dueDateLabel = $hasDateRange
         ? 'Due from '.$dueWindowStart->format('M j').' to '.$dueWindowEnd->format('M j')
         : ($isCurrentMonth ? 'Due this month' : 'Due in '.$dueWindowStart->format('F Y'));
-    $statusStyles = [
-        'due' => ['bg' => 'var(--accent-blue-soft)', 'fg' => 'var(--accent-blue)', 'icon' => 'fa-regular fa-calendar', 'label' => 'Due'],
-        'overdue' => ['bg' => 'var(--danger-soft)', 'fg' => 'var(--danger)', 'icon' => 'fa-solid fa-circle-exclamation', 'label' => 'Overdue'],
-        'out_of_window' => ['bg' => 'var(--amber-soft)', 'fg' => 'var(--amber)', 'icon' => 'fa-solid fa-clock', 'label' => 'Out of window'],
-        'no_show' => ['bg' => 'var(--danger-soft)', 'fg' => 'var(--danger)', 'icon' => 'fa-solid fa-user-clock', 'label' => 'No-show'],
+    $doseHeaders = [
+        'due' => 'Due doses',
+        'overdue' => 'Overdue doses',
+        'no_show' => 'Missed doses',
     ];
 @endphp
 
@@ -35,8 +34,49 @@
 
     <x-flash />
 
-    <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <form method="GET" action="{{ route('immunizations.index') }}" class="flex flex-wrap items-center gap-2" x-data="{ showCustom: {{ $hasDateRange ? 'true' : 'false' }} }">
+    {{-- Toolbar: search is the primary entry point; filters sit beside it, visually secondary --}}
+    <div class="flex flex-col gap-3 lg:flex-row lg:items-start">
+        <div class="flex-1 min-w-0" x-data="patientSearch()" x-init="$watch('selectedPatientId', (id) => { if (id) $dispatch('checkin-open', { patientId: id }); selectedPatientId = null; })">
+            <div class="relative">
+                <span class="absolute inset-y-0 flex items-center pointer-events-none pl-3" style="color: var(--ink-subtle);">
+                    <i class="fa-solid fa-magnifying-glass text-sm" aria-hidden="true"></i>
+                </span>
+                <label for="patient_search" class="sr-only">Search patient</label>
+                <input id="patient_search" type="text" x-model="query" @input.debounce.300ms="search()"
+                       placeholder="Search patient to record a dose"
+                       class="w-full pl-10 pr-4 py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2 transition"
+                       style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);"
+                       autocomplete="off">
+            </div>
+            <div x-show="results.length > 0" x-cloak class="mt-3 rounded-lg border overflow-hidden" style="display: none; border-color: var(--border); background: var(--bg-surface-elevated); box-shadow: var(--shadow-md);">
+                <ul>
+                    <template x-for="patient in results" :key="patient.id">
+                        <li class="border-b last:border-0 transition-colors hover:bg-black/[0.03]">
+                            <button type="button" @click="selectedPatientId = patient.id; query = ''; results = [];" class="block w-full text-left px-4 py-2.5">
+                                <div class="font-medium text-sm" style="color: var(--ink);" x-text="patient.text"></div>
+                                <div class="text-xs mt-0.5" style="color: var(--ink-muted);">
+                                    <span x-text="patient.subtext"></span>
+                                    <span class="font-semibold" style="color: var(--primary);"> - Record dose</span>
+                                </div>
+                            </button>
+                        </li>
+                    </template>
+                </ul>
+            </div>
+            <div x-show="query.length > 1 && results.length === 0 && !loading" x-cloak class="mt-2 text-xs" style="display: none; color: var(--ink-muted);">
+                No patient found. <a href="{{ route('patients.create') }}" class="font-semibold" style="color: var(--primary);">Register a new patient</a>.
+            </div>
+            <div x-show="loading" x-cloak class="mt-2 rounded-lg border overflow-hidden" style="display: none; border-color: var(--border); background: var(--bg-surface-elevated);">
+                @for ($i = 0; $i < 3; $i++)
+                    <div class="px-4 py-2.5 border-b border-border last:border-0" aria-hidden="true">
+                        <div class="h-3.5 w-40 rounded bg-surface animate-pulse"></div>
+                        <div class="mt-1.5 h-3 w-56 rounded bg-surface animate-pulse"></div>
+                    </div>
+                @endfor
+            </div>
+        </div>
+
+        <form method="GET" action="{{ route('immunizations.index') }}" class="flex flex-wrap items-center gap-2 lg:justify-end" x-data="{ showCustom: {{ $hasDateRange ? 'true' : 'false' }} }">
             <div>
                 <label for="filter_zone" class="sr-only">Filter by purok</label>
                 <select id="filter_zone" name="zone_id" @change="$el.form.submit()"
@@ -82,80 +122,6 @@
         </form>
     </div>
 
-    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <div class="rounded-xl border p-4 lg:p-5" style="background: var(--bg-surface); border-color: var(--border);">
-            <p class="text-xs font-medium mb-0.5" style="color: var(--ink-muted);">Infant coverage (0-11 mo)</p>
-            <div class="flex items-end justify-between gap-3">
-                <p class="text-2xl font-display font-semibold leading-none" style="color: var(--ink);">
-                    {{ is_null($infantCoveragePercent) ? '-' : $infantCoveragePercent.'%' }}
-                </p>
-                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold" style="background: var(--teal-soft); color: var(--primary);">
-                    {{ number_format($infantTotal) }} infants
-                </span>
-            </div>
-        </div>
-        <div class="rounded-xl border p-4 lg:p-5" style="background: var(--bg-surface); border-color: var(--border);">
-            <p class="text-xs font-medium mb-0.5" style="color: var(--ink-muted);">Adults enrolled</p>
-            <div class="flex items-end justify-between gap-3">
-                <p class="text-2xl font-display font-semibold leading-none" style="color: var(--ink);">{{ number_format($adultEnrolled) }}</p>
-                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold" style="background: var(--teal-soft); color: var(--primary);">
-                    <i class="fa-solid fa-user mr-1" aria-hidden="true"></i>18+ enrolled
-                </span>
-            </div>
-        </div>
-        <div class="rounded-xl border p-4 lg:p-5 hidden sm:block" style="background: var(--bg-surface); border-color: var(--border);">
-            <p class="text-xs font-medium mb-2" style="color: var(--ink-muted);">Doses given (adult)</p>
-            @forelse ($adultDosesByVaccine as $adultDose)
-                <div class="flex items-center justify-between gap-3 py-1 border-b last:border-0" style="border-color: var(--border);">
-                    <span class="text-sm" style="color: var(--ink);">{{ $adultDose->vaccine_name }}</span>
-                    <span class="text-sm font-semibold" style="color: var(--primary);">{{ number_format($adultDose->doses_count) }}</span>
-                </div>
-            @empty
-                <p class="text-xs" style="color: var(--ink-muted);">No adult doses recorded yet.</p>
-            @endforelse
-        </div>
-    </div>
-
-    <div class="rounded-xl" x-data="patientSearch()" x-init="$watch('selectedPatientId', (id) => { if (id) $dispatch('checkin-open', { patientId: id }); selectedPatientId = null; })">
-        <div class="relative">
-            <span class="absolute inset-y-0 flex items-center pointer-events-none pl-3" style="color: var(--ink-subtle);">
-                <i class="fa-solid fa-magnifying-glass text-sm" aria-hidden="true"></i>
-            </span>
-            <label for="patient_search" class="sr-only">Search patient</label>
-            <input id="patient_search" type="text" x-model="query" @input.debounce.300ms="search()"
-                   placeholder="Search patient"
-                   class="w-full pl-10 pr-4 py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2 transition"
-                   style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);"
-                   autocomplete="off">
-        </div>
-        <div x-show="results.length > 0" x-cloak class="mt-3 rounded-lg border overflow-hidden" style="display: none; border-color: var(--border); background: var(--bg-surface-elevated); box-shadow: var(--shadow-md);">
-            <ul>
-                <template x-for="patient in results" :key="patient.id">
-                    <li class="border-b last:border-0 transition-colors hover:bg-black/[0.03]">
-                        <button type="button" @click="selectedPatientId = patient.id; query = ''; results = [];" class="block w-full text-left px-4 py-2.5">
-                            <div class="font-medium text-sm" style="color: var(--ink);" x-text="patient.text"></div>
-                            <div class="text-xs mt-0.5" style="color: var(--ink-muted);">
-                                <span x-text="patient.subtext"></span>
-                                <span class="font-semibold" style="color: var(--primary);"> - Record dose</span>
-                            </div>
-                        </button>
-                    </li>
-                </template>
-            </ul>
-        </div>
-        <div x-show="query.length > 1 && results.length === 0 && !loading" x-cloak class="mt-2 text-xs" style="display: none; color: var(--ink-muted);">
-            No patient found. <a href="{{ route('patients.create') }}" class="font-semibold" style="color: var(--primary);">Register a new patient</a>.
-        </div>
-        <div x-show="loading" x-cloak class="mt-2 rounded-lg border overflow-hidden" style="display: none; border-color: var(--border); background: var(--bg-surface-elevated);">
-            @for ($i = 0; $i < 3; $i++)
-                <div class="px-4 py-2.5 border-b border-border last:border-0" aria-hidden="true">
-                    <div class="h-3.5 w-40 rounded bg-surface animate-pulse"></div>
-                    <div class="mt-1.5 h-3 w-56 rounded bg-surface animate-pulse"></div>
-                </div>
-            @endfor
-        </div>
-    </div>
-
     {{-- Search-initiated check-in panel (for patients not in the current queue) --}}
     <div x-show="searchCheckinPatientId" x-cloak class="rounded-xl border overflow-hidden" style="display: none; background: var(--bg-surface-elevated); border-color: var(--border);">
         <div x-show="searchCheckinLoading" class="flex items-center justify-center gap-2 px-4 py-6">
@@ -171,20 +137,28 @@
                 <h2 class="font-display font-semibold text-lg" style="color: var(--ink);">Queue</h2>
                 <p class="text-xs mt-0.5" style="color: var(--ink-muted);">Focus on who needs action today.</p>
             </div>
-            <div class="inline-flex flex-wrap rounded-xl border p-1" style="border-color: var(--border); background: var(--bg-surface);" role="tablist" aria-label="Queue view">
-                <button type="button" @click="activeQueue = 'due'" role="tab" :aria-selected="activeQueue === 'due' ? 'true' : 'false'" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition" :style="activeQueue === 'due' ? 'background: var(--teal-soft); color: var(--primary);' : 'color: var(--ink-muted);'">
+            <div class="inline-flex flex-wrap items-center gap-1 border-b" style="border-color: var(--border);" role="tablist" aria-label="Queue view">
+                <button type="button" @click="activeQueue = 'due'" role="tab" :aria-selected="activeQueue === 'due' ? 'true' : 'false'"
+                        class="px-3 py-2 -mb-px text-xs font-semibold transition border-b-2"
+                        :style="activeQueue === 'due' ? 'color: var(--primary); border-color: var(--primary);' : 'color: var(--ink-muted); border-color: transparent;'">
                     {{ $dueDateLabel }}
-                    <span class="ml-1 opacity-70">{{ number_format($dueTodayCount) }}</span>
+                    <span class="ml-1 font-normal">{{ number_format($dueTodayCount) }}</span>
                 </button>
-                <button type="button" @click="activeQueue = 'overdue'" role="tab" :aria-selected="activeQueue === 'overdue' ? 'true' : 'false'" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition" :style="activeQueue === 'overdue' ? 'background: var(--danger-soft); color: var(--danger);' : 'color: var(--ink-muted);'">
+                <button type="button" @click="activeQueue = 'overdue'" role="tab" :aria-selected="activeQueue === 'overdue' ? 'true' : 'false'"
+                        class="px-3 py-2 -mb-px text-xs font-semibold transition border-b-2"
+                        :style="activeQueue === 'overdue' ? 'color: var(--primary); border-color: var(--primary);' : 'color: var(--ink-muted); border-color: transparent;'">
                     Overdue
-                    <span class="ml-1 opacity-70">{{ number_format($overdueCount) }}</span>
+                    <span class="ml-1 font-normal">{{ number_format($overdueCount) }}</span>
                 </button>
-                <button type="button" @click="activeQueue = 'no_show'" role="tab" :aria-selected="activeQueue === 'no_show' ? 'true' : 'false'" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition" :style="activeQueue === 'no_show' ? 'background: var(--danger-soft); color: var(--danger);' : 'color: var(--ink-muted);'">
+                <button type="button" @click="activeQueue = 'no_show'" role="tab" :aria-selected="activeQueue === 'no_show' ? 'true' : 'false'"
+                        class="px-3 py-2 -mb-px text-xs font-semibold transition border-b-2"
+                        :style="activeQueue === 'no_show' ? 'color: var(--primary); border-color: var(--primary);' : 'color: var(--ink-muted); border-color: transparent;'">
                     No-show
-                    <span class="ml-1 opacity-70">{{ number_format($noShowCount) }}</span>
+                    <span class="ml-1 font-normal">{{ number_format($noShowCount) }}</span>
                 </button>
-                <button type="button" @click="activeQueue = 'recent'" role="tab" :aria-selected="activeQueue === 'recent' ? 'true' : 'false'" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition" :style="activeQueue === 'recent' ? 'background: var(--teal-soft); color: var(--primary);' : 'color: var(--ink-muted);'">
+                <button type="button" @click="activeQueue = 'recent'" role="tab" :aria-selected="activeQueue === 'recent' ? 'true' : 'false'"
+                        class="px-3 py-2 -mb-px text-xs font-semibold transition border-b-2"
+                        :style="activeQueue === 'recent' ? 'color: var(--primary); border-color: var(--primary);' : 'color: var(--ink-muted); border-color: transparent;'">
                     Recent
                 </button>
             </div>
@@ -195,13 +169,13 @@
                 $queueGroups = ($queues[$queueKey] ?? collect())->groupBy(fn (array $entry) => $entry['patient']->id);
             @endphp
             <div x-show="activeQueue === '{{ $queueKey }}'" x-cloak class="rounded-xl border overflow-hidden"
-                 @if ($queueKey === 'due') style="background: var(--bg-surface-elevated); border-color: var(--border);" @else style="display: none; background: var(--bg-surface-elevated); border-color: var(--border);" @endif>
+                 @if ($queueKey === 'due') style="background: var(--bg-surface); border-color: var(--border);" @else style="display: none; background: var(--bg-surface); border-color: var(--border);" @endif>
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-sm">
                         <thead style="background: var(--teal-soft);">
                             <tr>
                                 <th class="px-3 lg:px-4 py-2 lg:py-3 text-left text-xs font-medium whitespace-nowrap" style="color: var(--ink-muted);">Patient</th>
-                                <th class="px-3 lg:px-4 py-2 lg:py-3 text-left text-xs font-medium whitespace-nowrap" style="color: var(--ink-muted);">Due doses</th>
+                                <th class="px-3 lg:px-4 py-2 lg:py-3 text-left text-xs font-medium whitespace-nowrap" style="color: var(--ink-muted);">{{ $doseHeaders[$queueKey] }}</th>
                                 <th class="px-3 lg:px-4 py-2 lg:py-3 text-right text-xs font-medium whitespace-nowrap" style="color: var(--ink-muted);"></th>
                             </tr>
                         </thead>
@@ -209,7 +183,7 @@
                             @forelse ($queueGroups as $patientId => $entries)
                                 @php
                                     $queuePatient = $entries->first()['patient'];
-                                    $pillRows = $entries
+                                    $doseRows = $entries
                                         ->groupBy(fn (array $entry) => $entry['vaccine']->group_key ?? 'vaccine_'.$entry['vaccine']->id)
                                         ->map(fn ($groupEntries) => $groupEntries->firstWhere('status', 'no_show')
                                             ?? $groupEntries->sortBy('due_date')->first())
@@ -229,34 +203,20 @@
                                         </div>
                                     </td>
                                     <td class="px-3 lg:px-4 py-3">
-                                        <div class="flex flex-wrap items-center gap-1.5">
-                                            @foreach ($pillRows as $entry)
+                                        <div class="space-y-1">
+                                            @foreach ($doseRows as $entry)
                                                 @php
                                                     $queueVaccine = $entry['vaccine'];
-                                                    $pillStyle = $statusStyles[$entry['status']] ?? $statusStyles['due'];
-                                                    $pillLabel = $queueVaccine->group_key !== null
+                                                    $doseLabel = $queueVaccine->group_key !== null
                                                         ? ($queueVaccine->group_label ?? $queueVaccine->vaccine_name)
                                                         : $queueVaccine->vaccine_name;
                                                 @endphp
-                                                <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap" style="background: {{ $pillStyle['bg'] }}; color: {{ $pillStyle['fg'] }};">
-                                                    <i class="{{ $pillStyle['icon'] }}" aria-hidden="true"></i>
-                                                    {{ $pillLabel }} {{ $entry['dose_number'] }}
+                                                <div class="flex flex-wrap items-baseline gap-x-2">
+                                                    <span class="text-sm" style="color: var(--ink);">{{ $doseLabel }} {{ $entry['dose_number'] }}</span>
                                                     @if ($entry['due_date'] !== null)
-                                                        · {{ $entry['due_date']->format('M j') }}
+                                                        <span class="text-xs" style="color: var(--ink-muted);">{{ $entry['due_date']->format('M j') }}</span>
                                                     @endif
-                                                    <span class="sr-only"> - {{ $pillStyle['label'] }}</span>
-                                                </span>
-                                                @if ($entry['status'] === 'no_show')
-                                                    <form method="POST" action="{{ route('immunizations.no-show') }}" @submit.prevent="confirmClearNoShow($event.target, @js(fullName($queuePatient->last_name, $queuePatient->first_name, $queuePatient->middle_name, $queuePatient->suffix)))">
-                                                        @csrf
-                                                        <input type="hidden" name="no_show" value="0">
-                                                        <input type="hidden" name="patient_id" value="{{ $queuePatient->id }}">
-                                                        <input type="hidden" name="vaccine_id" value="{{ $queueVaccine->id }}">
-                                                        <button type="submit" title="Clear no-show" aria-label="Clear no-show for {{ $pillLabel }}" class="inline-flex h-7 w-7 items-center justify-center rounded-full border text-xs transition hover:bg-black/[0.03]" style="border-color: var(--border); color: var(--ink-muted);">
-                                                            <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
-                                                        </button>
-                                                    </form>
-                                                @endif
+                                                </div>
                                             @endforeach
                                         </div>
                                     </td>
@@ -305,6 +265,22 @@
         <div x-show="activeQueue === 'recent'" x-cloak style="display: none;">
             @include('immunizations.partials._recent-table', ['records' => $recentRecords])
         </div>
+    </div>
+
+    {{-- Program summary: quiet reference line, kept out of the primary task path --}}
+    <div class="flex flex-wrap items-baseline gap-x-6 gap-y-2 border-t pt-4 text-sm" style="border-color: var(--border); color: var(--ink-muted);">
+        <span>
+            <span class="font-display font-semibold text-lg" style="color: var(--ink);">{{ is_null($infantCoveragePercent) ? '-' : $infantCoveragePercent.'%' }}</span>
+            infant coverage (0-11 mo)
+        </span>
+        <span>
+            <span class="font-display font-semibold text-lg" style="color: var(--ink);">{{ number_format($infantTotal) }}</span>
+            infants
+        </span>
+        <span>
+            <span class="font-display font-semibold text-lg" style="color: var(--ink);">{{ number_format($adultEnrolled) }}</span>
+            adults enrolled
+        </span>
     </div>
 
 </div>
@@ -430,7 +406,7 @@
                     showCancelButton: true,
                     confirmButtonText: 'Yes, mark no-show',
                     cancelButtonText: 'Cancel',
-                    confirmButtonColor: 'var(--danger)',
+                    confirmButtonColor: 'var(--primary)',
                     cancelButtonColor: 'var(--ink-muted)',
                     reverseButtons: true,
                 }).then((result) => {

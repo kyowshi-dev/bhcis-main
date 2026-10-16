@@ -76,6 +76,38 @@
                     @csrf
                     @method('PUT')
                     <div class="grid grid-cols-1 gap-3">
+                        <x-field name="first_name" label="First Name" required>
+                            <x-slot:control>
+                                <input type="text" name="first_name" id="first_name" required maxlength="255"
+                                       value="{{ old('first_name', $patient->first_name) }}"
+                                       class="w-full rounded-lg border border-border px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent-blue">
+                            </x-slot:control>
+                        </x-field>
+
+                        <x-field name="middle_name" label="Middle Name">
+                            <x-slot:control>
+                                <input type="text" name="middle_name" id="middle_name" maxlength="255"
+                                       value="{{ old('middle_name', $patient->middle_name) }}"
+                                       class="w-full rounded-lg border border-border px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent-blue">
+                            </x-slot:control>
+                        </x-field>
+
+                        <x-field name="last_name" label="Last Name" required>
+                            <x-slot:control>
+                                <input type="text" name="last_name" id="last_name" required maxlength="255"
+                                       value="{{ old('last_name', $patient->last_name) }}"
+                                       class="w-full rounded-lg border border-border px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent-blue">
+                            </x-slot:control>
+                        </x-field>
+
+                        <x-field name="suffix" label="Suffix">
+                            <x-slot:control>
+                                <input type="text" name="suffix" id="suffix" maxlength="50"
+                                       value="{{ old('suffix', $patient->suffix) }}"
+                                       class="w-full rounded-lg border border-border px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent-blue">
+                            </x-slot:control>
+                        </x-field>
+
                         <x-field name="sex" label="Sex" required>
                             <x-slot:control>
                                 <select name="sex" id="sex" required
@@ -158,6 +190,54 @@
                                 <input type="text" name="residential_address" id="residential_address" maxlength="255"
                                        value="{{ old('residential_address', $patient->residential_address) }}"
                                        class="w-full rounded-lg border border-border px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent-blue">
+                            </x-slot:control>
+                        </x-field>
+
+                        <x-field name="philhealth_no" label="PhilHealth Number">
+                            <x-slot:control>
+                                <input type="text" name="philhealth_no" id="philhealth_no" maxlength="50"
+                                       value="{{ old('philhealth_no', $patient->philhealth_no) }}"
+                                       class="w-full rounded-lg border border-border px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent-blue">
+                            </x-slot:control>
+                        </x-field>
+
+                        <x-field name="is_philhealth_member" label="PhilHealth Member">
+                            <x-slot:control>
+                                <select name="is_philhealth_member" id="is_philhealth_member"
+                                        class="w-full rounded-lg border border-border px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent-blue">
+                                    <option value="y" @selected(old('is_philhealth_member', $patient->is_philhealth_member) === 'y')>Yes</option>
+                                    <option value="n" @selected(old('is_philhealth_member', $patient->is_philhealth_member) === 'n')>No</option>
+                                </select>
+                            </x-slot:control>
+                        </x-field>
+
+                        <x-field name="is_pcb_member" label="PCB Member">
+                            <x-slot:control>
+                                <select name="is_pcb_member" id="is_pcb_member"
+                                        class="w-full rounded-lg border border-border px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent-blue">
+                                    <option value="y" @selected(old('is_pcb_member', $patient->is_pcb_member) === 'y')>Yes</option>
+                                    <option value="n" @selected(old('is_pcb_member', $patient->is_pcb_member) === 'n')>No</option>
+                                </select>
+                            </x-slot:control>
+                        </x-field>
+
+                        <x-field name="has_4ps" label="4Ps Beneficiary">
+                            <x-slot:control>
+                                <select name="has_4ps" id="has_4ps"
+                                        class="w-full rounded-lg border border-border px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent-blue">
+                                    <option value="y" @selected(old('has_4ps', $patient->has_4ps) === 'y')>Yes</option>
+                                    <option value="n" @selected(old('has_4ps', $patient->has_4ps) === 'n')>No</option>
+                                </select>
+                            </x-slot:control>
+                        </x-field>
+
+                        <x-field name="has_nhts" label="NHTS Beneficiary">
+                            <x-slot:control>
+                                <select name="has_nhts" id="has_nhts"
+                                        class="w-full rounded-lg border border-border px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-accent-blue">
+                                    <option value="y" @selected(old('has_nhts', $patient->has_nhts) === 'y')>Yes</option>
+                                    <option value="n" @selected(old('has_nhts', $patient->has_nhts) === 'n')>No</option>
+                                </select>
                             </x-slot:control>
                         </x-field>
                     </div>
@@ -322,20 +402,26 @@
                 <div class="mt-4 lg:mt-6 pt-3 lg:pt-4 border-t">
                     <h4 class="text-xs font-bold text-ink-subtle uppercase mb-2">Data Management</h4>
                     <div class="space-y-2">
-                        <form action="{{ route('patients.destroy', $patient->id) }}" method="POST" class="w-full confirm-delete-form" data-message="Archive this patient? They will be moved to trash and hidden from the main list.">
-                            @csrf
-                            @method('DELETE')
+                        <x-destructive-form
+                            action="{{ route('patients.destroy', $patient->id) }}"
+                            message="Archive this patient? They will be moved to trash and hidden from the main list."
+                            confirmText="Archive"
+                            class="w-full"
+                        >
                             <button type="submit" class="inline-flex items-center justify-center w-full px-3 py-2 rounded-lg text-xs lg:text-sm font-medium transition" style="background: var(--amber-soft); color: var(--amber);">
                                 <i class="fa-solid fa-box-archive mr-1.5" aria-hidden="true"></i> Archive Patient
                             </button>
-                        </form>
-                        <form action="{{ route('patients.forceDestroy', $patient->id) }}" method="POST" class="w-full confirm-delete-form" data-message="PERMANENTLY delete this patient? This cannot be undone. All their records will be lost forever." data-confirm-text="Permanently Delete">
-                            @csrf
-                            @method('DELETE')
+                        </x-destructive-form>
+                        <x-destructive-form
+                            action="{{ route('patients.forceDestroy', $patient->id) }}"
+                            message="PERMANENTLY delete this patient? This cannot be undone. All their records will be lost forever."
+                            confirmText="Permanently Delete"
+                            class="w-full"
+                        >
                             <button type="submit" class="inline-flex items-center justify-center w-full px-3 py-2 rounded-lg text-xs lg:text-sm font-medium transition" style="background: var(--danger-soft, #fef2f2); color: var(--danger);">
                                 <i class="fa-solid fa-trash-can mr-1.5" aria-hidden="true"></i> Delete Permanently
                             </button>
-                        </form>
+                        </x-destructive-form>
                     </div>
                 </div>
             @endif
@@ -395,22 +481,3 @@
     </div>
 </div>
 @endsection
-
-@push('scripts')
-<script>
-    document.querySelectorAll('.confirm-delete-form').forEach(form => {
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            Swal.fire({
-                title: form.dataset.message || 'Are you sure?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: 'var(--danger)',
-                cancelButtonColor: 'var(--ink-muted)',
-                confirmButtonText: form.dataset.confirmText || 'Delete',
-                cancelButtonText: 'Cancel',
-            }).then(result => { if (result.isConfirmed) form.submit(); });
-        });
-    });
-</script>
-@endpush

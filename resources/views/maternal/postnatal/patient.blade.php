@@ -531,6 +531,28 @@
                     </div>
                 </div>
             </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                    <label for="ep_vitamin_a_date" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Vitamin A date</label>
+                    <input id="ep_vitamin_a_date" type="date" name="vitamin_a_date" max="{{ now()->toDateString() }}" value="{{ old('vitamin_a_date', $current->vitamin_a_date?->format('Y-m-d')) }}"
+                           class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                           style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
+                </div>
+                <div>
+                    <label for="ep_iron_date" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Iron date</label>
+                    <input id="ep_iron_date" type="date" name="iron_date" max="{{ now()->toDateString() }}" value="{{ old('iron_date', $current->iron_date?->format('Y-m-d')) }}"
+                           class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                           style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
+                </div>
+                <div>
+                    <label for="ep_iron_count" class="mb-1 block text-xs font-medium" style="color: var(--ink-muted);">Iron count</label>
+                    <input id="ep_iron_count" type="number" min="0" max="999" name="iron_count" value="{{ old('iron_count', $current->iron_count) }}"
+                           class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                           style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--accent-blue);">
+                </div>
+            </div>
+
             <div class="flex justify-end gap-2 pt-1">
                 <button type="button" @click="$dispatch('close')" class="rounded-lg border px-4 py-2 text-sm font-semibold transition hover:bg-black/[0.03]"
                         style="border-color: var(--border); color: var(--ink-muted);">Cancel</button>

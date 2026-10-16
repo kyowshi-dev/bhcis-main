@@ -15,12 +15,17 @@ class SearchController extends Controller
     /**
      * Zone scoping helper for patient queries.
      *
+     * Archived (soft-deleted) patients are always excluded - they are not
+     * viewable via patients.show and only appear on the index archived tab.
+     *
      * Zone-scoped users (BHWs) may search patients within their assigned
      * zones, plus any patient they enrolled themselves (even when that
      * patient's household lies outside their zones).
      */
     private function scopePatientQuery(Builder $query): Builder
     {
+        $query->whereNull('deleted_at');
+
         $user = auth()->user();
 
         if ($user !== null && $user->isZoneScoped()) {

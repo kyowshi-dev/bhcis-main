@@ -51,11 +51,15 @@ class PatientUpdateTest extends TestCase
     }
 
     /**
-     * @return array<string, string>
+     * @return array<string, mixed>
      */
     private function validPayload(): array
     {
         return [
+            'first_name' => 'Maria',
+            'middle_name' => 'Concepcion',
+            'last_name' => 'Santos',
+            'suffix' => '',
             'sex' => 'Female',
             'date_of_birth' => '1990-02-15',
             'blood_type' => 'O+',
@@ -64,6 +68,11 @@ class PatientUpdateTest extends TestCase
             'spouse_name' => 'Juan Dela Cruz',
             'family_relationship' => 'Daughter',
             'residential_address' => '2 Sta. Ana, Tagoloan',
+            'philhealth_no' => '123456789012',
+            'is_philhealth_member' => true,
+            'is_pcb_member' => false,
+            'has_4ps' => false,
+            'has_nhts' => false,
         ];
     }
 

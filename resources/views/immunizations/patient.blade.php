@@ -64,6 +64,7 @@
     ])
 
     @include('immunizations.partials._administer-modal')
+    @include('immunizations.partials._edit-dose-modal', ['patientId' => $patient->id])
 </div>
 
 <script>
@@ -75,7 +76,7 @@
             showCancelButton: true,
             confirmButtonText: 'Yes, mark no-show',
             cancelButtonText: 'Cancel',
-            confirmButtonColor: 'var(--danger)',
+            confirmButtonColor: 'var(--primary)',
             cancelButtonColor: 'var(--ink-muted)',
             reverseButtons: true,
         }).then((result) => {

@@ -14,13 +14,16 @@
             <a href="{{ route('zones.edit', $zone->id) }}" class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-white text-sm font-semibold transition duration-200 hover:shadow-md" style="background: var(--primary);">
                 Edit
             </a>
-            <form action="{{ route('zones.destroy', $zone->id) }}" method="POST" class="inline confirm-delete-form" data-message="Are you sure you want to delete this zone? Make sure there are no households in this zone.">
-                @csrf
-                @method('DELETE')
+            <x-destructive-form
+                action="{{ route('zones.destroy', $zone->id) }}"
+                message="Are you sure you want to delete this zone? Make sure there are no households in this zone."
+                confirmText="Delete"
+                class="inline"
+            >
                 <button type="submit" class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-white text-sm font-semibold transition duration-200 hover:shadow-md" style="background: var(--danger);">
                     Delete
                 </button>
-            </form>
+            </x-destructive-form>
         </div>
     </div>
 
@@ -120,20 +123,3 @@
     @endif
 </div>
 @endsection
-
-<script>
-document.querySelectorAll('.confirm-delete-form').forEach(form => {
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        Swal.fire({
-            title: form.dataset.message || 'Are you sure?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: 'var(--danger)',
-            cancelButtonColor: 'var(--ink-muted)',
-            confirmButtonText: 'Delete',
-            cancelButtonText: 'Cancel',
-        }).then(result => { if (result.isConfirmed) form.submit(); });
-    });
-});
-</script>

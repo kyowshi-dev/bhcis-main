@@ -153,6 +153,10 @@ class ConsultationController extends Controller
     {
         $this->authorizePermission('consultations');
 
+        if (auth()->user()->isZoneScoped() && ! auth()->user()->canAccessConsultation($consultation)) {
+            abort(403);
+        }
+
         $worker = $this->currentWorker();
         if (! $worker->isNurse()) {
             abort(403, 'Only nurses can cancel intake requests.');
@@ -211,6 +215,10 @@ class ConsultationController extends Controller
     public function deleteVitalVersion(Consultation $consultation, $vitalId): RedirectResponse
     {
         $this->authorizePermission('consultations');
+
+        if (auth()->user()->isZoneScoped() && ! auth()->user()->canAccessConsultation($consultation)) {
+            abort(403);
+        }
 
         $result = VitalsService::deleteVersion($consultation, (int) $vitalId);
 
@@ -373,6 +381,21 @@ class ConsultationController extends Controller
     {
         $this->authorizePermission('consultations');
 
+        if (auth()->user()->isZoneScoped() && ! auth()->user()->canAccessConsultation($consultation)) {
+            abort(403);
+        }
+
+        $worker = $this->currentWorker();
+        if (! $worker->isDoctor()) {
+            abort(403, 'Only doctors can delete diagnoses.');
+        }
+
+        if (in_array($consultation->status, ConsultationStatus::terminalValues(), true)) {
+            return redirect()->back()->withErrors([
+                'diagnosis' => 'Diagnoses cannot be deleted from a completed or referred consultation.',
+            ]);
+        }
+
         if (! ConsultationService::deleteDiagnosis($consultation, (int) $diagnosisId)) {
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Diagnosis not found'], 404);
@@ -391,7 +414,17 @@ class ConsultationController extends Controller
     {
         $this->authorizePermission('consultations');
 
+        if (auth()->user()->isZoneScoped() && ! auth()->user()->canAccessConsultation($consultation)) {
+            abort(403);
+        }
+
         $this->requirePrescriptionAccess();
+
+        if (in_array($consultation->status, ConsultationStatus::terminalValues(), true)) {
+            return redirect()->back()->withErrors([
+                'prescription' => 'Prescriptions cannot be deleted from a completed or referred consultation.',
+            ]);
+        }
 
         if (! ConsultationService::deletePrescription($consultation, (int) $prescriptionId)) {
             if ($request->expectsJson()) {

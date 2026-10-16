@@ -206,6 +206,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('/referrals/{id}/status', [ReferralController::class, 'updateStatus'])
         ->middleware('permission:referrals')
         ->name('referrals.update-status');
+    Route::put('/referrals/{id}', [ReferralController::class, 'update'])
+        ->middleware('permission:referrals')
+        ->name('referrals.update');
 
     // Triage / New Admission
     Route::get('/patients/{patient}/consultations/create', [ConsultationController::class, 'create'])
@@ -310,6 +313,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/patients/{id}/immunizations/{vaccine}/mark-done', [ImmunizationController::class, 'markGiven'])
         ->middleware('permission:immunizations')
         ->name('immunizations.mark-done');
+    Route::put('/patients/{id}/immunizations/{immunization}', [ImmunizationController::class, 'update'])
+        ->middleware('permission:immunizations')
+        ->name('immunizations.update');
     Route::post('/patients/{patient}/immunizations/enroll', [ImmunizationController::class, 'enroll'])
         ->middleware('permission:immunizations')
         ->name('immunizations.enroll');
@@ -342,6 +348,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/maternal/family-planning/{client}/visits', [FamilyPlanningController::class, 'addVisit'])
         ->middleware('permission:maternal')
         ->name('maternal.family-planning.visits.store');
+    Route::put('/maternal/family-planning/visits/{visit}', [FamilyPlanningController::class, 'updateVisit'])
+        ->middleware('permission:maternal')
+        ->name('maternal.family-planning.visits.update');
     Route::get('/maternal/family-planning/{client}/print', [FamilyPlanningController::class, 'print'])
         ->middleware('permission:maternal')
         ->name('maternal.family-planning.print');

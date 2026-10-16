@@ -40,17 +40,13 @@
                         </td>
                         <td class="px-3 lg:px-4 py-2 lg:py-3 hidden md:table-cell">
                             @if ($hasOverdue)
-                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold" style="background: var(--danger-soft); color: var(--danger);">
-                                    <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i> Overdue
-                                </span>
+                                <x-badge state="overdue" />
                             @elseif ($hasDueToday)
-                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold" style="background: var(--accent-blue-soft); color: var(--accent-blue);">
-                                    <i class="fa-regular fa-calendar" aria-hidden="true"></i> Due today
-                                </span>
+                                <x-badge state="due">Due today</x-badge>
                             @elseif ($hasNextDue)
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold" style="background: rgba(0,0,0,0.06); color: var(--ink-muted);">In progress</span>
+                                <span class="text-xs font-medium" style="color: var(--ink-muted);">In progress</span>
                             @else
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold" style="background: var(--teal-soft); color: var(--primary);">Up to date</span>
+                                <x-badge state="complete">Up to date</x-badge>
                             @endif
                         </td>
                         <td class="px-3 lg:px-4 py-2 lg:py-3 text-right whitespace-nowrap">

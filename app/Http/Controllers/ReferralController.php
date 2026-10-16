@@ -87,4 +87,30 @@ class ReferralController extends Controller
             excludeUserId: auth()->id(),
         );
     }
+
+    public function update(Request $request, int $id): RedirectResponse
+    {
+        $this->authorizePermission('referrals');
+
+        $referral = OutwardReferral::findOrFail($id);
+
+        if (! auth()->user()->canAccessConsultation($referral->consultation)) {
+            abort(403, 'This referral is outside your assigned zones.');
+        }
+
+        $validated = $request->validate([
+            'referred_to' => ['required', 'string', 'max:255'],
+            'referral_reasons' => ['nullable', 'array'],
+            'referral_reasons.*' => ['string'],
+            'referral_reason_details' => ['nullable', 'string', 'max:1000'],
+            'pertinent_history' => ['required', 'string'],
+            'actions_taken' => ['nullable', 'string'],
+        ]);
+
+        ReferralService::updateContent($referral, $validated);
+
+        return redirect()
+            ->back()
+            ->with('success', 'Referral content updated successfully.');
+    }
 }

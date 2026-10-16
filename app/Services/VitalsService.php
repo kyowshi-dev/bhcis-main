@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\ConsultationStatus;
 use App\Models\Consultation;
 use App\Models\HealthWorker;
+use App\Models\Vitals;
 use Illuminate\Support\Facades\DB;
 
 final class VitalsService
@@ -101,8 +102,7 @@ final class VitalsService
      */
     public static function deleteVersion(Consultation $consultation, int $vitalId): VitalsDeleteResult
     {
-        $versions = DB::table('vitals')
-            ->where('consultation_id', $consultation->id)
+        $versions = Vitals::where('consultation_id', $consultation->id)
             ->orderBy('created_at')
             ->orderBy('id')
             ->get();
@@ -120,10 +120,7 @@ final class VitalsService
             return new VitalsDeleteResult(error: 'Triage baseline vitals cannot be deleted.');
         }
 
-        DB::table('vitals')
-            ->where('id', $vitalId)
-            ->where('consultation_id', $consultation->id)
-            ->delete();
+        $vital->delete();
 
         return new VitalsDeleteResult(deleted: true);
     }

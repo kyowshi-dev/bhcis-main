@@ -14,6 +14,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class PatientController extends Controller
@@ -25,15 +26,21 @@ class PatientController extends Controller
 
         $sort = $request->input('sort', 'created');
         $dir = $request->input('dir', $sort === 'name' ? 'asc' : 'desc');
-        $showTrashed = $request->boolean('trashed');
 
-        $patients = PatientQueryService::paginateIndex($sort, $dir, auth()->user(), pageSize(20), $showTrashed);
+        $status = $request->input('status');
+        if (! in_array($status, ['active', 'archived'], true)) {
+            // Legacy back-compat: ?trashed=1 meant "show archived".
+            $status = $request->boolean('trashed') ? 'archived' : 'active';
+        }
+
+        $patients = PatientQueryService::paginateIndex($sort, $dir, auth()->user(), pageSize(20), $status);
 
         return view('patients.index', [
             'patients' => $patients,
             'patientSort' => $sort,
             'patientDir' => $dir,
-            'showTrashed' => $showTrashed,
+            'patientStatus' => $status,
+            'patientCounts' => PatientQueryService::statusCounts(auth()->user()),
         ]);
     }
 
@@ -145,6 +152,14 @@ class PatientController extends Controller
     {
         $patient = Patient::withTrashed()->findOrFail($id);
         $this->authorize('forceDelete', $patient);
+
+        // Check for consultations which have RESTRICT FK and would cause a 500
+        $consultationCount = DB::table('consultations')->where('patient_id', $patient->id)->count();
+        if ($consultationCount > 0) {
+            return redirect()->back()->withErrors([
+                'patient' => "Cannot permanently delete this patient because they have {$consultationCount} consultation(s) that would be orphaned. Please contact an administrator.",
+            ]);
+        }
 
         $patient->forceDelete();
 
