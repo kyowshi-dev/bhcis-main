@@ -6,7 +6,9 @@ use App\Http\Controllers\Concerns\ResolvesWorkerId;
 use App\Http\Requests\AddFamilyPlanningVisitRequest;
 use App\Http\Requests\StoreFamilyPlanningClientRequest;
 use App\Http\Requests\UpdateFamilyPlanningClientRequest;
+use App\Http\Requests\UpdateFamilyPlanningVisitRequest;
 use App\Models\FamilyPlanningClient;
+use App\Models\FamilyPlanningVisit;
 use App\Models\Patient;
 use App\Models\Zone;
 use App\Services\ConsultationQueryService;
@@ -104,5 +106,22 @@ class FamilyPlanningController extends Controller
         return view('maternal.print.family-planning', [
             'client' => $client->load(['patient.household.zone', 'visits']),
         ]);
+    }
+
+    public function updateVisit(UpdateFamilyPlanningVisitRequest $request, FamilyPlanningVisit $visit): RedirectResponse
+    {
+        $this->authorizePermission('maternal');
+
+        $client = $visit->client;
+
+        if (auth()->user()->isZoneScoped() && ! auth()->user()->canAccessPatient($client->patient)) {
+            abort(403);
+        }
+
+        $visit->update($request->validated());
+
+        return redirect()
+            ->route('maternal.family-planning.patient', $client->patient_id)
+            ->with('success', 'Follow-up visit updated successfully.');
     }
 }

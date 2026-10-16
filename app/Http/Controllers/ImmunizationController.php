@@ -7,7 +7,9 @@ use App\Http\Requests\AdministerBatchVaccineRequest;
 use App\Http\Requests\AdministerVaccineRequest;
 use App\Http\Requests\MarkNoShowRequest;
 use App\Http\Requests\StoreInfantWithHouseholdRequest;
+use App\Http\Requests\UpdateImmunizationRequest;
 use App\Models\Household;
+use App\Models\Immunization;
 use App\Models\Patient;
 use App\Models\Vaccine;
 use App\Models\Zone;
@@ -68,7 +70,7 @@ class ImmunizationController extends Controller
         $recentRecords = $this->service->withNextDue(ImmunizationQueryService::recentRecords());
 
         $infantStats = ImmunizationQueryService::infantStats($zoneId);
-        $adultStats = ImmunizationQueryService::adultStats($zoneId);
+        $adultEnrolled = ImmunizationQueryService::adultEnrolled($zoneId);
 
         $zones = Zone::orderBy('zone_number')->get();
 
@@ -89,8 +91,7 @@ class ImmunizationController extends Controller
             'noShowCount' => $noShowCount,
             'infantCoveragePercent' => $infantStats['infantCoveragePercent'],
             'infantTotal' => $infantStats['infantTotal'],
-            'adultEnrolled' => $adultStats['adultEnrolled'],
-            'adultDosesByVaccine' => $adultStats['dosesByVaccine'],
+            'adultEnrolled' => $adultEnrolled,
         ]);
     }
 
@@ -400,6 +401,26 @@ class ImmunizationController extends Controller
         return redirect()
             ->route('immunizations.index')
             ->with('success', $vaccine->vaccine_name.' (dose '.$record->dose_number.') marked as done - recorded as '.$record->date_given->format('M j, Y').'.');
+    }
+
+    /**
+     * Update an existing immunization dose record.
+     */
+    public function update(UpdateImmunizationRequest $request, $id, Immunization $immunization): RedirectResponse
+    {
+        $this->authorizeImmunizations();
+
+        $patient = $immunization->patient;
+
+        if (auth()->user()->isZoneScoped() && ! auth()->user()->canAccessPatient($patient)) {
+            abort(403);
+        }
+
+        $immunization->update($request->validated());
+
+        return redirect()
+            ->route('immunizations.patient', $patient->id)
+            ->with('success', 'Immunization record updated successfully.');
     }
 
     public function enrollInfant(StoreInfantWithHouseholdRequest $request): RedirectResponse

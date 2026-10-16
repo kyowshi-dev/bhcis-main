@@ -36,6 +36,10 @@ class UpdatePatientRequest extends FormRequest
         }
 
         return [
+            'first_name' => ['required', 'string', 'max:255'],
+            'middle_name' => ['nullable', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
+            'suffix' => ['nullable', 'string', 'max:50'],
             'sex' => 'required|in:Male,Female',
             'date_of_birth' => 'required|date|before:today',
             'blood_type' => 'nullable|in:A+,A-,B+,B-,O+,O-,AB+,AB-',
@@ -46,6 +50,11 @@ class UpdatePatientRequest extends FormRequest
             // Matches the patients.family_relationship ENUM column.
             'family_relationship' => ['nullable', 'in:'.implode(',', Patient::FAMILY_RELATIONSHIP_OPTIONS)],
             'residential_address' => ['nullable', 'string', 'max:255'],
+            'philhealth_no' => ['nullable', 'string', 'max:50'],
+            'is_philhealth_member' => ['boolean'],
+            'is_pcb_member' => ['boolean'],
+            'has_4ps' => ['boolean'],
+            'has_nhts' => ['boolean'],
         ];
     }
 

@@ -14,13 +14,15 @@
         </div>
         <div class="flex gap-2">
             <a href="{{ route('deaths.edit', $death) }}" class="inline-flex items-center justify-center px-4 py-2 rounded-xl border border-border text-xs lg:text-sm font-medium text-ink transition hover:bg-black/5">Edit</a>
-            <form action="{{ route('deaths.destroy', $death) }}" method="POST" class="confirm-delete-form" data-message="Delete this death record? This cannot be undone.">
-                @csrf
-                @method('DELETE')
+            <x-destructive-form
+                action="{{ route('deaths.destroy', $death) }}"
+                message="Delete this death record? This cannot be undone."
+                confirmText="Delete"
+            >
                 <button type="submit" class="inline-flex items-center justify-center px-4 py-2 rounded-xl transition" style="background: var(--danger-soft); color: var(--danger);">
                     <i class="fa-solid fa-trash mr-1.5" aria-hidden="true"></i> Delete
                 </button>
-            </form>
+            </x-destructive-form>
             <a href="{{ route('patients.show', $death->patient_id) }}" class="inline-flex items-center justify-center px-4 py-2 rounded-xl border border-border text-xs lg:text-sm font-medium text-ink transition hover:bg-black/5">Back to Patient</a>
         </div>
     </div>
@@ -137,11 +139,11 @@
         </dl>
     </div>
 
-    @if ($death->cause_text)
+@if ($death->cause_text)
     <div class="rounded-xl border p-4 lg:p-5" style="background: var(--bg-surface); border-color: var(--border);">
         <h2 class="font-display font-semibold text-sm mb-3" style="color: var(--ink);">Cause of Death (Free Text)</h2>
         <p class="text-sm" style="color: var(--ink); white-space: pre-wrap;">{{ $death->cause_text }}</p>
     </div>
-    @endif
+@endif
 </div>
 @endsection

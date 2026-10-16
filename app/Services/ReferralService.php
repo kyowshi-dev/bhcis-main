@@ -159,6 +159,21 @@ final class ReferralService
             ]);
     }
 
+    public static function updateContent(OutwardReferral $referral, array $validated): void
+    {
+        $payload = [
+            'destination_facility' => $validated['referred_to'],
+            'pertinent_history' => $validated['pertinent_history'],
+            'actions_taken' => $validated['actions_taken'] ?? null,
+            'specific_details' => self::specificDetails(
+                $validated['referral_reasons'] ?? [],
+                $validated['referral_reason_details'] ?? null
+            ),
+        ];
+
+        $referral->update($payload + ['updated_at' => now()]);
+    }
+
     /**
      * Alert consultation staff when a pending referral row is created.
      */

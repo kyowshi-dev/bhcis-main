@@ -319,7 +319,7 @@ class ConsultationEditTest extends TestCase
             ->deleteJson("/consultations/{$consultationId}/prescriptions/{$prescriptionId}")
             ->assertOk();
 
-        $this->assertDatabaseMissing('prescriptions', ['id' => $prescriptionId]);
+        $this->assertSoftDeleted('prescriptions', ['id' => $prescriptionId]);
     }
 
     public function test_non_doctor_prescription_write_is_rejected_with_the_actual_reason(): void

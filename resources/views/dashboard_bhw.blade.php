@@ -15,20 +15,56 @@
 
     <x-flash />
 
-    <div class="animate-in opacity-0 delay-2 rounded-xl border p-4" x-data="patientSearch()"
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 lg:gap-4">
+        <x-kpi-card
+            label="Total patients"
+            :value="$totalPatients"
+            icon="fa-solid fa-users"
+            tone="primary"
+            :href="route('patients.create')"
+            :hrefLabel="$totalPatients === 0 ? 'Register first patient' : 'Register patient'"
+            :zeroState="$totalPatients === 0 ? 'Register first patient' : null"
+            :animateDelay="2"
+        />
+
+        <x-kpi-card
+            label="Consultations today"
+            :value="$consultationsToday"
+            icon="fa-solid fa-stethoscope"
+            tone="primary"
+            :href="route('consultations.index')"
+            :hrefLabel="$consultationsToday === 0 ? null : 'View consultations'"
+            :zeroState="$consultationsToday === 0 ? 'None yet today' : null"
+            :animateDelay="3"
+        />
+
+        <x-kpi-card
+            label="Pending check-ups"
+            :value="$pendingConsultations"
+            icon="fa-solid fa-clock"
+            tone="blue"
+            :href="route('consultations.index')"
+            :hrefLabel="$pendingConsultations === 0 ? null : 'Manage queue'"
+            :zeroState="$pendingConsultations === 0 ? 'All caught up' : null"
+            :animateDelay="4"
+        />
+    </div>
+
+    <div class="animate-in opacity-0 delay-5 rounded-xl border p-4" x-data="patientSearch()"
          style="background: var(--bg-surface); border-color: var(--border); box-shadow: var(--shadow-sm);">
         <div class="flex flex-col lg:flex-row lg:items-center gap-3">
             <div class="relative flex-1 min-w-0">
+                <label for="bhw-patient-search" class="sr-only">Search patients by name</label>
                 <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none" style="color: var(--ink-subtle);" :style="loading && 'color: var(--primary)'">
                     <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
                 </span>
-                <input type="text" x-model="query" @input.debounce.300ms="search()"
+                <input id="bhw-patient-search" type="search" x-model="query" @input.debounce.300ms="search()"
                        placeholder="Search patients by name..."
-                       class="w-full max-w-3xl pl-10 pr-4 py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2 transition"
+                       class="w-full pl-10 pr-4 py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2 transition"
                        style="border-color: var(--border); color: var(--ink); --tw-ring-color: var(--primary);"
                        autocomplete="off">
             </div>
-            <a href="{{ route('patients.create') }}" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-white transition hover:opacity-90 shrink-0" style="background: var(--primary);">
+            <a href="{{ route('patients.create') }}" class="inline-flex items-center justify-center gap-2 w-full lg:w-auto px-4 py-3 lg:py-2.5 rounded-lg text-sm font-semibold text-white transition hover:opacity-90 lg:shrink-0" style="background: var(--primary);">
                 <i class="fa-solid fa-user-plus" aria-hidden="true"></i>
                 Enrol New Patient
             </a>
@@ -52,7 +88,7 @@
             <div class="flex justify-center mb-2"><i class="fa-solid fa-user-plus text-3xl" style="color: var(--ink-subtle);" aria-hidden="true"></i></div>
             <p class="text-sm font-medium" style="color: var(--ink);">No patient found</p>
             <p class="text-xs mt-1 mb-3" style="color: var(--ink-muted);">Try searching with a different name or ID</p>
-            <a href="{{ route('patients.create') }}" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-white transition hover:opacity-90" style="background: var(--primary);"><i class="fa-solid fa-plus" aria-hidden="true"></i> Enrol a new patient</a>
+            <a href="{{ route('patients.create') }}" class="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-3 py-2.5 rounded-lg text-xs font-semibold text-white transition hover:opacity-90" style="background: var(--primary);"><i class="fa-solid fa-plus" aria-hidden="true"></i> Enrol a new patient</a>
         </div>
         <div x-show="loading" class="mt-3 rounded-lg border overflow-hidden" style="display: none; border-color: var(--border); background: var(--bg-surface-elevated);">
             <div class="px-4 py-3 border-b border-border" aria-hidden="true">
@@ -68,12 +104,12 @@
     </div>
 
     <div>
-        <div class="flex items-center justify-between mb-3">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-3">
             <div>
                 <h2 class="font-display font-semibold text-lg lg:text-xl" style="color: var(--ink);">Queue</h2>
                 <p class="text-sm" style="color: var(--ink-muted);">Patients In-Waiting for Consultation Result</p>
             </div>
-            <a href="{{ route('consultations.index') }}" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border transition hover:bg-black/[0.02]" style="border-color: var(--border); color: var(--primary);">
+            <a href="{{ route('consultations.index') }}" class="inline-flex items-center justify-center gap-2 self-start px-3 py-2.5 rounded-lg text-sm font-semibold border transition hover:bg-black/[0.02] shrink-0" style="border-color: var(--border); color: var(--primary);">
                 <i class="fa-solid fa-list" aria-hidden="true"></i>
                 View all consultations
             </a>
@@ -91,7 +127,7 @@
                                 <div class="text-xs mt-1 truncate" style="color: var(--ink-muted);">{{ $queue->identifier ?? $queue['identifier'] ?? 'No ID available' }}</div>
                             </div>
                             @if ((auth()->user()?->hasPermission('patients') || auth()->user()?->hasPermission('consultations')) && ($queue->patient_id ?? null))
-                                <a href="{{ route('patients.show', $queue->patient_id) }}" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border shrink-0 transition hover:bg-black/[0.02]" style="border-color: var(--border); color: var(--primary);">
+                                <a href="{{ route('patients.show', $queue->patient_id) }}" class="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-semibold border shrink-0 transition hover:bg-black/[0.02]" style="border-color: var(--border); color: var(--primary);">
                                     <i class="fa-solid fa-user" aria-hidden="true"></i>
                                     View patient
                                 </a>
@@ -119,21 +155,15 @@
                     <div class="space-y-3">
                         @forelse($recentPatients ?? [] as $recent)
                             <div class="rounded-xl p-4 border" style="background: var(--bg-surface-elevated); border-color: var(--border);">
-                                <div class="flex items-center justify-between gap-3 min-w-0">
+                                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between min-w-0">
                                     <div class="min-w-0">
                                         <p class="font-medium text-sm truncate" style="color: var(--ink);" title="{{ ucwords($recent->name) }}">{{ ucwords($recent->name) }}</p>
                                         <p class="text-xs mt-1 truncate" style="color: var(--ink-muted);">{{ $recent->identifier }}</p>
                                     </div>
-                                    <div class="flex flex-wrap gap-2 shrink-0">
-                                        <a href="{{ route('consultations.create', $recent->id) }}" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-white transition hover:opacity-90 whitespace-nowrap" style="background: var(--primary);">
-                                            <i class="fa-solid fa-clock" aria-hidden="true"></i>
-                                            Start Queue
-                                        </a>
-                                        <a href="{{ route('patients.show', $recent->id) }}" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold border transition hover:bg-black/[0.02] whitespace-nowrap" style="border-color: var(--primary); color: var(--primary);">
-                                            <i class="fa-solid fa-user" aria-hidden="true"></i>
-                                            View profile
-                                        </a>
-                                    </div>
+                                    <a href="{{ route('consultations.create', $recent->id) }}" class="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-3 sm:py-2 rounded-lg text-sm sm:text-xs font-semibold text-white transition hover:opacity-90 shrink-0" style="background: var(--primary);">
+                                        <i class="fa-solid fa-clock" aria-hidden="true"></i>
+                                        Start Queue
+                                    </a>
                                 </div>
                             </div>
                         @empty
@@ -169,9 +199,12 @@
                     if (this.query.length < 2) { this.results = []; return; }
                     this.loading = true;
                     try {
-                        const response = await safeFetch(`{{ route('search.patients') }}?query=${this.query}`);
+                        const response = await safeFetch(`{{ route('search.patients') }}?query=${encodeURIComponent(this.query)}`);
                         this.results = response.ok ? await response.json() : [];
-                    } catch (e) { console.error('Search failed:', e); }
+                    } catch (e) {
+                        console.error('Search failed:', e);
+                        this.results = [];
+                    }
                     this.loading = false;
                 },
             };

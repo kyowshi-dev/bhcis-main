@@ -53,7 +53,7 @@
                         <p class="text-xs mt-1 line-clamp-2" style="color: var(--ink-subtle);">{{ $result->diagnosis_summary }}</p>
                     @endif
                 </div>
-                <div class="flex shrink-0 gap-2">
+                <div class="flex flex-wrap shrink-0 gap-2">
                     @if (auth()->user()->canPrintHandout())
                         <a href="{{ route('consultations.handout', $result->id) }}" target="_blank" rel="noopener"
                            class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-white transition hover:opacity-90"

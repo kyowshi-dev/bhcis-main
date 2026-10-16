@@ -4,8 +4,12 @@ namespace App\Services;
 
 use App\Enums\ConsultationStatus;
 use App\Models\Consultation;
+use App\Models\DiagnosisRecord;
 use App\Models\HealthWorker;
+use App\Models\OutwardReferral;
 use App\Models\Patient;
+use App\Models\Prescription;
+use App\Models\Vitals;
 use DomainException;
 use Illuminate\Support\Facades\DB;
 
@@ -76,9 +80,19 @@ final class ConsultationService
     public static function cancel(Consultation $consultation): void
     {
         DB::transaction(function () use ($consultation) {
-            DB::table('vitals')->where('consultation_id', $consultation->id)->delete();
-            DB::table('outward_referrals')->where('consultation_id', $consultation->id)->delete();
-            DB::table('consultations')->where('id', $consultation->id)->delete();
+            // Delete related records using Eloquent to trigger soft deletes and audit logging
+            $vitals = Vitals::where('consultation_id', $consultation->id)->get();
+            foreach ($vitals as $vital) {
+                $vital->delete();
+            }
+
+            $referral = OutwardReferral::where('consultation_id', $consultation->id)->first();
+            if ($referral) {
+                $referral->delete();
+            }
+
+            // Delete the consultation itself (triggers soft delete + audit)
+            $consultation->delete();
         });
     }
 
@@ -238,32 +252,30 @@ final class ConsultationService
 
     public static function deleteDiagnosis(Consultation $consultation, int $diagnosisId): bool
     {
-        $exists = DB::table('diagnosis_records')
-            ->where('id', $diagnosisId)
+        $diagnosis = DiagnosisRecord::where('id', $diagnosisId)
             ->where('consultation_id', $consultation->id)
-            ->exists();
+            ->first();
 
-        if (! $exists) {
+        if (! $diagnosis) {
             return false;
         }
 
-        DB::table('diagnosis_records')->where('id', $diagnosisId)->delete();
+        $diagnosis->delete();
 
         return true;
     }
 
     public static function deletePrescription(Consultation $consultation, int $prescriptionId): bool
     {
-        $exists = DB::table('prescriptions')
-            ->where('id', $prescriptionId)
+        $prescription = Prescription::where('id', $prescriptionId)
             ->where('consultation_id', $consultation->id)
-            ->exists();
+            ->first();
 
-        if (! $exists) {
+        if (! $prescription) {
             return false;
         }
 
-        DB::table('prescriptions')->where('id', $prescriptionId)->delete();
+        $prescription->delete();
 
         return true;
     }

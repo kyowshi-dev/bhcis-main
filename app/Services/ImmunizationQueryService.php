@@ -68,11 +68,9 @@ final class ImmunizationQueryService
     }
 
     /**
-     * Adult (18+) enrollment and per-vaccine dose stats for the index dashboard.
-     *
-     * @return array{adultEnrolled: int, dosesByVaccine: Collection}
+     * Adult (18+) immunization enrollment count for the index summary.
      */
-    public static function adultStats(?int $zoneId = null): array
+    public static function adultEnrolled(?int $zoneId = null): int
     {
         $adultCutoff = Carbon::today()->subYears(18)->toDateString();
 
@@ -84,30 +82,9 @@ final class ImmunizationQueryService
             $patientBase->where('households.zone_id', $zoneId);
         }
 
-        $adultEnrolled = (clone $patientBase)
+        return (int) $patientBase
             ->where('patients.is_immunization_enrolled', true)
             ->count();
-
-        $dosesByVaccine = DB::table('immunization_records')
-            ->where('immunization_records.no_show', false)
-            ->join('patients', 'immunization_records.patient_id', '=', 'patients.id')
-            ->join('households', 'patients.household_id', '=', 'households.id')
-            ->join('vaccines_lookup', 'immunization_records.vaccine_id', '=', 'vaccines_lookup.id')
-            ->whereIn('vaccines_lookup.category', ['Adult', 'Both'])
-            ->where('patients.date_of_birth', '<=', $adultCutoff)
-            ->when($zoneId !== null, fn ($query) => $query->where('households.zone_id', $zoneId))
-            ->select(
-                'vaccines_lookup.vaccine_name',
-                DB::raw('COUNT(immunization_records.id) as doses_count')
-            )
-            ->groupBy('vaccines_lookup.id', 'vaccines_lookup.vaccine_name', 'vaccines_lookup.sort_order')
-            ->orderBy('vaccines_lookup.sort_order')
-            ->get();
-
-        return [
-            'adultEnrolled' => $adultEnrolled,
-            'dosesByVaccine' => $dosesByVaccine,
-        ];
     }
 
     public static function recordsForPatient(int $patientId): Collection

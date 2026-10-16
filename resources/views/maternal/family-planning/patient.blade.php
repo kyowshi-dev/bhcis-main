@@ -170,6 +170,7 @@
                                     <th class="px-4 py-2.5 font-semibold whitespace-nowrap">Date</th>
                                     <th class="px-4 py-2.5 font-semibold whitespace-nowrap">Method</th>
                                     <th class="px-4 py-2.5 font-semibold whitespace-nowrap">Next follow-up</th>
+                                    <th class="px-4 py-2.5 font-semibold whitespace-nowrap text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y" style="border-color: var(--border);">
@@ -178,6 +179,23 @@
                                         <td class="px-4 py-2.5 whitespace-nowrap font-medium" style="color: var(--ink);">{{ $visit->visit_date->format('M d, Y') }}</td>
                                         <td class="px-4 py-2.5" style="color: var(--ink-muted);">{{ $visit->method }}</td>
                                         <td class="px-4 py-2.5 whitespace-nowrap" style="color: var(--ink-muted);">{{ $visit->schedule_next_visit?->format('M d, Y') ?? '-' }}</td>
+                                        <td class="px-4 py-2.5 whitespace-nowrap text-right">
+                                            <button type="button"
+                                                    @click="$dispatch('open-edit-fp-visit', {
+                                                        visitId: {{ $visit->id }},
+                                                        visitDate: @js($visit->visit_date->format('Y-m-d')),
+                                                        method: @js($visit->method),
+                                                        scheduleNextVisit: @js($visit->schedule_next_visit ? $visit->schedule_next_visit->format('Y-m-d') : ''),
+                                                        chiefComplaint: @js($visit->chief_complaint ?? ''),
+                                                        modeOfTransaction: @js($visit->mode_of_transaction ?? ''),
+                                                        natureOfVisit: @js($visit->nature_of_visit ?? ''),
+                                                    })"
+                                                    class="inline-flex items-center justify-center p-1.5 rounded transition hover:bg-black/[0.05]"
+                                                    aria-label="Edit visit"
+                                                    style="color: var(--ink-muted);">
+                                                <i class="fa-solid fa-pen text-xs" aria-hidden="true"></i>
+                                            </button>
+                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -306,4 +324,5 @@
         </form>
     </x-modal>
 @endif
+    @include('maternal.family-planning.partials._edit-visit-modal')
 @endsection

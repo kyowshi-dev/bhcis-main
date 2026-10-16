@@ -127,6 +127,19 @@
                                 @endforeach
                             </select>
                         </form>
+                        <button type="button"
+                                @click="$dispatch('open-edit-referral', {
+                                    id: {{ $referral->id }},
+                                    referredTo: @js($referral->destination_facility),
+                                    pertinentHistory: @js($referral->pertinent_history ?? ''),
+                                    actionsTaken: @js($referral->actions_taken ?? ''),
+                                    referralReasons: [],
+                                    referralReasonDetails: @js('')
+                                })"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition hover:bg-black/[0.03]"
+                                style="background: var(--bg-surface); border: 1px solid var(--border); color: var(--ink);">
+                            <i class="fa-solid fa-pen mr-1.5" aria-hidden="true"></i> Edit
+                        </button>
                         <a href="{{ route('consultations.show', $referral->consultation_id) }}" class="text-primary text-sm font-medium hover:underline">View consultation</a>
                     </div>
                 </div>
@@ -144,4 +157,7 @@
         <x-pagination :paginator="$referrals" />
     </div>
 </div>
+
+@include('referrals.partials._edit-modal')
+
 @endsection

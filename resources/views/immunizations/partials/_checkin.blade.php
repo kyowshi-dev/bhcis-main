@@ -42,4 +42,5 @@
     </div>
 
     @include('immunizations.partials._administer-modal', ['patient' => $patient, 'vaccines' => $vaccines])
+@include('immunizations.partials._edit-dose-modal', ['patientId' => $patient->id])
 </div>
