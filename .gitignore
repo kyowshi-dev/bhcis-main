@@ -16,6 +16,10 @@
 /public/build
 /public/hot
 /public/storage
+/database/*.sql
+/database/backup/
+/session-*.md
+/storage/app/private/*.sql
 /storage/logs/*.log
 /storage/*.key
 /storage/pail

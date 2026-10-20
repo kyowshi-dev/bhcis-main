@@ -56,11 +56,12 @@ class SecurityHeaders
             "base-uri 'self'",
             "object-src 'none'",
             "frame-ancestors 'none'",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:{$devOrigin}",
-            "style-src 'self' 'unsafe-inline' https:{$devOrigin}",
-            "img-src 'self' data: https:",
-            "font-src 'self' https: data:{$devOrigin}",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net{$devOrigin}",
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com{$devOrigin}",
+            "img-src 'self' data:",
+            "font-src 'self' https://fonts.gstatic.com data:{$devOrigin}",
             "connect-src 'self' ws://127.0.0.1:5173 ws://localhost:5173{$devOrigin}",
+            "form-action 'self'",
         ]));
 
         if ($request->isSecure()) {

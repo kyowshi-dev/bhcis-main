@@ -220,6 +220,12 @@ class SecuritySettingsTest extends TestCase
         $this->assertNotNull($csp);
         $this->assertStringContainsString("frame-ancestors 'none'", $csp);
         $this->assertStringContainsString("default-src 'self'", $csp);
+        $this->assertStringContainsString("script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net", $csp);
+        $this->assertStringContainsString("style-src 'self' 'unsafe-inline' https://fonts.googleapis.com", $csp);
+        $this->assertStringContainsString("font-src 'self' https://fonts.gstatic.com data:", $csp);
+        $this->assertStringContainsString("img-src 'self' data:", $csp);
+        $this->assertStringContainsString("form-action 'self'", $csp);
+        $this->assertStringNotContainsString('https:;', $csp);
     }
 
     public function test_hsts_header_only_sent_over_https(): void

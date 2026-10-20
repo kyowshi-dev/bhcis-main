@@ -24,7 +24,7 @@ class DatabaseSeeder extends Seeder
         $this->call(AssignInitialRolesSeeder::class);
 
         // 3. INITIAL USERS (Admin, BHW, Nurse, Doctor)
-        // All passwords: password123
+        // Password: INITIAL_USER_PASSWORD, or the demo default outside production
         $this->call(CreateInitialUsersSeeder::class);
 
         // 4. DIAGNOSIS - common PH diseases for local search testing

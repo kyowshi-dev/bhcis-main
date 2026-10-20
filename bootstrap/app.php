@@ -36,9 +36,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // Add hardening security headers to every web response
         $middleware->appendToGroup('web', SecurityHeaders::class);
 
-        // Trust forwarding headers from tunnel proxies (ngrok, Cloudflare Tunnel)
-        // so generated URLs use https:// when the app is reached through them
-        $middleware->trustProxies(at: '*');
+        // Trust forwarding headers only from known proxies. Deployments behind
+        // Vercel or a tunnel proxy must opt in with TRUSTED_PROXIES=* (or a
+        // comma-separated proxy list); direct traffic cannot spoof client IPs.
+        $middleware->trustProxies(at: env('TRUSTED_PROXIES', '127.0.0.1,::1'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         /**

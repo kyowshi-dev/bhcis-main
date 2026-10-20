@@ -110,12 +110,14 @@ The `.env` file is created from `.env.example` during setup. Review these values
 | -------- | -------------- |
 | `DB_PASSWORD` | Set your MySQL root password (empty by default) |
 | `MAIL_USERNAME` / `MAIL_PASSWORD` | Required only if you want OTP email auth. Use a Gmail App Password ([guide](https://myaccount.google.com/apppasswords)). |
-| `SESSION_SECURE_COOKIE` | Set to `true` when serving over HTTPS. |
+| `SESSION_SECURE_COOKIE` | Leave `null` to auto-detect HTTPS, or force `true` in production. |
+| `TRUSTED_PROXIES` | Set `*` behind Vercel/ngrok; keep loopback-only otherwise. |
 | `APP_DEBUG` | Keep `false`. Never enable in production. |
 
 ### Default Accounts
 
-After seeding, these accounts are available (password: `password123` for all):
+After seeding outside production, these accounts are available (password: `password123` for all).
+In production, set `INITIAL_USER_PASSWORD` before seeding; the seeder refuses to run without it.
 
 | Role    | Email                |
 | ------- | -------------------- |

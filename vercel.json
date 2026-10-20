@@ -27,6 +27,9 @@
     "LOG_CHANNEL": "stderr",
     "CACHE_STORE": "array",
     "QUEUE_CONNECTION": "sync",
-    "SESSION_DRIVER": "cookie"
+    "SESSION_DRIVER": "cookie",
+    "SESSION_SECURE_COOKIE": "true",
+    "SESSION_ENCRYPT": "true",
+    "TRUSTED_PROXIES": "*"
   }
 }
